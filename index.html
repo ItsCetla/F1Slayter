@@ -43,20 +43,22 @@
           </div>
         </header>
 
-        <table class="leaderboard">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Driver</th>
-              <th>Team</th>
-              <th>PTS</th>
-              <th>Wins</th>
-              <th>Podiums</th>
-              <th>Fastest Laps</th>
-            </tr>
-          </thead>
-          <tbody id="leaderboardBody"></tbody>
-        </table>
+        <div class="leaderboard__scroll" role="region" aria-live="polite">
+          <table class="leaderboard">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Driver</th>
+                <th scope="col">Team</th>
+                <th scope="col">PTS</th>
+                <th scope="col">Wins</th>
+                <th scope="col">Podiums</th>
+                <th scope="col">Fastest Laps</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboardBody"></tbody>
+          </table>
+        </div>
       </section>
 
       <section class="panel panel--insights">
@@ -96,8 +98,9 @@
           <div class="sessions__list">
             <h3>Recent Sessions</h3>
             <p class="sessions__hint">
-              Update session history and driver stats directly inside
-              <code>script.js</code>. Refresh the page to reflect your changes.
+              Manage driver standings and session history inside
+              <code>data/league-data.csv</code>. Refresh the page to reflect
+              your updates.
             </p>
             <div id="sessionList" class="session-list"></div>
             <p id="statusMessage" class="sessions__status" role="status"></p>

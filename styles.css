@@ -170,6 +170,22 @@ a {
   font-size: 0.95rem;
 }
 
+.leaderboard__scroll {
+  width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.leaderboard__scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.leaderboard__scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+}
+
 .leaderboard thead {
   font-family: "Orbitron", sans-serif;
   text-transform: uppercase;
@@ -197,6 +213,12 @@ a {
   display: flex;
   align-items: center;
   gap: 0.8rem;
+}
+
+.leaderboard__empty {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
 }
 
 .leaderboard__driver span {
@@ -273,6 +295,15 @@ a {
   gap: 1rem;
 }
 
+.sessions__empty {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.9rem;
+}
+
 .session {
   background: rgba(255, 255, 255, 0.03);
   border-radius: var(--radius-md);
@@ -316,6 +347,12 @@ a {
 
 .session__result strong {
   color: var(--color-light);
+}
+
+.session__empty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .session__tags {
@@ -400,5 +437,89 @@ a {
   .select select {
     min-width: 0;
     width: 100%;
+  }
+
+  .leaderboard__scroll {
+    margin: 0 -0.5rem;
+    padding: 0 0.5rem;
+  }
+
+  .insights {
+    grid-template-columns: 1fr;
+  }
+
+  .sessions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .panel {
+    padding: 1.25rem;
+  }
+
+  .leaderboard thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .leaderboard tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .leaderboard tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0;
+    border: none;
+    font-size: 0.85rem;
+  }
+
+  .leaderboard tbody td:first-child {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .leaderboard tbody td::before {
+    content: attr(data-label);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.6);
+    margin-right: 0.75rem;
+  }
+
+  .leaderboard__driver {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
+
+  .leaderboard__driver strong {
+    font-size: 0.95rem;
+  }
+
+  .badge {
+    margin-top: 0.25rem;
+  }
+
+  .sessions__hint {
+    font-size: 0.8rem;
+  }
+
+  .card__value {
+    font-size: 1.75rem;
   }
 }

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>F1 Slayter League Leaderboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Roboto:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__overlay"></div>
+      <div class="hero__content">
+        <p class="hero__eyebrow">Slayter League</p>
+        <h1 class="hero__title">F1 Drivers Leaderboard</h1>
+        <p class="hero__subtitle">
+          Live session tracking, driver standings, and performance insights for
+          your custom league.
+        </p>
+        <a class="hero__cta" href="#dashboard">View Dashboard</a>
+      </div>
+    </header>
+
+    <main id="dashboard" class="dashboard">
+      <section class="panel panel--leaderboard">
+        <header class="panel__header">
+          <h2>Current Standings</h2>
+          <div class="panel__controls">
+            <label class="select">
+              <span>Sort by</span>
+              <select id="sortSelect">
+                <option value="points">Points</option>
+                <option value="wins">Wins</option>
+                <option value="podiums">Podiums</option>
+                <option value="fastestLaps">Fastest Laps</option>
+              </select>
+            </label>
+          </div>
+        </header>
+
+        <div class="leaderboard__scroll" role="region" aria-live="polite">
+          <table class="leaderboard">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Driver</th>
+                <th scope="col">Team</th>
+                <th scope="col">PTS</th>
+                <th scope="col">Wins</th>
+                <th scope="col">Podiums</th>
+                <th scope="col">Fastest Laps</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboardBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel panel--insights">
+        <header class="panel__header">
+          <h2>Session Insights</h2>
+        </header>
+        <div class="insights">
+          <article class="card">
+            <h3 class="card__label">Championship Leader</h3>
+            <p id="leaderName" class="card__value">-</p>
+            <p id="leaderPoints" class="card__meta">0 pts</p>
+          </article>
+          <article class="card">
+            <h3 class="card__label">Most Wins</h3>
+            <p id="winsLeader" class="card__value">-</p>
+            <p id="winsCount" class="card__meta">0 wins</p>
+          </article>
+          <article class="card">
+            <h3 class="card__label">Driver to Watch</h3>
+            <p id="watchName" class="card__value">-</p>
+            <p id="watchMeta" class="card__meta">-</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel panel--sessions">
+        <header class="panel__header">
+          <h2>Session Database</h2>
+          <div class="panel__controls">
+            <button id="copyJson" type="button" class="btn btn--ghost">
+              Copy JSON Snapshot
+            </button>
+          </div>
+        </header>
+
+        <div class="sessions">
+          <div class="sessions__list">
+            <h3>Recent Sessions</h3>
+            <p class="sessions__hint">
+              Manage driver standings and session history inside
+              <code>data/league-data.csv</code>. Refresh the page to reflect
+              your updates.
+            </p>
+            <div id="sessionList" class="session-list"></div>
+            <p id="statusMessage" class="sessions__status" role="status"></p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>
+        Built for the Slayter League • Copy the JSON snapshot into your AI tools
+        to generate commentary, predictions, and highlights.
+      </p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

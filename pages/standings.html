@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>Driver Standings - F1 Slayter League</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Roboto:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <div class="scroll-progress"></div>
+    
+    <!-- Persistent Navigation -->
+    <nav class="nav-menu nav-menu--persistent">
+      <div class="nav-menu__container">
+        <div class="nav-menu__brand">
+          <span class="nav-menu__logo">🏎️</span>
+          <span class="nav-menu__title">Slayter League</span>
+        </div>
+        <ul class="nav-menu__links">
+          <li><a href="home.html" class="nav-menu__link">Home</a></li>
+          <li><a href="standings.html" class="nav-menu__link nav-menu__link--active">Standings</a></li>
+          <li><a href="sessions.html" class="nav-menu__link">Sessions</a></li>
+          <li><a href="calendar.html" class="nav-menu__link">Calendar</a></li>
+          <li><a href="insights.html" class="nav-menu__link">Insights</a></li>
+        </ul>
+      </div>
+    </nav>
+    
+    <header class="page-header">
+      <div class="page-header__content">
+        <h1 class="page-header__title">Championship Standings</h1>
+        <p class="page-header__subtitle">Current driver rankings and performance statistics</p>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <section class="panel panel--leaderboard">
+        <header class="panel__header">
+          <h2>Current Standings</h2>
+          <div class="panel__controls">
+            <label class="select">
+              <span>Sort by</span>
+              <select id="sortSelect">
+                <option value="points">Points</option>
+                <option value="wins">Wins</option>
+                <option value="podiums">Podiums</option>
+                <option value="fastestLaps">Fastest Laps</option>
+              </select>
+            </label>
+          </div>
+        </header>
+
+        <div class="leaderboard__scroll" role="region" aria-live="polite">
+          <table class="leaderboard leaderboard--interactive">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Driver</th>
+                <th scope="col">Team</th>
+                <th scope="col">PTS</th>
+                <th scope="col">Wins</th>
+                <th scope="col">Podiums</th>
+                <th scope="col">Fastest Laps</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboardBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Top 3 Spotlight -->
+      <section class="panel panel--spotlight">
+        <header class="panel__header">
+          <h2>Championship Top 3</h2>
+        </header>
+        <div id="topThreeSpotlight" class="top-three-grid">
+          <!-- Populated by JavaScript -->
+        </div>
+      </section>
+    </main>
+
+    <!-- Driver Detail Modal -->
+    <div id="driverModal" class="modal">
+      <div class="modal__overlay"></div>
+      <div class="modal__content">
+        <button class="modal__close" aria-label="Close">&times;</button>
+        <div id="driverDetailContent" class="driver-detail">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <p>
+        Built for the Slayter League • 
+        <a href="home.html">Home</a> • 
+        <a href="sessions.html">Sessions</a> • 
+        <a href="calendar.html">Calendar</a> • 
+        <a href="insights.html">Insights</a>
+      </p>
+    </footer>
+
+    <script src="../js/shared.js"></script>
+    <script src="../js/standings.js"></script>
+  </body>
+</html>
+

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>Season Calendar - F1 Slayter League</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Roboto:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <div class="scroll-progress"></div>
+    
+    <!-- Persistent Navigation -->
+    <nav class="nav-menu nav-menu--persistent">
+      <div class="nav-menu__container">
+        <div class="nav-menu__brand">
+          <span class="nav-menu__logo">🏎️</span>
+          <span class="nav-menu__title">Slayter League</span>
+        </div>
+        <ul class="nav-menu__links">
+          <li><a href="home.html" class="nav-menu__link">Home</a></li>
+          <li><a href="standings.html" class="nav-menu__link">Standings</a></li>
+          <li><a href="sessions.html" class="nav-menu__link">Sessions</a></li>
+          <li><a href="calendar.html" class="nav-menu__link nav-menu__link--active">Calendar</a></li>
+          <li><a href="insights.html" class="nav-menu__link">Insights</a></li>
+        </ul>
+      </div>
+    </nav>
+    
+    <header class="page-header">
+      <div class="page-header__content">
+        <h1 class="page-header__title">Season Calendar</h1>
+        <p class="page-header__subtitle">Full race schedule and circuit information</p>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <section class="panel panel--calendar">
+        <header class="panel__header">
+          <h2>2024 Season Schedule</h2>
+          <div class="panel__controls">
+            <label class="select">
+              <span>View</span>
+              <select id="calendarView">
+                <option value="all">All Races</option>
+                <option value="completed">Completed</option>
+                <option value="upcoming">Upcoming</option>
+              </select>
+            </label>
+          </div>
+        </header>
+
+        <div class="calendar calendar--detailed">
+          <div class="calendar__item calendar__item--completed calendar__item--clickable" data-race="abu-dhabi" onclick="showRaceDetails('Abu Dhabi')">
+            <span class="calendar__date">Race 1</span>
+            <div class="calendar__details">
+              <span class="calendar__track">Abu Dhabi GP</span>
+              <span class="calendar__time">Oct 7 • 8:00 PM ET</span>
+              <span class="calendar__circuit">Yas Marina Circuit</span>
+            </div>
+            <span class="calendar__status">✓</span>
+          </div>
+          
+          <div class="calendar__item calendar__item--completed calendar__item--clickable" data-race="las-vegas" onclick="showRaceDetails('Las Vegas')">
+            <span class="calendar__date">Race 2</span>
+            <div class="calendar__details">
+              <span class="calendar__track">Las Vegas GP</span>
+              <span class="calendar__time">Oct 14 • 8:00 PM ET</span>
+              <span class="calendar__circuit">Las Vegas Street Circuit</span>
+            </div>
+            <span class="calendar__status">✓</span>
+          </div>
+          
+          <div class="calendar__item calendar__item--completed calendar__item--clickable" data-race="bahrain" onclick="showRaceDetails('Bahrain')">
+            <span class="calendar__date">Race 3</span>
+            <div class="calendar__details">
+              <span class="calendar__track">Bahrain GP</span>
+              <span class="calendar__time">Oct 21 • 8:00 PM ET</span>
+              <span class="calendar__circuit">Bahrain International Circuit</span>
+            </div>
+            <span class="calendar__status">✓</span>
+          </div>
+          
+          <div class="calendar__item calendar__item--completed calendar__item--clickable" data-race="saudi-arabia" onclick="showRaceDetails('Saudi Arabia')">
+            <span class="calendar__date">Race 4</span>
+            <div class="calendar__details">
+              <span class="calendar__track">Saudi Arabia GP</span>
+              <span class="calendar__time">Oct 28 • 8:00 PM ET • Jeddah</span>
+              <span class="calendar__circuit">Jeddah Corniche Circuit</span>
+            </div>
+            <span class="calendar__status">✓</span>
+          </div>
+          
+          <div class="calendar__item calendar__item--upcoming calendar__item--clickable" data-race="azerbaijan" onclick="showRaceDetails('Azerbaijan')">
+            <span class="calendar__date">Race 5</span>
+            <div class="calendar__details">
+              <span class="calendar__track">Azerbaijan GP</span>
+              <span class="calendar__time">Nov 4 • 8:00 PM ET • Baku</span>
+              <span class="calendar__circuit">Baku City Circuit</span>
+            </div>
+            <span class="calendar__status">📅</span>
+          </div>
+          
+          <div class="calendar__item calendar__item--future calendar__item--clickable" data-race="miami" onclick="showRaceDetails('Miami')">
+            <span class="calendar__date">Race 6</span>
+            <div class="calendar__details">
+              <span class="calendar__track">Miami GP</span>
+              <span class="calendar__time">Nov 11 • 8:00 PM ET</span>
+              <span class="calendar__circuit">Miami International Autodrome</span>
+            </div>
+            <span class="calendar__status">⏱️</span>
+          </div>
+          
+          <div class="calendar__item calendar__item--future calendar__item--clickable" data-race="japan" onclick="showRaceDetails('Japan')">
+            <span class="calendar__date">Race 7</span>
+            <div class="calendar__details">
+              <span class="calendar__track">Japan GP</span>
+              <span class="calendar__time">Nov 18 • 8:00 PM ET • Suzuka</span>
+              <span class="calendar__circuit">Suzuka Circuit</span>
+            </div>
+            <span class="calendar__status">⏱️</span>
+          </div>
+          
+          <div class="calendar__item calendar__item--future calendar__item--clickable" data-race="austria" onclick="showRaceDetails('Austria')">
+            <span class="calendar__date">Race 8</span>
+            <div class="calendar__details">
+              <span class="calendar__track">Austria GP</span>
+              <span class="calendar__time">Nov 25 • 8:00 PM ET • Red Bull Ring</span>
+              <span class="calendar__circuit">Red Bull Ring</span>
+            </div>
+            <span class="calendar__status">⏱️</span>
+          </div>
+          
+          <div class="calendar__item calendar__item--future calendar__item--clickable" data-race="singapore" onclick="showRaceDetails('Singapore')">
+            <span class="calendar__date">Race 9</span>
+            <div class="calendar__details">
+              <span class="calendar__track">Singapore GP</span>
+              <span class="calendar__time">Dec 9 • 8:00 PM ET</span>
+              <span class="calendar__circuit">Marina Bay Street Circuit</span>
+            </div>
+            <span class="calendar__status">⏱️</span>
+          </div>
+          
+          <div class="calendar__item calendar__item--future calendar__item--clickable" data-race="netherlands" onclick="showRaceDetails('Netherlands')">
+            <span class="calendar__date">Race 10</span>
+            <div class="calendar__details">
+              <span class="calendar__track">Netherlands GP</span>
+              <span class="calendar__time">Dec 16 • 8:00 PM ET • Zandvoort</span>
+              <span class="calendar__circuit">Circuit Zandvoort</span>
+            </div>
+            <span class="calendar__status">⏱️</span>
+          </div>
+          
+          <div class="calendar__item calendar__item--future calendar__item--clickable" data-race="australia" onclick="showRaceDetails('Australia')">
+            <span class="calendar__date">Race 11</span>
+            <div class="calendar__details">
+              <span class="calendar__track">Australia GP</span>
+              <span class="calendar__time">Dec 23 • 8:00 PM ET • Melbourne</span>
+              <span class="calendar__circuit">Albert Park Circuit</span>
+            </div>
+            <span class="calendar__status">⏱️</span>
+          </div>
+          
+          <div class="calendar__item calendar__item--future calendar__item--clickable" data-race="united-states" onclick="showRaceDetails('United States')">
+            <span class="calendar__date">Race 12</span>
+            <div class="calendar__details">
+              <span class="calendar__track">United States GP</span>
+              <span class="calendar__time">Dec 30 • 8:00 PM ET • Austin</span>
+              <span class="calendar__circuit">Circuit of the Americas</span>
+            </div>
+            <span class="calendar__status">🏁</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Season Progress -->
+      <section class="panel panel--progress">
+        <header class="panel__header">
+          <h2>Season Progress</h2>
+        </header>
+        <div class="season-progress">
+          <div class="season-progress__bar">
+            <div id="seasonProgressFill" class="season-progress__fill"></div>
+          </div>
+          <div class="season-progress__stats">
+            <span id="racesCompleted">0 of 12</span> races completed
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Race Detail Modal -->
+    <div id="raceModal" class="modal">
+      <div class="modal__overlay"></div>
+      <div class="modal__content">
+        <button class="modal__close" aria-label="Close">&times;</button>
+        <div id="raceDetailContent" class="race-detail">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <p>
+        Built for the Slayter League • 
+        <a href="home.html">Home</a> • 
+        <a href="standings.html">Standings</a> • 
+        <a href="sessions.html">Sessions</a> • 
+        <a href="insights.html">Insights</a>
+      </p>
+    </footer>
+
+    <script src="../js/shared.js"></script>
+    <script src="../js/calendar.js"></script>
+  </body>
+</html>
+

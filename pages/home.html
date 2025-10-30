@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>F1 Slayter League - Home</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Roboto:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <div class="scroll-progress"></div>
+    
+    <!-- Persistent Navigation -->
+    <nav class="nav-menu nav-menu--persistent">
+      <div class="nav-menu__container">
+        <div class="nav-menu__brand">
+          <span class="nav-menu__logo">🏎️</span>
+          <span class="nav-menu__title">Slayter League</span>
+        </div>
+        <ul class="nav-menu__links">
+          <li><a href="home.html" class="nav-menu__link nav-menu__link--active">Home</a></li>
+          <li><a href="standings.html" class="nav-menu__link">Standings</a></li>
+          <li><a href="sessions.html" class="nav-menu__link">Sessions</a></li>
+          <li><a href="calendar.html" class="nav-menu__link">Calendar</a></li>
+          <li><a href="insights.html" class="nav-menu__link">Insights</a></li>
+        </ul>
+      </div>
+    </nav>
+    
+    <header class="hero hero--home">
+      <div class="hero__overlay"></div>
+      <div class="hero__content">
+        <p class="hero__eyebrow">Slayter League</p>
+        <h1 class="hero__title">F1 Championship Hub</h1>
+        <p class="hero__subtitle">
+          Track live standings, analyze race sessions, and dive deep into driver performance. 
+          Your complete F1 league management platform.
+        </p>
+        <div class="hero__actions">
+          <a class="hero__cta hero__cta--primary" href="standings.html">View Standings</a>
+          <a class="hero__cta hero__cta--secondary" href="insights.html">View Insights</a>
+        </div>
+      </div>
+    </header>
+
+    <main class="home-dashboard">
+      <!-- Quick Stats Overview -->
+      <section class="quick-stats">
+        <div class="quick-stats__grid">
+          <article class="stat-card" onclick="window.location.href='standings.html'">
+            <div class="stat-card__icon">🏆</div>
+            <div class="stat-card__content">
+              <h3 class="stat-card__label">Current Leader</h3>
+              <p id="homeLeaderName" class="stat-card__value">Loading...</p>
+              <p id="homeLeaderPoints" class="stat-card__meta">0 points</p>
+            </div>
+          </article>
+          
+          <article class="stat-card" onclick="window.location.href='sessions.html'">
+            <div class="stat-card__icon">🏁</div>
+            <div class="stat-card__content">
+              <h3 class="stat-card__label">Races Completed</h3>
+              <p id="homeRacesCompleted" class="stat-card__value">0</p>
+              <p class="stat-card__meta">View all sessions</p>
+            </div>
+          </article>
+          
+          <article class="stat-card" onclick="window.location.href='standings.html'">
+            <div class="stat-card__icon">👥</div>
+            <div class="stat-card__content">
+              <h3 class="stat-card__label">Active Drivers</h3>
+              <p id="homeActiveDrivers" class="stat-card__value">0</p>
+              <p class="stat-card__meta">League participants</p>
+            </div>
+          </article>
+          
+          <article class="stat-card" onclick="window.location.href='calendar.html'">
+            <div class="stat-card__icon">📅</div>
+            <div class="stat-card__content">
+              <h3 class="stat-card__label">Next Race</h3>
+              <p id="homeNextRace" class="stat-card__value">TBD</p>
+              <p id="homeNextRaceDate" class="stat-card__meta">Check calendar</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Feature Cards -->
+      <section class="feature-section">
+        <h2 class="section-title">Explore the League</h2>
+        <div class="feature-grid">
+          <article class="feature-card" onclick="window.location.href='standings.html'">
+            <div class="feature-card__header">
+              <h3 class="feature-card__title">Driver Standings</h3>
+              <span class="feature-card__badge">Live</span>
+            </div>
+            <p class="feature-card__description">
+              View real-time championship standings, driver statistics, and detailed performance metrics. 
+              Click on any driver to see their complete race history and achievements.
+            </p>
+            <div class="feature-card__footer">
+              <span class="feature-card__link">View Standings →</span>
+            </div>
+          </article>
+          
+          <article class="feature-card" onclick="window.location.href='sessions.html'">
+            <div class="feature-card__header">
+              <h3 class="feature-card__title">Race Sessions</h3>
+              <span class="feature-card__badge">Analysis</span>
+            </div>
+            <p class="feature-card__description">
+              Browse completed races, view podium finishes, and analyze session highlights. 
+              Dive into detailed race breakdowns with lap-by-lap insights.
+            </p>
+            <div class="feature-card__footer">
+              <span class="feature-card__link">View Sessions →</span>
+            </div>
+          </article>
+          
+          <article class="feature-card" onclick="window.location.href='calendar.html'">
+            <div class="feature-card__header">
+              <h3 class="feature-card__title">Season Calendar</h3>
+              <span class="feature-card__badge">Schedule</span>
+            </div>
+            <p class="feature-card__description">
+              Track upcoming races, review past events, and stay updated on the full season schedule. 
+              Get circuit information and race-day details for each Grand Prix.
+            </p>
+            <div class="feature-card__footer">
+              <span class="feature-card__link">View Calendar →</span>
+            </div>
+          </article>
+          
+          <article class="feature-card" onclick="window.location.href='insights.html'">
+            <div class="feature-card__header">
+              <h3 class="feature-card__title">Championship Insights</h3>
+              <span class="feature-card__badge">Analytics</span>
+            </div>
+            <p class="feature-card__description">
+              Explore advanced statistics, performance trends, and championship predictions. 
+              Discover who's improving, who's dominating, and who to watch.
+            </p>
+            <div class="feature-card__footer">
+              <span class="feature-card__link">View Insights →</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Recent Activity -->
+      <section class="recent-activity">
+        <h2 class="section-title">Recent Highlights</h2>
+        <div id="recentHighlights" class="highlights-list">
+          <!-- Populated by JavaScript -->
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>
+        Built for the Slayter League • 
+        <a href="standings.html">Standings</a> • 
+        <a href="sessions.html">Sessions</a> • 
+        <a href="calendar.html">Calendar</a> • 
+        <a href="insights.html">Insights</a>
+      </p>
+    </footer>
+
+    <script src="../js/shared.js"></script>
+    <script src="../js/home.js"></script>
+  </body>
+</html>
+

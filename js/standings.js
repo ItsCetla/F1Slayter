@@ -3,16 +3,17 @@
 (function() {
   'use strict';
   
-  const { loadData, getTeamColor, openModal, closeModal, appState } = window.F1SlayterShared;
+  const { loadData, getTeamColor, openModal, closeModal, appState, isRealF1Driver } = window.F1SlayterShared;
 
   let currentSortKey = "points";
+  let hideAiDrivers = false;
 
 async function initStandingsPage() {
   await loadData();
-  
-  renderLeaderboard();
-  renderTopThree();
+
   setupSortingControls();
+  setupAiToggle();
+  renderLeaderboard();
 }
 
 function setupSortingControls() {
@@ -25,18 +26,42 @@ function setupSortingControls() {
   }
 }
 
+function setupAiToggle() {
+  const toggleButton = document.getElementById('toggleAiButton');
+  if (!toggleButton) return;
+
+  const updateButtonState = () => {
+    toggleButton.setAttribute('aria-pressed', hideAiDrivers ? 'true' : 'false');
+    toggleButton.classList.toggle('btn--toggle-active', hideAiDrivers);
+    toggleButton.textContent = hideAiDrivers ? 'Enable AI Drivers' : 'Disable AI Drivers';
+  };
+
+  toggleButton.addEventListener('click', () => {
+    hideAiDrivers = !hideAiDrivers;
+    updateButtonState();
+    renderLeaderboard();
+  });
+
+  updateButtonState();
+}
+
 function renderLeaderboard() {
   const { drivers } = appState;
   const leaderboardBody = document.getElementById('leaderboardBody');
-  
+
   if (!leaderboardBody) return;
-  
-  if (!drivers.length) {
-    leaderboardBody.innerHTML = '<tr><td class="leaderboard__empty" colspan="7">No driver data available.</td></tr>';
+
+  const visibleDrivers = hideAiDrivers
+    ? drivers.filter((driver) => !isRealF1Driver(driver.name))
+    : drivers.slice();
+
+  if (!visibleDrivers.length) {
+    leaderboardBody.innerHTML = '<tr><td class="leaderboard__empty" colspan="7">No driver data available for the current filters.</td></tr>';
+    renderTopThree();
     return;
   }
-  
-  const sorted = drivers.slice().sort((a, b) => {
+
+  const sorted = visibleDrivers.sort((a, b) => {
     const valueA = typeof a[currentSortKey] === "number" ? a[currentSortKey] : 0;
     const valueB = typeof b[currentSortKey] === "number" ? b[currentSortKey] : 0;
 
@@ -88,17 +113,27 @@ function renderLeaderboard() {
   }).join('');
   
   leaderboardBody.innerHTML = rows;
+  renderTopThree();
 }
 
 function renderTopThree() {
   const { drivers } = appState;
   const container = document.getElementById('topThreeSpotlight');
-  
+
   if (!container) return;
-  
-  const standings = drivers.slice().sort((a, b) => b.points - a.points);
+
+  const standingsSource = hideAiDrivers
+    ? drivers.filter((driver) => !isRealF1Driver(driver.name))
+    : drivers.slice();
+
+  if (!standingsSource.length) {
+    container.innerHTML = '<p class="leaderboard__empty" style="margin: 1rem 0;">No drivers available for the current filters.</p>';
+    return;
+  }
+
+  const standings = standingsSource.sort((a, b) => b.points - a.points);
   const topThree = standings.slice(0, 3);
-  
+
   const markup = topThree.map((driver, index) => {
     const positionClass = ['first', 'second', 'third'][index];
     const medal = ['🥇', '🥈', '🥉'][index];

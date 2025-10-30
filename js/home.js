@@ -105,9 +105,10 @@ function renderRecentHighlights() {
   const markup = recentSessions.map(session => {
     const winner = session.results.filter(r => !window.F1SlayterShared.isRealF1Driver(r.driver))[0];
     const winnerName = winner ? winner.driver : "TBD";
+    const sessionNameEncoded = encodeURIComponent(session.name || "");
     
     return `
-      <div class="highlight-item">
+      <div class="highlight-item" onclick="window.location.href='sessions.html#${sessionNameEncoded}'" style="cursor: pointer; transition: transform 0.2s, background-color 0.2s;" onmouseenter="this.style.transform='translateY(-2px)'; this.style.backgroundColor='rgba(255, 255, 255, 0.03)';" onmouseleave="this.style.transform='translateY(0)'; this.style.backgroundColor='transparent';">
         <h4 style="font-family: 'Orbitron', sans-serif; margin: 0 0 0.5rem; font-size: 1.1rem;">
           ${session.name || "Unnamed Session"}
         </h4>

@@ -12,6 +12,50 @@ async function initSessionsPage() {
   
   renderSessions();
   setupFilterControls();
+  
+  // Check for hash in URL to open specific session
+  checkAndOpenSessionFromHash();
+}
+
+function checkAndOpenSessionFromHash() {
+  const hash = window.location.hash;
+  if (hash && hash.length > 1) {
+    const sessionName = decodeURIComponent(hash.substring(1)); // Remove the # symbol
+    setTimeout(() => {
+      scrollToAndHighlightSession(sessionName);
+      // Clear the hash after scrolling
+      history.replaceState(null, null, ' ');
+    }, 300); // Small delay to ensure DOM is ready
+  }
+}
+
+function scrollToAndHighlightSession(sessionName) {
+  // Find the session article element
+  const sessionArticles = document.querySelectorAll('.session');
+  let targetArticle = null;
+  
+  sessionArticles.forEach(article => {
+    const titleElement = article.querySelector('.session__banner-title');
+    if (titleElement && titleElement.textContent.trim() === sessionName) {
+      targetArticle = article;
+    }
+  });
+  
+  if (targetArticle) {
+    // Scroll to the element with smooth behavior
+    targetArticle.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    // Add a temporary highlight effect
+    targetArticle.style.boxShadow = '0 0 0 3px var(--color-primary), 0 8px 32px rgba(225, 6, 0, 0.3)';
+    targetArticle.style.transform = 'scale(1.02)';
+    targetArticle.style.transition = 'all 0.3s ease';
+    
+    // Remove the highlight after a few seconds
+    setTimeout(() => {
+      targetArticle.style.boxShadow = '';
+      targetArticle.style.transform = '';
+    }, 2500);
+  }
 }
 
 function setupFilterControls() {

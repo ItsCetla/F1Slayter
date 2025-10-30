@@ -1,8 +1,11 @@
 // Sessions page functionality
 
-const { loadData, formatDate, getTrackImage, isRealF1Driver, openModal, closeModal, appState } = window.F1SlayterShared;
+(function() {
+  'use strict';
+  
+  const { loadData, formatDate, getTrackImage, isRealF1Driver, openModal, closeModal, appState } = window.F1SlayterShared;
 
-let currentFilter = "all";
+  let currentFilter = "all";
 
 async function initSessionsPage() {
   await loadData();
@@ -248,9 +251,10 @@ function showSessionDetail(sessionName) {
   openModal('sessionModal');
 }
 
-// Make function globally available for onclick
-window.showSessionDetail = showSessionDetail;
+  // Make function globally available for onclick
+  window.showSessionDetail = showSessionDetail;
 
-// Initialize on load
-document.addEventListener('DOMContentLoaded', initSessionsPage);
+  // Initialize on load
+  document.addEventListener('DOMContentLoaded', initSessionsPage);
+})();
 

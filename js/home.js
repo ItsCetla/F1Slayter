@@ -1,16 +1,32 @@
 // Home page functionality
 
-const { loadData, formatDate, appState } = window.F1SlayterShared;
+(function() {
+  'use strict';
+  
+  const { loadData, formatDate, appState } = window.F1SlayterShared;
 
 async function initHomePage() {
-  await loadData();
+  console.log('Home: Starting initialization...');
   
-  updateQuickStats();
-  renderRecentHighlights();
+  try {
+    await loadData();
+    console.log('Home: Data loaded successfully');
+    console.log('Home: Drivers:', appState.drivers.length);
+    console.log('Home: Sessions:', appState.sessions.length);
+    
+    updateQuickStats();
+    renderRecentHighlights();
+    
+    console.log('Home: Rendering complete');
+  } catch (error) {
+    console.error('Home: Error during initialization:', error);
+  }
 }
 
 function updateQuickStats() {
+  console.log('Home: updateQuickStats called');
   const { drivers, sessions } = appState;
+  console.log('Home: updateQuickStats - drivers:', drivers.length, 'sessions:', sessions.length);
   
   // Championship Leader
   const standings = drivers.slice().sort((a, b) => b.points - a.points);
@@ -56,22 +72,24 @@ function updateQuickStats() {
   }
   if (nextRaceDateEl && nextRace) {
     const raceCalendar = {
-      "Azerbaijan": "Nov 4 • 8:00 PM ET",
-      "Miami": "Nov 11 • 8:00 PM ET",
-      "Japan": "Nov 18 • 8:00 PM ET",
-      "Austria": "Nov 25 • 8:00 PM ET",
-      "Singapore": "Dec 9 • 8:00 PM ET",
-      "Netherlands": "Dec 16 • 8:00 PM ET",
-      "Australia": "Dec 23 • 8:00 PM ET",
-      "United States": "Dec 30 • 8:00 PM ET"
+      "Azerbaijan": "Nov 4 • 8:00 PM EST",
+      "Miami": "Nov 11 • 8:00 PM EST",
+      "Japan": "Nov 18 • 8:00 PM EST",
+      "Austria": "Nov 25 • 8:00 PM EST",
+      "Singapore": "Dec 9 • 8:00 PM EST",
+      "Netherlands": "Dec 16 • 8:00 PM EST",
+      "Australia": "Dec 23 • 8:00 PM EST",
+      "United States": "Dec 30 • 8:00 PM EST (FINAL)"
     };
     nextRaceDateEl.textContent = raceCalendar[nextRace] || "TBD";
   }
 }
 
 function renderRecentHighlights() {
+  console.log('Home: renderRecentHighlights called');
   const { sessions } = appState;
   const container = document.getElementById('recentHighlights');
+  console.log('Home: renderRecentHighlights - container found:', !!container, 'sessions:', sessions.length);
   
   if (!container) return;
   
@@ -80,7 +98,9 @@ function renderRecentHighlights() {
     return;
   }
   
-  const recentSessions = sessions.slice(0, 3);
+  // Sort sessions by date (most recent first) and take the top 3
+  const sortedSessions = sessions.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+  const recentSessions = sortedSessions.slice(0, 3);
   
   const markup = recentSessions.map(session => {
     const winner = session.results.filter(r => !window.F1SlayterShared.isRealF1Driver(r.driver))[0];
@@ -109,6 +129,10 @@ function renderRecentHighlights() {
   container.innerHTML = markup;
 }
 
-// Initialize on load
-document.addEventListener('DOMContentLoaded', initHomePage);
+  // Initialize on load
+  document.addEventListener('DOMContentLoaded', initHomePage);
+  
+  // Make initHomePage available globally for testing
+  window.initHomePage = initHomePage;
+})();
 

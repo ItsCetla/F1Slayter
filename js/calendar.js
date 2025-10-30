@@ -1,6 +1,9 @@
 // Calendar page functionality
 
-const { loadData, formatDate, getTrackImage, openModal, closeModal, appState } = window.F1SlayterShared;
+(function() {
+  'use strict';
+  
+  const { loadData, formatDate, getTrackImage, openModal, closeModal, appState } = window.F1SlayterShared;
 
 async function initCalendarPage() {
   await loadData();
@@ -143,9 +146,10 @@ function showRaceDetails(raceName) {
   openModal('raceModal');
 }
 
-// Make function globally available for onclick
-window.showRaceDetails = showRaceDetails;
+  // Make function globally available for onclick
+  window.showRaceDetails = showRaceDetails;
 
-// Initialize on load
-document.addEventListener('DOMContentLoaded', initCalendarPage);
+  // Initialize on load
+  document.addEventListener('DOMContentLoaded', initCalendarPage);
+})();
 

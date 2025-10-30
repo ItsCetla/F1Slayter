@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test Home Page</title>
+  <style>
+    body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #fff; }
+    .log { margin: 5px 0; padding: 5px; background: #000; }
+  </style>
+</head>
+<body>
+  <h1>Home Page Script Test</h1>
+  <div id="logs"></div>
+  
+  <hr>
+  <p id="homeLeaderName">Loading...</p>
+  <p id="homeLeaderPoints">0 points</p>
+  <p id="homeRacesCompleted">0</p>
+  <p id="homeActiveDrivers">0</p>
+  <p id="homeNextRace">TBD</p>
+  <p id="homeNextRaceDate">Check calendar</p>
+  <div id="recentHighlights"></div>
+
+  <script>
+    function log(msg) {
+      const div = document.createElement('div');
+      div.className = 'log';
+      div.textContent = new Date().toISOString() + ': ' + msg;
+      document.getElementById('logs').appendChild(div);
+      console.log(msg);
+    }
+    
+    log('1. Page loaded, starting script load...');
+  </script>
+  
+  <script src="../js/shared.js"></script>
+  <script>
+    log('2. shared.js loaded');
+    log('3. F1SlayterShared exists: ' + (window.F1SlayterShared ? 'YES' : 'NO'));
+  </script>
+  
+  <script src="../js/home.js"></script>
+  <script>
+    log('4. home.js loaded');
+    log('5. initHomePage function exists: ' + (typeof initHomePage !== 'undefined' ? 'YES' : 'NO'));
+    
+    setTimeout(() => {
+      log('6. After 2 seconds - checking values:');
+      log('   homeLeaderName: ' + document.getElementById('homeLeaderName').textContent);
+      log('   homeRacesCompleted: ' + document.getElementById('homeRacesCompleted').textContent);
+    }, 2000);
+  </script>
+</body>
+</html>
+

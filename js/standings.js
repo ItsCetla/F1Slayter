@@ -1,8 +1,11 @@
 // Standings page functionality
 
-const { loadData, getTeamColor, openModal, closeModal, appState } = window.F1SlayterShared;
+(function() {
+  'use strict';
+  
+  const { loadData, getTeamColor, openModal, closeModal, appState } = window.F1SlayterShared;
 
-let currentSortKey = "points";
+  let currentSortKey = "points";
 
 async function initStandingsPage() {
   await loadData();
@@ -29,7 +32,7 @@ function renderLeaderboard() {
   if (!leaderboardBody) return;
   
   if (!drivers.length) {
-    leaderboardBody.innerHTML = '<tr><td class="leaderboard__empty" colspan="8">No driver data available.</td></tr>';
+    leaderboardBody.innerHTML = '<tr><td class="leaderboard__empty" colspan="7">No driver data available.</td></tr>';
     return;
   }
   
@@ -54,7 +57,6 @@ function renderLeaderboard() {
     }
 
     const code = driver.code ? `<span style="font-size: 0.75rem; color: var(--color-muted);">${driver.code}</span>` : "";
-    const teamColor = getTeamColor(driver.team);
     
     return `
       <tr onclick="showDriverDetail('${driver.name.replace(/'/g, "\\'")}')">
@@ -66,12 +68,6 @@ function renderLeaderboard() {
               ${code}
             </div>
             ${tags.join(" ")}
-          </div>
-        </td>
-        <td data-label="Team">
-          <div class="team-badge">
-            <span class="team-badge__color" style="--team-color: ${teamColor};"></span>
-            <span class="team-badge__name">${driver.team || "-"}</span>
           </div>
         </td>
         <td data-label="Points">${driver.points}</td>
@@ -106,17 +102,13 @@ function renderTopThree() {
   const markup = topThree.map((driver, index) => {
     const positionClass = ['first', 'second', 'third'][index];
     const medal = ['🥇', '🥈', '🥉'][index];
-    const teamColor = getTeamColor(driver.team);
     
     return `
       <div class="spotlight-card spotlight-card--${positionClass}">
         <div style="font-size: 3rem; margin-bottom: 1rem;">${medal}</div>
-        <h3 style="font-family: 'Orbitron', sans-serif; font-size: 1.5rem; margin: 0 0 0.5rem;">
+        <h3 style="font-family: 'Orbitron', sans-serif; font-size: 1.5rem; margin: 0 0 1rem;">
           ${driver.name}
         </h3>
-        <p style="margin: 0 0 1rem; color: rgba(255, 255, 255, 0.6);">
-          ${driver.team}
-        </p>
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
           <div>
             <div style="font-size: 2rem; font-family: 'Orbitron', sans-serif; color: var(--color-primary);">
@@ -162,15 +154,9 @@ function showDriverDetail(driverName) {
     return null;
   }).filter(Boolean);
   
-  const teamColor = getTeamColor(driver.team);
-  
   const content = `
     <div class="driver-detail__header">
       <h2 class="driver-detail__name">${driver.name}</h2>
-      <div class="team-badge" style="justify-content: center;">
-        <span class="team-badge__color" style="--team-color: ${teamColor};"></span>
-        <span class="team-badge__name">${driver.team}</span>
-      </div>
     </div>
     
     <div class="driver-detail__stats">
@@ -228,9 +214,10 @@ function showDriverDetail(driverName) {
   openModal('driverModal');
 }
 
-// Make function globally available for onclick
-window.showDriverDetail = showDriverDetail;
+  // Make function globally available for onclick
+  window.showDriverDetail = showDriverDetail;
 
-// Initialize on load
-document.addEventListener('DOMContentLoaded', initStandingsPage);
+  // Initialize on load
+  document.addEventListener('DOMContentLoaded', initStandingsPage);
+})();
 

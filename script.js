@@ -17,7 +17,6 @@ const elements = {
   watchName: document.getElementById("watchName"),
   watchMeta: document.getElementById("watchMeta"),
   sessionList: document.getElementById("sessionList"),
-  copyJson: document.getElementById("copyJson"),
   statusMessage: document.getElementById("statusMessage"),
 };
 
@@ -134,6 +133,68 @@ function normaliseHighlights(value) {
     .filter(Boolean);
 }
 
+function getTeamColor(teamName) {
+  const teamColors = {
+    "Ferrari": "#DC0000",
+    "Red Bull": "#3671C6",
+    "Mercedes-AMG Petronas": "#27F4D2",
+    "McLaren": "#FF8000",
+    "Aston Martin": "#229971",
+    "Alpine": "#FF87BC",
+    "Williams": "#64C4FF",
+    "Kick Sauber": "#52E252",
+    "Haas": "#B6BABD",
+    "Visa Cash App RB": "#6692FF"
+  };
+  return teamColors[teamName] || "#666666";
+}
+
+function getTrackImage(sessionName) {
+  // Prefer local assets if available; fall back to remote images otherwise
+  const trackImages = {
+    // Local assets (copied to assets/tracks)
+    "Abu Dhabi": "./assets/tracks/abu-dhabi.avif",
+    "Las Vegas": "./assets/tracks/las-vegas.png",
+    "Bahrain": "./assets/tracks/bahrain.avif",
+    "Saudi Arabia": "./assets/tracks/saudi-arabia.jpg",
+    "Azerbaijan": "./assets/tracks/azerbaijan.jpg",
+    "Miami": "./assets/tracks/miami.jpg",
+    "Austria": "./assets/tracks/austria.avif",
+    "Singapore": "./assets/tracks/singapore.jpg",
+    "Australia": "./assets/tracks/australia.jpg",
+    "United States": "./assets/tracks/united-states.jpg",
+
+    // Keep remote fallbacks for tracks without local files yet
+    "Japan": "https://f1chronicle.com/wp-content/uploads/2024/04/2024-Japanese-Grand-Prix-Track-Map.jpg",
+    "Netherlands": "https://f1chronicle.com/wp-content/uploads/2024/08/2024-Dutch-Grand-Prix-Track-Map.jpg",
+    "China": "https://f1chronicle.com/wp-content/uploads/2024/04/2024-Chinese-Grand-Prix-Track-Map.jpg",
+    "Monaco": "https://f1chronicle.com/wp-content/uploads/2024/05/2024-Monaco-Grand-Prix-Track-Map.jpg",
+    "Canada": "https://f1chronicle.com/wp-content/uploads/2024/06/2024-Canadian-Grand-Prix-Track-Map.jpg",
+    "Spain": "https://f1chronicle.com/wp-content/uploads/2024/06/2024-Spanish-Grand-Prix-Track-Map.jpg",
+    "Great Britain": "https://f1chronicle.com/wp-content/uploads/2024/07/2024-British-Grand-Prix-Track-Map.jpg",
+    "Hungary": "https://f1chronicle.com/wp-content/uploads/2024/07/2024-Hungarian-Grand-Prix-Track-Map.jpg",
+    "Belgium": "https://f1chronicle.com/wp-content/uploads/2024/07/2024-Belgian-Grand-Prix-Track-Map.jpg",
+    "Italy": "https://f1chronicle.com/wp-content/uploads/2024/08/2024-Italian-Grand-Prix-Track-Map.jpg",
+    "Mexico": "https://f1chronicle.com/wp-content/uploads/2024/10/2024-Mexico-City-Grand-Prix-Track-Map.jpg",
+    "Brazil": "https://f1chronicle.com/wp-content/uploads/2024/10/2024-Brazilian-Grand-Prix-Track-Map.jpg",
+    "Qatar": "https://f1chronicle.com/wp-content/uploads/2023/10/2023-Qatar-Grand-Prix-Track-Map.jpg"
+  };
+  return trackImages[sessionName] || "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=1200&q=80";
+}
+
+function isRealF1Driver(driverName) {
+  const realF1Drivers = [
+    "Max Verstappen", "Sergio Perez", "Lewis Hamilton", "George Russell",
+    "Charles Leclerc", "Carlos Sainz", "Lando Norris", "Oscar Piastri",
+    "Fernando Alonso", "Lance Stroll", "Esteban Ocon", "Pierre Gasly",
+    "Yuki Tsunoda", "Daniel Ricciardo", "Nico Hulkenberg", "Kevin Magnussen",
+    "Alexander Albon", "Logan Sargeant", "Valtteri Bottas", "Zhou Guanyu",
+    "Oliver Bearman", "Liam Lawson", "Isack Hadjar", "Jack Doohan",
+    "Andrea Kimi Antonelli", "Kimi Antonelli", "Gabriel Bortoleto"
+  ];
+  return realF1Drivers.includes(driverName);
+}
+
 function transformRows(rows) {
   const drivers = [];
   const sessionsMap = new Map();
@@ -146,6 +207,7 @@ function transformRows(rows) {
       const driver = {
         name: row.driverName || "",
         code: row.driverCode || "",
+        team: row.team || "",
         points: toNumber(row.points),
         wins: toNumber(row.wins),
         podiums: toNumber(row.podiums),
@@ -368,9 +430,38 @@ function renderSessions() {
     return;
   }
 
+  // Custom race order for the Slayter League
+  const raceOrder = [
+    "Abu Dhabi",
+    "Las Vegas", 
+    "Bahrain",
+    "Saudi Arabia",
+    "Azerbaijan",
+    "Miami",
+    "Japan",
+    "Austria",
+    "Singapore",
+    "Netherlands",
+    "Australia",
+    "United States"
+  ];
+
   const ordered = state.sessions
     .slice()
     .sort((a, b) => {
+      const aIndex = raceOrder.indexOf(a.name);
+      const bIndex = raceOrder.indexOf(b.name);
+      
+      // If both are in the race order, sort by custom order (reverse for most recent first)
+      if (aIndex !== -1 && bIndex !== -1) {
+        return bIndex - aIndex;
+      }
+      
+      // If only one is in the race order, prioritize it
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+      
+      // Fall back to date sorting for any races not in the custom order
       if (a.date && b.date) {
         const aTime = new Date(`${a.date}T00:00:00`).getTime();
         const bTime = new Date(`${b.date}T00:00:00`).getTime();
@@ -385,87 +476,116 @@ function renderSessions() {
 
   const markup = ordered
     .map((session) => {
+      // Filter out real F1 drivers but keep original positions
+      const filteredResults = session.results.filter(result => !isRealF1Driver(result.driver));
+      
+      // Get winner info (first non-AI driver)
+      const winner = filteredResults.length > 0 ? filteredResults[0] : null;
+      const winnerName = winner ? winner.driver : "TBD";
+      
+      // Get track image
+      const trackImage = getTrackImage(session.name);
+      
       const highlights = session.highlights.length
-        ? `<div class="session__tags">${session.highlights
-            .map((highlight) => `<span class="badge">${highlight}</span>`)
+        ? `<div class="session__highlights">${session.highlights
+            .map((highlight) => `<span class="session__highlight-badge">${highlight}</span>`)
             .join("")}</div>`
         : "";
 
-      const results = session.results.length
-        ? session.results
+      // Render top 3 podium positions with special styling (excluding AI drivers)
+      const podiumResults = filteredResults.slice(0, 3);
+      const otherResults = filteredResults.slice(3, 10); // Show top 10
+      
+      const podiumMarkup = podiumResults.length
+        ? podiumResults
             .map((result) => {
               const position = result.position !== null ? result.position : "—";
-              const points = Number.isFinite(result.points) ? `${result.points} pts` : "";
-              const fastest = result.fastestLap
-                ? '<span class="badge badge--fastest">Fastest Lap</span>'
-                : "";
-              const details = [points, fastest].filter(Boolean).join(" ");
-              const detailsMarkup = details || "&nbsp;";
+              const points = Number.isFinite(result.points) ? result.points : 0;
+              const fastest = result.fastestLap ? "⚡" : "";
+              
+              let positionClass = "";
+              let positionLabel = "";
+              if (position === 1) {
+                positionClass = "session__podium-item--gold";
+                positionLabel = "🥇";
+              } else if (position === 2) {
+                positionClass = "session__podium-item--silver";
+                positionLabel = "🥈";
+              } else if (position === 3) {
+                positionClass = "session__podium-item--bronze";
+                positionLabel = "🥉";
+              }
 
               return `
-                <div class="session__result">
-                  <span><strong>${position}</strong> • ${result.driver}</span>
-                  <span>${detailsMarkup}</span>
+                <div class="session__podium-item ${positionClass}">
+                  <div class="session__podium-position">
+                    <span class="session__podium-medal">${positionLabel}</span>
+                    <span class="session__podium-p">P${position}</span>
+                  </div>
+                  <div class="session__podium-driver">
+                    <span class="session__podium-name">${result.driver}</span>
+                    <span class="session__podium-points">${points} pts ${fastest}</span>
+                  </div>
                 </div>
               `;
             })
             .join("")
-        : '<p class="session__empty">No results recorded yet for this session.</p>';
+        : "";
+
+      const otherResultsMarkup = otherResults.length
+        ? `<div class="session__other-results">
+            <div class="session__other-header">Remaining Top 10</div>
+            ${otherResults
+              .map((result) => {
+                const position = result.position !== null ? result.position : "—";
+                const points = Number.isFinite(result.points) ? result.points : 0;
+                const fastest = result.fastestLap ? "⚡" : "";
+                
+                return `
+                  <div class="session__other-item">
+                    <span class="session__other-position">P${position}</span>
+                    <span class="session__other-driver">${result.driver}</span>
+                    <span class="session__other-points">${points} pts ${fastest}</span>
+                  </div>
+                `;
+              })
+              .join("")}
+          </div>`
+        : "";
+
+      const results = filteredResults.length
+        ? `<div class="session__podium">${podiumMarkup}</div>${otherResultsMarkup}`
+        : '<p class="session__empty">No league member results recorded for this session.</p>';
 
       return `
         <article class="session">
-          <div class="session__header">
-            <h4 class="session__title">${session.name || "Unnamed Session"}</h4>
-            <p class="session__meta">${formatDate(session.date)}</p>
+          <div class="session__track-image">
+            <img src="${trackImage}" alt="${session.name || 'Circuit'} Track Map" />
+            <div class="session__track-overlay">
+              <span class="session__track-label">Track Map</span>
+            </div>
+          </div>
+          <div class="session__banner">
+            <div class="session__banner-content">
+              <div class="session__banner-left">
+                <span class="session__banner-label">Grand Prix</span>
+                <h4 class="session__banner-title">${session.name || "Unnamed Session"}</h4>
+                <p class="session__banner-date">📅 ${formatDate(session.date)}</p>
+              </div>
+              <div class="session__banner-right">
+                <span class="session__banner-winner-label">Race Winner</span>
+                <span class="session__banner-winner-name">🏆 ${winnerName}</span>
+              </div>
+            </div>
           </div>
           ${highlights}
-          <div class="session__results">${results}</div>
+          <div class="session__results-container">${results}</div>
         </article>
       `;
     })
     .join("");
 
   elements.sessionList.innerHTML = markup;
-}
-
-function buildSnapshot() {
-  return {
-    generatedAt: new Date().toISOString(),
-    source: DATA_SOURCE,
-    standings: state.drivers.map((driver) => ({
-      name: driver.name,
-      code: driver.code,
-      points: Number.isFinite(driver.points) ? driver.points : 0,
-      wins: Number.isFinite(driver.wins) ? driver.wins : 0,
-      podiums: Number.isFinite(driver.podiums) ? driver.podiums : 0,
-      fastestLaps: Number.isFinite(driver.fastestLaps) ? driver.fastestLaps : 0,
-      previousRank: Number.isFinite(driver.previousRank) ? driver.previousRank : null,
-      consistencyIndex: driver.consistencyIndex ?? null,
-    })),
-    sessions: state.sessions.map((session) => ({
-      name: session.name,
-      date: session.date,
-      highlights: session.highlights,
-      results: session.results.map((result) => ({
-        driver: result.driver,
-        position: result.position,
-        points: result.points,
-        fastestLap: result.fastestLap,
-      })),
-    })),
-  };
-}
-
-function handleCopyJson() {
-  const payload = JSON.stringify(buildSnapshot(), null, 2);
-  navigator.clipboard
-    .writeText(payload)
-    .then(() => {
-      showStatus("JSON snapshot copied to clipboard.", "success");
-    })
-    .catch(() => {
-      showStatus("Unable to copy JSON.", "error");
-    });
 }
 
 async function loadData() {
@@ -515,10 +635,6 @@ function init() {
     });
   }
 
-  if (elements.copyJson) {
-    elements.copyJson.addEventListener("click", handleCopyJson);
-  }
-
   renderLeaderboard(currentSortKey);
   updateInsights();
   renderSessions();
@@ -526,3 +642,68 @@ function init() {
 }
 
 init();
+
+// Scroll Progress Indicator
+function updateScrollProgress() {
+  const scrollProgress = document.querySelector('.scroll-progress');
+  if (!scrollProgress) return;
+  
+  const windowHeight = window.innerHeight;
+  const documentHeight = document.documentElement.scrollHeight - windowHeight;
+  const scrolled = window.scrollY;
+  const progress = (scrolled / documentHeight) * 100;
+  
+  scrollProgress.style.width = `${progress}%`;
+}
+
+// Dynamic Navigation Menu Position
+function updateNavPosition() {
+  const navMenu = document.querySelector('.nav-menu');
+  if (!navMenu) return;
+  
+  const scrolled = window.scrollY;
+  const windowHeight = window.innerHeight;
+  const documentHeight = document.documentElement.scrollHeight;
+  const distanceFromBottom = documentHeight - (scrolled + windowHeight);
+  
+  // Thresholds for position changes (lower thresholds for faster transition)
+  const topThreshold = 150; // Show top menu when within 150px of top
+  const bottomThreshold = 400; // Show bottom menu when within 400px of bottom
+  
+  // On smaller screens (tablets and mobile), don't use side menu
+  const usesSideMenu = window.innerWidth > 1200;
+  
+  // Remove all position classes first
+  navMenu.classList.remove('nav-menu--top', 'nav-menu--side', 'nav-menu--bottom');
+  
+  if (scrolled < topThreshold) {
+    // At the top of the page
+    navMenu.classList.add('nav-menu--top');
+    console.log('Menu: Top');
+  } else if (distanceFromBottom < bottomThreshold) {
+    // Near the bottom of the page
+    navMenu.classList.add('nav-menu--bottom');
+    console.log('Menu: Bottom');
+  } else {
+    // In the middle - show on side (desktop only)
+    if (usesSideMenu) {
+      navMenu.classList.add('nav-menu--side');
+      console.log('Menu: Side (Right)');
+    } else {
+      navMenu.classList.add('nav-menu--top');
+      console.log('Menu: Top (Mobile/Tablet)');
+    }
+  }
+}
+
+// Combined scroll handler
+function handleScroll() {
+  updateScrollProgress();
+  updateNavPosition();
+}
+
+// Initialize on load
+updateNavPosition();
+
+window.addEventListener('scroll', handleScroll, { passive: true });
+window.addEventListener('resize', handleScroll, { passive: true });

@@ -13,6 +13,23 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div class="scroll-progress"></div>
+    
+    <!-- Dynamic Navigation Menu -->
+    <nav class="nav-menu nav-menu--top">
+      <div class="nav-menu__container">
+        <div class="nav-menu__brand">
+          <span class="nav-menu__logo">🏎️</span>
+          <span class="nav-menu__title">Slayter League</span>
+        </div>
+        <ul class="nav-menu__links">
+          <li><a href="#dashboard" class="nav-menu__link">Standings</a></li>
+          <li><a href="#sessions" class="nav-menu__link">Sessions</a></li>
+          <li><a href="#calendar" class="nav-menu__link">Calendar</a></li>
+        </ul>
+      </div>
+    </nav>
+    
     <header class="hero">
       <div class="hero__overlay"></div>
       <div class="hero__content">
@@ -27,85 +44,187 @@
     </header>
 
     <main id="dashboard" class="dashboard">
-      <section class="panel panel--leaderboard">
-        <header class="panel__header">
-          <h2>Current Standings</h2>
-          <div class="panel__controls">
-            <label class="select">
-              <span>Sort by</span>
-              <select id="sortSelect">
-                <option value="points">Points</option>
-                <option value="wins">Wins</option>
-                <option value="podiums">Podiums</option>
-                <option value="fastestLaps">Fastest Laps</option>
-              </select>
-            </label>
+      <!-- Left Column -->
+      <div class="dashboard__left">
+        <section class="panel panel--leaderboard">
+          <header class="panel__header">
+            <h2>Current Standings</h2>
+            <div class="panel__controls">
+              <label class="select">
+                <span>Sort by</span>
+                <select id="sortSelect">
+                  <option value="points">Points</option>
+                  <option value="wins">Wins</option>
+                  <option value="podiums">Podiums</option>
+                  <option value="fastestLaps">Fastest Laps</option>
+                </select>
+              </label>
+            </div>
+          </header>
+
+          <div class="leaderboard__scroll" role="region" aria-live="polite">
+            <table class="leaderboard">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Driver</th>
+                  <th scope="col">PTS</th>
+                  <th scope="col">Wins</th>
+                  <th scope="col">Podiums</th>
+                  <th scope="col">Fastest Laps</th>
+                </tr>
+              </thead>
+              <tbody id="leaderboardBody"></tbody>
+            </table>
           </div>
-        </header>
+        </section>
 
-        <div class="leaderboard__scroll" role="region" aria-live="polite">
-          <table class="leaderboard">
-            <thead>
-              <tr>
-                <th scope="col">#</th>
-                <th scope="col">Driver</th>
-                <th scope="col">PTS</th>
-                <th scope="col">Wins</th>
-                <th scope="col">Podiums</th>
-                <th scope="col">Fastest Laps</th>
-              </tr>
-            </thead>
-            <tbody id="leaderboardBody"></tbody>
-          </table>
-        </div>
-      </section>
+        <section id="sessions" class="panel panel--sessions">
+          <header class="panel__header">
+            <h2>Recent Sessions</h2>
+          </header>
 
-      <section class="panel panel--insights">
-        <header class="panel__header">
-          <h2>Session Insights</h2>
-        </header>
-        <div class="insights">
-          <article class="card">
-            <h3 class="card__label">Championship Leader</h3>
-            <p id="leaderName" class="card__value">-</p>
-            <p id="leaderPoints" class="card__meta">0 pts</p>
-          </article>
-          <article class="card">
-            <h3 class="card__label">Most Wins</h3>
-            <p id="winsLeader" class="card__value">-</p>
-            <p id="winsCount" class="card__meta">0 wins</p>
-          </article>
-          <article class="card">
-            <h3 class="card__label">Driver to Watch</h3>
-            <p id="watchName" class="card__value">-</p>
-            <p id="watchMeta" class="card__meta">-</p>
-          </article>
-        </div>
-      </section>
-
-      <section class="panel panel--sessions">
-        <header class="panel__header">
-          <h2>Session Database</h2>
-          <div class="panel__controls">
-            <button id="copyJson" type="button" class="btn btn--ghost">
-              Copy JSON Snapshot
-            </button>
-          </div>
-        </header>
-
-        <div class="sessions">
-          <div class="sessions__list">
-            <h3>Recent Sessions</h3>
+          <div class="sessions__intro">
             <p class="sessions__hint">
-              Manage driver standings and session history inside
-              <code>data/league-data.csv</code>. Refresh the page to reflect
-              your updates.
+              Complete race results and highlights from your league sessions
             </p>
-            <div id="sessionList" class="session-list"></div>
-            <p id="statusMessage" class="sessions__status" role="status"></p>
           </div>
-        </div>
-      </section>
+          
+          <div id="sessionList" class="session-list"></div>
+          <p id="statusMessage" class="sessions__status" role="status"></p>
+        </section>
+      </div>
+
+      <!-- Right Column -->
+      <div class="dashboard__right">
+        <section class="panel panel--insights">
+          <header class="panel__header">
+            <h2>Championship Insights</h2>
+          </header>
+          <div class="insights">
+            <article class="card">
+              <h3 class="card__label">Championship Leader</h3>
+              <p id="leaderName" class="card__value">-</p>
+              <p id="leaderPoints" class="card__meta">0 pts</p>
+            </article>
+            <article class="card">
+              <h3 class="card__label">Most Wins</h3>
+              <p id="winsLeader" class="card__value">-</p>
+              <p id="winsCount" class="card__meta">0 wins</p>
+            </article>
+            <article class="card">
+              <h3 class="card__label">Driver to Watch</h3>
+              <p id="watchName" class="card__value">-</p>
+              <p id="watchMeta" class="card__meta">-</p>
+            </article>
+          </div>
+        </section>
+
+        <!-- Season Calendar -->
+        <section id="calendar" class="panel panel--calendar">
+          <header class="panel__header">
+            <h2>Season Calendar</h2>
+          </header>
+          <div class="calendar">
+            <div class="calendar__item calendar__item--completed">
+              <span class="calendar__date">Race 1</span>
+              <div class="calendar__details">
+                <span class="calendar__track">Abu Dhabi GP</span>
+                <span class="calendar__time">Oct 7 • 8:00 PM ET</span>
+              </div>
+              <span class="calendar__status">✓</span>
+            </div>
+            <div class="calendar__item calendar__item--completed">
+              <span class="calendar__date">Race 2</span>
+              <div class="calendar__details">
+                <span class="calendar__track">Las Vegas GP</span>
+                <span class="calendar__time">Oct 14 • 8:00 PM ET</span>
+              </div>
+              <span class="calendar__status">✓</span>
+            </div>
+            <div class="calendar__item calendar__item--completed">
+              <span class="calendar__date">Race 3</span>
+              <div class="calendar__details">
+                <span class="calendar__track">Bahrain GP</span>
+                <span class="calendar__time">Oct 21 • 8:00 PM ET</span>
+              </div>
+              <span class="calendar__status">✓</span>
+            </div>
+            <div class="calendar__item calendar__item--completed">
+              <span class="calendar__date">Race 4</span>
+              <div class="calendar__details">
+                <span class="calendar__track">Saudi Arabia GP</span>
+                <span class="calendar__time">Oct 28 • 8:00 PM ET • Jeddah</span>
+              </div>
+              <span class="calendar__status">✓</span>
+            </div>
+            <div class="calendar__item calendar__item--upcoming">
+              <span class="calendar__date">Race 5</span>
+              <div class="calendar__details">
+                <span class="calendar__track">Azerbaijan GP</span>
+                <span class="calendar__time">Nov 4 • 8:00 PM ET • Baku</span>
+              </div>
+              <span class="calendar__status">📅</span>
+            </div>
+            <div class="calendar__item calendar__item--future">
+              <span class="calendar__date">Race 6</span>
+              <div class="calendar__details">
+                <span class="calendar__track">Miami GP</span>
+                <span class="calendar__time">Nov 11 • 8:00 PM ET</span>
+              </div>
+              <span class="calendar__status">⏱️</span>
+            </div>
+            <div class="calendar__item calendar__item--future">
+              <span class="calendar__date">Race 7</span>
+              <div class="calendar__details">
+                <span class="calendar__track">Japan GP</span>
+                <span class="calendar__time">Nov 18 • 8:00 PM ET • Suzuka</span>
+              </div>
+              <span class="calendar__status">⏱️</span>
+            </div>
+            <div class="calendar__item calendar__item--future">
+              <span class="calendar__date">Race 8</span>
+              <div class="calendar__details">
+                <span class="calendar__track">Austria GP</span>
+                <span class="calendar__time">Nov 25 • 8:00 PM ET • Red Bull Ring</span>
+              </div>
+              <span class="calendar__status">⏱️</span>
+            </div>
+            <div class="calendar__item calendar__item--future">
+              <span class="calendar__date">Race 9</span>
+              <div class="calendar__details">
+                <span class="calendar__track">Singapore GP</span>
+                <span class="calendar__time">Dec 9 • 8:00 PM ET</span>
+              </div>
+              <span class="calendar__status">⏱️</span>
+            </div>
+            <div class="calendar__item calendar__item--future">
+              <span class="calendar__date">Race 10</span>
+              <div class="calendar__details">
+                <span class="calendar__track">Netherlands GP</span>
+                <span class="calendar__time">Dec 16 • 8:00 PM ET • Zandvoort</span>
+              </div>
+              <span class="calendar__status">⏱️</span>
+            </div>
+            <div class="calendar__item calendar__item--future">
+              <span class="calendar__date">Race 11</span>
+              <div class="calendar__details">
+                <span class="calendar__track">Australia GP</span>
+                <span class="calendar__time">Dec 23 • 8:00 PM ET • Melbourne</span>
+              </div>
+              <span class="calendar__status">⏱️</span>
+            </div>
+            <div class="calendar__item calendar__item--future">
+              <span class="calendar__date">Race 12</span>
+              <div class="calendar__details">
+                <span class="calendar__track">United States GP</span>
+                <span class="calendar__time">Dec 30 • 8:00 PM ET • Austin</span>
+              </div>
+              <span class="calendar__status">🏁</span>
+            </div>
+          </div>
+        </section>
+      </div>
     </main>
 
     <footer class="footer">

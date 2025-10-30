@@ -26,7 +26,7 @@ function showStatus(message, tone = "info") {
 
   const palette = {
     info: "rgba(255, 255, 255, 0.65)",
-    success: "var(--color-secondary)",
+    success: "var(--color-success)",
     error: "#fca5a5",
   };
 
@@ -146,7 +146,6 @@ function transformRows(rows) {
       const driver = {
         name: row.driverName || "",
         code: row.driverCode || "",
-        team: row.team || "",
         points: toNumber(row.points),
         wins: toNumber(row.wins),
         podiums: toNumber(row.podiums),
@@ -171,7 +170,6 @@ function transformRows(rows) {
       const session = sessionsMap.get(key) || createSessionSkeleton(row);
       session.results.push({
         driver: row.driverName || "",
-        team: row.team || "",
         position: toInteger(row.position),
         points: toNumber(row.points),
         fastestLap: toBoolean(row.fastestLap),
@@ -221,7 +219,7 @@ function renderLeaderboard(sortKey = "points") {
 
   if (!drivers.length) {
     elements.leaderboardBody.innerHTML =
-      '<tr><td class="leaderboard__empty" colspan="7">Add driver rows to <code>data/league-data.csv</code> to see standings.</td></tr>';
+      '<tr><td class="leaderboard__empty" colspan="6">Add driver rows to <code>data/league-data.csv</code> to see standings.</td></tr>';
     return;
   }
 
@@ -247,7 +245,6 @@ function renderLeaderboard(sortKey = "points") {
       }
 
       const code = driver.code ? `<span>${driver.code}</span>` : "";
-      const team = driver.team || "-";
       const points = Number.isFinite(driver.points) ? driver.points : 0;
       const wins = Number.isFinite(driver.wins) ? driver.wins : 0;
       const podiums = Number.isFinite(driver.podiums) ? driver.podiums : 0;
@@ -265,7 +262,6 @@ function renderLeaderboard(sortKey = "points") {
               ${tags.join(" ")}
             </div>
           </td>
-          <td data-label="Team">${team}</td>
           <td data-label="Points">${points}</td>
           <td data-label="Wins">${wins}</td>
           <td data-label="Podiums">${podiums}</td>
@@ -400,16 +396,16 @@ function renderSessions() {
             .map((result) => {
               const position = result.position !== null ? result.position : "—";
               const points = Number.isFinite(result.points) ? `${result.points} pts` : "";
-              const team = result.team ? ` (${result.team})` : "";
               const fastest = result.fastestLap
                 ? '<span class="badge badge--fastest">Fastest Lap</span>'
                 : "";
               const details = [points, fastest].filter(Boolean).join(" ");
+              const detailsMarkup = details || "&nbsp;";
 
               return `
                 <div class="session__result">
-                  <span><strong>${position}</strong> • ${result.driver}${team}</span>
-                  <span>${details}</span>
+                  <span><strong>${position}</strong> • ${result.driver}</span>
+                  <span>${detailsMarkup}</span>
                 </div>
               `;
             })
@@ -439,7 +435,6 @@ function buildSnapshot() {
     standings: state.drivers.map((driver) => ({
       name: driver.name,
       code: driver.code,
-      team: driver.team,
       points: Number.isFinite(driver.points) ? driver.points : 0,
       wins: Number.isFinite(driver.wins) ? driver.wins : 0,
       podiums: Number.isFinite(driver.podiums) ? driver.podiums : 0,
@@ -453,7 +448,6 @@ function buildSnapshot() {
       highlights: session.highlights,
       results: session.results.map((result) => ({
         driver: result.driver,
-        team: result.team,
         position: result.position,
         points: result.points,
         fastestLap: result.fastestLap,

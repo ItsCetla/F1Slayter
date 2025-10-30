@@ -18,6 +18,15 @@
   box-sizing: border-box;
 }
 
+/* Responsive media defaults */
+img,
+svg,
+video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -32,11 +41,34 @@ body {
   min-height: 100%;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
   overflow-x: hidden;
 }
 
 a {
   color: inherit;
+}
+
+/* Mobile-first base improvements */
+@media (max-width: 768px) {
+  body {
+    font-size: 16px; /* Prevent iOS zoom on input focus */
+    line-height: 1.65;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /* Ensure all text is readable */
+  p, span, div, li {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Improve touch interactions */
+  a, button, select, input {
+    -webkit-tap-highlight-color: rgba(225, 6, 0, 0.15);
+    touch-action: manipulation;
+  }
 }
 
 /* Dynamic Navigation Menu */
@@ -53,7 +85,7 @@ a {
 
 /* Top Position (default) */
 .nav-menu--top {
-  top: 1rem;
+  top: calc(env(safe-area-inset-top) + 1rem);
   left: 50%;
   transform: translateX(-50%);
   width: min(95%, 1200px);
@@ -122,7 +154,7 @@ a {
 
 /* Bottom Position (near footer) */
 .nav-menu--bottom {
-  bottom: 1rem;
+  bottom: calc(env(safe-area-inset-bottom) + 1rem);
   top: auto;
   left: 50%;
   transform: translateX(-50%);
@@ -137,6 +169,17 @@ a {
   justify-content: space-between;
   gap: 2rem;
   padding: 0.75rem 1.5rem;
+  padding-left: calc(1.5rem + env(safe-area-inset-left));
+  padding-right: calc(1.5rem + env(safe-area-inset-right));
+}
+
+/* Consistent heading typography */
+h1,
+h2,
+h3,
+h4 {
+  font-family: "Orbitron", sans-serif;
+  letter-spacing: 0.06rem;
 }
 
 .nav-menu__brand {
@@ -169,7 +212,9 @@ a {
 }
 
 .nav-menu__link {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 0.5rem 1rem;
   color: rgba(255, 255, 255, 0.8);
   text-decoration: none;
@@ -178,6 +223,8 @@ a {
   border-radius: 999px;
   transition: all 200ms ease;
   position: relative;
+  min-height: 44px; /* Touch target */
+  min-width: 44px; /* Touch target */
 }
 
 .nav-menu__link::before {
@@ -317,6 +364,12 @@ a {
   box-shadow: 0 18px 36px rgba(225, 6, 0, 0.35);
   position: relative;
   overflow: hidden;
+  min-height: 48px; /* Touch target */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: rgba(255, 255, 255, 0.2);
 }
 
 .hero__cta::before {
@@ -486,16 +539,20 @@ a {
 
 .select select {
   appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
   background: rgba(255, 255, 255, 0.05);
   color: var(--color-light);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-sm);
-  padding: 0.5rem 2.5rem 0.5rem 0.75rem;
+  padding: 0.75rem 2.5rem 0.75rem 0.75rem;
   font-size: 0.95rem;
   min-width: 0;
+  min-height: 48px; /* Touch target */
   width: min(200px, 100%);
   cursor: pointer;
   transition: all 200ms ease;
+  font-family: inherit;
 }
 
 .select select:hover {
@@ -655,6 +712,9 @@ a {
   border-radius: var(--radius-sm);
   border-left: 3px solid rgba(255, 255, 255, 0.2);
   transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 64px; /* Better touch target on mobile */
+  cursor: pointer;
+  -webkit-tap-highlight-color: rgba(225, 6, 0, 0.1);
 }
 
 .calendar__item:hover {
@@ -722,6 +782,7 @@ a {
   transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1),
               box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1),
               border-left-color 300ms ease;
+  min-height: 120px; /* Better mobile presence */
 }
 
 .card:hover {
@@ -963,6 +1024,7 @@ a {
   border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 72px; /* Better touch target */
 }
 
 .session__podium-item:hover {
@@ -1139,9 +1201,13 @@ a {
 
 .footer {
   padding: 2rem 1.5rem 3rem;
+  padding-bottom: calc(3rem + env(safe-area-inset-bottom));
+  padding-left: calc(1.5rem + env(safe-area-inset-left));
+  padding-right: calc(1.5rem + env(safe-area-inset-right));
   text-align: center;
   color: rgba(255, 255, 255, 0.5);
   font-size: 0.85rem;
+  line-height: 1.6;
   margin-top: 4rem;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   background: linear-gradient(to top, rgba(5, 5, 5, 0.8), transparent);
@@ -1239,6 +1305,7 @@ a {
     height: auto;
     min-height: 420px;
     padding: clamp(3.5rem, 12vw, 5rem) 1.5rem;
+    padding-top: calc(clamp(3.5rem, 12vw, 5rem) + env(safe-area-inset-top));
   }
 
   .hero__content {
@@ -1250,12 +1317,15 @@ a {
 
   .hero__eyebrow {
     letter-spacing: 0.3rem;
+    font-size: clamp(0.7rem, 2vw, 0.75rem);
   }
 
   .dashboard {
     margin: -2.5rem auto 0;
-    padding: 0 1.25rem clamp(2.5rem, 8vw, 4rem);
-    gap: 1.5rem;
+    padding: 0 clamp(1.25rem, 4vw, 1.5rem) clamp(2.5rem, 8vw, 4rem);
+    padding-left: calc(clamp(1.25rem, 4vw, 1.5rem) + env(safe-area-inset-left));
+    padding-right: calc(clamp(1.25rem, 4vw, 1.5rem) + env(safe-area-inset-right));
+    gap: 1.75rem;
     grid-template-columns: 1fr;
   }
   
@@ -1269,35 +1339,59 @@ a {
   }
   
   .nav-menu__links {
-    gap: 0.25rem;
+    gap: 0.5rem;
   }
   
   .nav-menu__link {
     font-size: 0.85rem;
-    padding: 0.4rem 0.85rem;
+    padding: 0.6rem 1rem;
+    min-height: 44px;
+    min-width: 44px;
   }
   
   .nav-menu--top,
   .nav-menu--bottom {
     width: min(95%, 600px);
+    left: 50%;
+    transform: translateX(-50%);
+    margin-left: calc(env(safe-area-inset-left));
+    margin-right: calc(env(safe-area-inset-right));
   }
   
   .nav-menu__container {
-    padding: 0.65rem 1rem;
+    padding: 0.75rem 1.25rem;
+    padding-left: calc(1.25rem + env(safe-area-inset-left));
+    padding-right: calc(1.25rem + env(safe-area-inset-right));
+    gap: 1rem;
   }
 
   .panel {
     padding: 1.5rem;
+    padding-left: calc(1.5rem + env(safe-area-inset-left));
+    padding-right: calc(1.5rem + env(safe-area-inset-right));
   }
 
   .panel__header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .panel__header h2 {
+    font-size: clamp(1.35rem, 4vw, 1.7rem);
+    line-height: 1.3;
+  }
+
+  .select {
+    width: 100%;
   }
 
   .select select {
     min-width: 0;
     width: 100%;
+    min-height: 48px;
+    font-size: 1rem; /* Prevent iOS zoom */
+    padding: 0.75rem 2.75rem 0.75rem 1rem;
   }
 
   .leaderboard__scroll {
@@ -1305,8 +1399,77 @@ a {
     padding: 0 0.5rem;
   }
 
+  .leaderboard {
+    font-size: 0.9rem;
+  }
+
+  .leaderboard th,
+  .leaderboard td {
+    padding: 0.85rem 0.75rem;
+  }
+
   .insights {
     grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .calendar__item {
+    padding: 1.25rem 1.25rem;
+    min-height: 76px;
+    gap: 1.25rem;
+  }
+
+  .calendar__date {
+    font-size: 0.9rem;
+    min-width: 65px;
+  }
+
+  .calendar__track {
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .calendar__time {
+    font-size: 0.85rem;
+  }
+
+  .card {
+    padding: 1.5rem;
+    min-height: 130px;
+  }
+
+  .card__label {
+    font-size: 0.8rem;
+  }
+
+  .card__value {
+    font-size: clamp(1.75rem, 5vw, 2.25rem);
+  }
+
+  .card__meta {
+    font-size: 0.9rem;
+  }
+
+  .session__track-image {
+    height: 220px;
+  }
+
+  .session__banner {
+    padding: 1.5rem;
+  }
+
+  .session__banner-title {
+    font-size: 1.3rem;
+  }
+
+  .session__podium-item {
+    padding: 1.25rem;
+    min-height: 80px;
+  }
+
+  .session__other-item {
+    padding: 0.85rem;
+    min-height: 48px;
   }
 }
 
@@ -1343,23 +1506,29 @@ a {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.25rem 0;
+    padding: 0.5rem 0;
     border: none;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
+    min-height: 44px; /* Touch target */
   }
 
   .leaderboard tbody td:first-child {
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: 600;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 0.25rem;
   }
 
   .leaderboard tbody td::before {
     content: attr(data-label);
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.65);
     margin-right: 0.75rem;
+    font-weight: 500;
+    min-width: 100px;
   }
 
   .leaderboard__driver {
@@ -1460,6 +1629,9 @@ a {
   .nav-menu__link {
     font-size: 0.75rem;
     padding: 0.4rem 0.65rem;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
   }
   
   .nav-menu--top,
@@ -1483,21 +1655,33 @@ a {
 
   .hero__cta {
     width: 100%;
-    padding: 0.75rem 1rem;
+    padding: 1rem 1.5rem;
+    min-height: 52px;
+    font-size: 0.9rem;
   }
 
   .dashboard {
     margin: -3.5rem auto 0;
-    padding: 0 0.85rem 2.75rem;
-    gap: 1.5rem;
+    padding: 0 clamp(1rem, 3vw, 1.25rem) 2.75rem;
+    padding-left: calc(clamp(1rem, 3vw, 1.25rem) + env(safe-area-inset-left));
+    padding-right: calc(clamp(1rem, 3vw, 1.25rem) + env(safe-area-inset-right));
+    gap: 1.75rem;
   }
 
   .panel {
-    padding: 1.1rem;
+    padding: 1.5rem;
+    padding-left: calc(1.5rem + env(safe-area-inset-left));
+    padding-right: calc(1.5rem + env(safe-area-inset-right));
   }
 
   .panel__header {
     align-items: stretch;
+    gap: 1.25rem;
+  }
+
+  .panel__header h2 {
+    font-size: 1.4rem;
+    line-height: 1.3;
   }
 
   .panel__controls {
@@ -1509,27 +1693,32 @@ a {
     font-size: 0.8rem;
   }
 
-  .panel__controls .select select {
+  .panel__controls   .select select {
     width: 100%;
-    font-size: 0.85rem;
-    padding: 0.45rem 2.25rem 0.45rem 0.65rem;
+    font-size: 1rem; /* Prevent iOS zoom */
+    padding: 0.75rem 2.5rem 0.75rem 1rem;
+    min-height: 48px;
   }
 
   .card {
-    padding: 1.2rem;
-    gap: 0.6rem;
+    padding: 1.5rem;
+    gap: 0.75rem;
+    min-height: 140px;
   }
 
   .card__label {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
+    line-height: 1.4;
   }
 
   .card__value {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
+    line-height: 1.2;
   }
 
   .card__meta {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
   }
 
   .sessions__hint {
@@ -1586,8 +1775,9 @@ a {
   }
   
   .session__other-item {
-    padding: 0.65rem;
-    gap: 0.75rem;
+    padding: 0.85rem;
+    gap: 1rem;
+    min-height: 52px;
   }
   
   .session__other-position {

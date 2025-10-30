@@ -560,7 +560,7 @@ function renderSessions() {
       return `
         <article class="session">
           <div class="session__track-image">
-            <img src="${trackImage}" alt="${session.name || 'Circuit'} Track Map" />
+            <img src="${trackImage}" alt="${session.name || 'Circuit'} Track Map" loading="lazy" decoding="async" />
             <div class="session__track-overlay">
               <span class="session__track-label">Track Map</span>
             </div>

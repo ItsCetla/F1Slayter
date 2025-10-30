@@ -51,30 +51,36 @@ function renderLeaderboard() {
 
   if (!leaderboardBody) return;
 
-  const visibleDrivers = hideAiDrivers
-    ? drivers.filter((driver) => !isRealF1Driver(driver.name))
-    : drivers.slice();
+  const sortedAllDrivers = drivers
+    .slice()
+    .sort((a, b) => {
+      const valueA = typeof a[currentSortKey] === "number" ? a[currentSortKey] : 0;
+      const valueB = typeof b[currentSortKey] === "number" ? b[currentSortKey] : 0;
 
-  if (!visibleDrivers.length) {
+      if (valueB === valueA) {
+        return (typeof b.points === "number" ? b.points : 0) - (typeof a.points === "number" ? a.points : 0);
+      }
+
+      return valueB - valueA;
+    })
+    .map((driver, index) => ({
+      driver,
+      position: index + 1,
+    }));
+
+  const visibleEntries = hideAiDrivers
+    ? sortedAllDrivers.filter(({ driver }) => !isRealF1Driver(driver.name))
+    : sortedAllDrivers;
+
+  if (!visibleEntries.length) {
     leaderboardBody.innerHTML = '<tr><td class="leaderboard__empty" colspan="7">No driver data available for the current filters.</td></tr>';
     renderTopThree();
     return;
   }
 
-  const sorted = visibleDrivers.sort((a, b) => {
-    const valueA = typeof a[currentSortKey] === "number" ? a[currentSortKey] : 0;
-    const valueB = typeof b[currentSortKey] === "number" ? b[currentSortKey] : 0;
-
-    if (valueB === valueA) {
-      return (typeof b.points === "number" ? b.points : 0) - (typeof a.points === "number" ? a.points : 0);
-    }
-
-    return valueB - valueA;
-  });
-  
-  const rows = sorted.map((driver, index) => {
+  const rows = visibleEntries.map(({ driver, position }) => {
     const tags = [];
-    if (index === 0 && currentSortKey === "points") {
+    if (position === 1 && currentSortKey === "points") {
       tags.push('<span class="badge badge--leader">Leader</span>');
     }
     if (driver.fastestLaps > 0 && currentSortKey === "fastestLaps") {
@@ -85,7 +91,7 @@ function renderLeaderboard() {
     
     return `
       <tr onclick="showDriverDetail('${driver.name.replace(/'/g, "\\'")}')">
-        <td data-label="Position">${index + 1}</td>
+        <td data-label="Position">${position}</td>
         <td data-label="Driver">
           <div class="leaderboard__driver">
             <div>

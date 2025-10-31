@@ -48,10 +48,10 @@ function updateQuickStats() {
     racesCompletedEl.textContent = sessions.length;
   }
   
-  // Active Drivers (non-AI drivers with points)
+  // Active Drivers (non-AI drivers only)
   const activeDriversEl = document.getElementById('homeActiveDrivers');
   if (activeDriversEl) {
-    const activeCount = drivers.filter(d => !window.F1SlayterShared.isRealF1Driver(d.name) || d.points > 0).length;
+    const activeCount = drivers.filter(d => !window.F1SlayterShared.isRealF1Driver(d.name)).length;
     activeDriversEl.textContent = activeCount;
   }
   

@@ -21,32 +21,61 @@ const EXCLUDED_DRIVER_NAMES = new Set(
   ].map((name) => name.toLowerCase()),
 );
 
-const DRIVER_COLORS = [
-  '#ff6b6b',
-  '#845ef7',
-  '#339af0',
-  '#ffa94d',
-  '#51cf66',
-  '#f06595',
-  '#22b8cf',
-  '#94d82d',
-  '#ffd43b',
-  '#4dabf7',
-  '#ff922b',
-];
+function hslToHex(h, s, l) {
+  const saturation = s / 100;
+  const lightness = l / 100;
+  const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
+  const hueSegment = h / 60;
+  const secondary = chroma * (1 - Math.abs((hueSegment % 2) - 1));
 
-const TEAM_COLORS = {
-  Ferrari: '#ff1e00',
-  'Red Bull': '#1e41ff',
-  McLaren: '#ff7f0f',
-  'Mercedes-AMG Petronas': '#06b0b0',
-  Alpine: '#0090ff',
-  'Visa Cash App RB': '#3a87ff',
-  Haas: '#ffffff',
-  Williams: '#005aff',
-  'Aston Martin': '#0a9f6c',
-  'Kick Sauber': '#3bffbe',
-};
+  let red = 0;
+  let green = 0;
+  let blue = 0;
+
+  if (hueSegment >= 0 && hueSegment < 1) {
+    red = chroma;
+    green = secondary;
+  } else if (hueSegment >= 1 && hueSegment < 2) {
+    red = secondary;
+    green = chroma;
+  } else if (hueSegment >= 2 && hueSegment < 3) {
+    green = chroma;
+    blue = secondary;
+  } else if (hueSegment >= 3 && hueSegment < 4) {
+    green = secondary;
+    blue = chroma;
+  } else if (hueSegment >= 4 && hueSegment < 5) {
+    red = secondary;
+    blue = chroma;
+  } else if (hueSegment >= 5 && hueSegment < 6) {
+    red = chroma;
+    blue = secondary;
+  }
+
+  const match = lightness - chroma / 2;
+  const toHex = (value) => {
+    const channel = Math.round((value + match) * 255);
+    return channel.toString(16).padStart(2, '0');
+  };
+
+  return `#${toHex(red)}${toHex(green)}${toHex(blue)}`;
+}
+
+function generateDistinctColors(count) {
+  if (!Number.isFinite(count) || count <= 0) {
+    return [];
+  }
+
+  const colors = [];
+  const goldenAngle = 137.508;
+  for (let index = 0; index < count; index += 1) {
+    const hue = (index * goldenAngle) % 360;
+    const saturation = 68;
+    const lightness = 52 + ((index % 3) - 1) * 6;
+    colors.push(hslToHex(hue, saturation, Math.max(38, Math.min(70, lightness))));
+  }
+  return colors;
+}
 
 const state = {
   seasons: [],
@@ -182,20 +211,8 @@ function bindEventHandlers() {
   }
 
   const driversToggle = document.getElementById('toggle-drivers');
-  const teamsToggle = document.getElementById('toggle-teams');
   if (driversToggle) {
     driversToggle.addEventListener('change', () => {
-      if (!driversToggle.checked && teamsToggle && !teamsToggle.checked) {
-        driversToggle.checked = true;
-      }
-      updatePointsChart();
-    });
-  }
-  if (teamsToggle) {
-    teamsToggle.addEventListener('change', () => {
-      if (!teamsToggle.checked && driversToggle && !driversToggle.checked) {
-        teamsToggle.checked = true;
-      }
       updatePointsChart();
     });
   }
@@ -286,13 +303,14 @@ function buildSeasonMetrics(season) {
           fastestLapCount: 0,
           fastestLapPositions: [],
           raceCount: 0,
-          color: TEAM_COLORS[result.team] || null,
+          color: null,
         });
       }
     });
   });
 
   const drivers = Array.from(driverMap.values());
+  const colorPalette = generateDistinctColors(drivers.length);
 
   rounds.forEach((round) => {
     (round.results || []).forEach((result) => {
@@ -325,7 +343,7 @@ function buildSeasonMetrics(season) {
       runningPoints += driver.pointsEarned[i] || 0;
       driver.cumulativePoints[i] = runningPoints;
       if (!driver.color) {
-        driver.color = DRIVER_COLORS[driverIndex % DRIVER_COLORS.length];
+        driver.color = colorPalette[driverIndex] || '#888888';
       }
     }
     const finishedPositions = driver.positions.filter((position) => Number.isFinite(position));
@@ -354,40 +372,6 @@ function buildSeasonMetrics(season) {
     });
   }
 
-  const teamMap = new Map();
-  drivers.forEach((driver) => {
-    const teamName = driver.team || 'Independent';
-    if (!teamMap.has(teamName)) {
-      teamMap.set(teamName, {
-        name: teamName,
-        color: TEAM_COLORS[teamName] || DRIVER_COLORS[teamMap.size % DRIVER_COLORS.length],
-        pointsEarned: Array(rounds.length).fill(0),
-        cumulativePoints: Array(rounds.length).fill(0),
-        totalPoints: 0,
-      });
-    }
-  });
-
-  rounds.forEach((round, roundIndex) => {
-    (round.results || []).forEach((result) => {
-      const teamName = result.team || 'Independent';
-      const team = teamMap.get(teamName);
-      if (!team) return;
-      const points = Number.isFinite(result.points) ? result.points : 0;
-      team.pointsEarned[roundIndex] += points;
-    });
-  });
-
-  const teams = Array.from(teamMap.values());
-  teams.forEach((team) => {
-    let running = 0;
-    for (let i = 0; i < rounds.length; i += 1) {
-      running += team.pointsEarned[i] || 0;
-      team.cumulativePoints[i] = running;
-    }
-    team.totalPoints = running;
-  });
-
   const maxPosition = drivers.reduce((highest, driver) => {
     const driverMax = driver.positions.reduce((max, position) => {
       if (!Number.isFinite(position)) return max;
@@ -401,7 +385,6 @@ function buildSeasonMetrics(season) {
     rounds,
     drivers,
     driverMap,
-    teams,
     maxPosition,
   };
 }
@@ -413,12 +396,10 @@ function isExcludedDriver(name) {
 function normaliseRoundResults(results) {
   if (!Array.isArray(results)) return [];
   const filtered = results.filter((result) => result?.driver && !isExcludedDriver(result.driver));
-  let finishingPosition = 1;
   return filtered.map((result) => {
     const normalised = { ...result };
-    if (Number.isFinite(result.position)) {
-      normalised.position = finishingPosition;
-      finishingPosition += 1;
+    if (!Number.isFinite(result.position)) {
+      normalised.position = null;
     }
     return normalised;
   });
@@ -604,7 +585,6 @@ function renderPerformanceHighlights(snapshots) {
           <div class="insight-performance__header">
             <div>
               <p class="insight-performance__name">${entry.name}</p>
-              <span class="insight-performance__team">${entry.team}</span>
             </div>
             <strong class="insight-performance__points">${formatNumber(entry.points)} pts</strong>
           </div>
@@ -693,7 +673,6 @@ function updatePointsChart(forceCreate = false) {
   const ctx = document.getElementById('points-chart');
   if (!ctx || !state.metrics) return;
   const showDrivers = document.getElementById('toggle-drivers')?.checked !== false;
-  const showTeams = document.getElementById('toggle-teams')?.checked === true;
   const limit = getActiveRoundCount();
   const labels = getRoundLabels(limit);
 
@@ -710,22 +689,6 @@ function updatePointsChart(forceCreate = false) {
         tension: 0.35,
         borderColor: driver.color,
         backgroundColor: driver.color,
-        borderWidth: 2,
-        fill: false,
-      });
-    });
-  }
-
-  if (showTeams) {
-    const topTeams = state.metrics.teams.slice().sort((a, b) => b.totalPoints - a.totalPoints).slice(0, 6);
-    topTeams.forEach((team) => {
-      datasets.push({
-        label: `${team.name} (Team)`,
-        data: team.cumulativePoints.slice(0, limit),
-        tension: 0.35,
-        borderColor: team.color,
-        backgroundColor: team.color,
-        borderDash: [6, 4],
         borderWidth: 2,
         fill: false,
       });
@@ -912,8 +875,7 @@ function renderHeatmap() {
     const driverCell = document.createElement('div');
     driverCell.className = 'heatmap-cell heatmap-cell--driver';
     const nameSpan = createElement('span', { text: driver.name });
-    const teamSmall = createElement('small', { text: driver.team });
-    driverCell.append(nameSpan, teamSmall);
+    driverCell.append(nameSpan);
     row.appendChild(driverCell);
 
     rounds.forEach((round, index) => {

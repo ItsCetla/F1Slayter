@@ -6,7 +6,7 @@
     <meta name="format-detection" content="telephone=no" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <title>Race Sessions - F1 Slayter League</title>
+    <title>League Analytics - F1 Slayter League</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -17,7 +17,7 @@
   </head>
   <body>
     <div class="scroll-progress"></div>
-    
+
     <!-- Persistent Navigation -->
     <nav class="nav-menu nav-menu--persistent">
       <div class="nav-menu__container">
@@ -28,73 +28,63 @@
         <ul class="nav-menu__links">
           <li><a href="home.html" class="nav-menu__link">Home</a></li>
           <li><a href="standings.html" class="nav-menu__link">Standings</a></li>
-          <li><a href="sessions.html" class="nav-menu__link nav-menu__link--active">Sessions</a></li>
+          <li><a href="sessions.html" class="nav-menu__link">Sessions</a></li>
           <li><a href="calendar.html" class="nav-menu__link">Calendar</a></li>
           <li><a href="insights.html" class="nav-menu__link">Insights</a></li>
-          <li><a href="analytics.html" class="nav-menu__link">Analytics</a></li>
+          <li><a href="analytics.html" class="nav-menu__link nav-menu__link--active">Analytics</a></li>
         </ul>
       </div>
     </nav>
-    
+
     <header class="page-header">
       <div class="page-header__content">
-        <h1 class="page-header__title">Race Sessions</h1>
-        <p class="page-header__subtitle">Complete race results and session analysis</p>
+        <h1 class="page-header__title">League Analytics</h1>
+        <p class="page-header__subtitle">Deep-dive metrics and season trends for the Slayter League</p>
       </div>
     </header>
 
     <main class="page-content">
-      <section class="panel panel--sessions">
+      <!-- Points Progression -->
+      <section class="panel">
         <header class="panel__header">
-          <h2>Completed Races</h2>
-          <div class="panel__controls">
-            <label class="select">
-              <span>Filter by</span>
-              <select id="sessionFilter">
-                <option value="all">All Sessions</option>
-                <option value="recent">Recent (Last 3)</option>
-                <option value="season">Full Season</option>
-              </select>
-            </label>
-          </div>
+          <h2>Points Trajectory</h2>
+          <p class="panel__subtitle">Session-by-session scoring for the championship leaders</p>
         </header>
+        <div id="pointsProgression" class="analytics-grid" aria-live="polite"></div>
+      </section>
 
-        <div class="sessions__intro">
-          <p class="sessions__hint">
-            Click on any race card to view detailed session analysis, lap times, and race incidents
-          </p>
-        </div>
-        
-        <div id="sessionList" class="session-list"></div>
-        <p id="statusMessage" class="sessions__status" role="status"></p>
+      <!-- Team Performance -->
+      <section class="panel">
+        <header class="panel__header">
+          <h2>Team Performance</h2>
+          <p class="panel__subtitle">Comparing total output, wins, and consistency across each garage</p>
+        </header>
+        <div id="teamPerformance" class="analytics-grid analytics-grid--teams" aria-live="polite"></div>
+      </section>
+
+      <!-- Form Guide -->
+      <section class="panel">
+        <header class="panel__header">
+          <h2>Current Form Guide</h2>
+          <p class="panel__subtitle">Recent race finishes and points pace for key contenders</p>
+        </header>
+        <div id="formGuide" class="analytics-form" aria-live="polite"></div>
       </section>
     </main>
-
-    <!-- Session Detail Modal -->
-    <div id="sessionModal" class="modal">
-      <div class="modal__overlay"></div>
-      <div class="modal__content modal__content--wide">
-        <button class="modal__close" aria-label="Close">&times;</button>
-        <div id="sessionDetailContent" class="session-detail">
-          <!-- Populated by JavaScript -->
-        </div>
-      </div>
-    </div>
 
     <footer class="footer">
       <p>
         Built for the Slayter League •
         <a href="home.html">Home</a> •
         <a href="standings.html">Standings</a> •
-        <a href="sessions.html" aria-current="page">Sessions</a> •
+        <a href="sessions.html">Sessions</a> •
         <a href="calendar.html">Calendar</a> •
         <a href="insights.html">Insights</a> •
-        <a href="analytics.html">Analytics</a>
+        <a href="analytics.html" aria-current="page">Analytics</a>
       </p>
     </footer>
 
     <script src="../js/shared.js"></script>
-    <script src="../js/sessions.js"></script>
+    <script src="../js/analytics.js"></script>
   </body>
 </html>
-

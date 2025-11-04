@@ -8,6 +8,7 @@ A single-page, front-end only dashboard for managing the Slayter League's Formul
 - Interactive standings table with multiple sorting options.
 - Highlight cards for leader, wins champion, and momentum "Driver to Watch" insights.
 - Session database with recent event summaries sourced from the CSV data file.
+- Dedicated analytics page highlighting points trajectories, team comparisons, and current form trends.
 - Clipboard-friendly JSON snapshot for use with AI tools or reporting.
 
 ## Usage

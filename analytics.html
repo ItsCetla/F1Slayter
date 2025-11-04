@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Analytics - CETLA Racing League</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="assets/analytics.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-container">
+      <a class="brand" href="index.html">CETLA</a>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="primary-nav">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="nav-toggle__line"></span>
+        <span class="nav-toggle__line"></span>
+        <span class="nav-toggle__line"></span>
+      </button>
+      <nav id="primary-nav" class="site-nav">
+        <a href="index.html#season-picker">Seasons</a>
+        <a href="index.html#standings">Standings</a>
+        <a href="index.html#races">Race Hub</a>
+        <a href="analytics.html" class="is-active">Analytics</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero hero--compact">
+      <div class="container hero__content">
+        <div class="hero__copy">
+          <p class="eyebrow">CETLA Racing League</p>
+          <h1 class="hero__title">Season Analytics</h1>
+          <p class="hero__subtitle">
+            Dive deep into the data with interactive charts and race-by-race progression.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--pad">
+      <div class="container">
+        <div class="season-controls">
+          <label class="season-select">
+            <span class="season-select__label">Season</span>
+            <select id="season-select" aria-label="Select season"></select>
+          </label>
+          <div class="season-pills" id="season-pills" role="listbox" aria-label="Season quick select"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--alt timeline-section">
+      <div class="container">
+        <header class="section__header">
+          <div>
+            <h2>Race Timeline</h2>
+            <p class="section__subtitle">Drag the slider to see how the championship evolved race-by-race.</p>
+          </div>
+          <div class="timeline-display">
+            <span class="timeline-label">Through Race:</span>
+            <span class="timeline-value" id="timeline-value">All Races</span>
+          </div>
+        </header>
+
+        <div class="timeline-control">
+          <button id="timeline-play" class="timeline-btn" aria-label="Play timeline">
+            <span class="play-icon">▶</span>
+            <span class="pause-icon" style="display:none;">⏸</span>
+          </button>
+          <div class="timeline-slider-wrapper">
+            <input
+              type="range"
+              id="timeline-slider"
+              class="timeline-slider"
+              min="0"
+              max="11"
+              value="11"
+              step="1"
+              aria-label="Race timeline slider"
+            >
+            <div class="timeline-ticks" id="timeline-ticks"></div>
+          </div>
+          <button id="timeline-reset" class="timeline-btn timeline-btn--secondary" aria-label="Reset timeline">
+            Reset
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--pad">
+      <div class="container">
+        <div class="chart-card">
+          <header class="chart-card__header">
+            <div>
+              <h3>Points Progression</h3>
+              <p class="chart-subtitle">Championship points accumulated over the season</p>
+            </div>
+            <div class="chart-controls">
+              <label class="chart-toggle">
+                <input type="checkbox" id="toggle-drivers" checked>
+                <span>Drivers</span>
+              </label>
+              <label class="chart-toggle">
+                <input type="checkbox" id="toggle-teams">
+                <span>Teams</span>
+              </label>
+            </div>
+          </header>
+          <div class="chart-container">
+            <canvas id="points-chart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--alt">
+      <div class="container">
+        <div class="chart-card">
+          <header class="chart-card__header">
+            <div>
+              <h3>Points Gap to Leader</h3>
+              <p class="chart-subtitle">How far each contender trails the championship leader after every race</p>
+            </div>
+          </header>
+          <div class="chart-container">
+            <canvas id="points-gap-chart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--pad">
+      <div class="container">
+        <div class="chart-card">
+          <header class="chart-card__header">
+            <div>
+              <h3>Championship Position Tracker</h3>
+              <p class="chart-subtitle">Driver ranking after each race (lower lines mean higher positions)</p>
+            </div>
+          </header>
+          <div class="chart-container">
+            <canvas id="position-change-chart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--alt">
+      <div class="container">
+        <div class="chart-card">
+          <header class="chart-card__header">
+            <div>
+              <h3>Position Heatmap</h3>
+              <p class="chart-subtitle">Finishing positions across all races (darker = better finish)</p>
+            </div>
+            <div class="chart-controls">
+              <label class="chart-select">
+                <span>Sort by:</span>
+                <select id="heatmap-sort">
+                  <option value="points">Total Points</option>
+                  <option value="avg">Avg Position</option>
+                  <option value="name">Driver Name</option>
+                </select>
+              </label>
+            </div>
+          </header>
+          <div class="heatmap-container" id="heatmap-container"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--pad">
+      <div class="container">
+        <div class="chart-card">
+          <header class="chart-card__header">
+            <div>
+              <h3>Podium Distribution</h3>
+              <p class="chart-subtitle">Breakdown of finishing positions for top drivers</p>
+            </div>
+            <div class="chart-controls">
+              <label class="chart-select">
+                <span>Show:</span>
+                <select id="podium-filter">
+                  <option value="10">Top 10 Drivers</option>
+                  <option value="5">Top 5 Drivers</option>
+                  <option value="all">All Drivers</option>
+                </select>
+              </label>
+            </div>
+          </header>
+          <div class="chart-container">
+            <canvas id="podium-chart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--alt">
+      <div class="container">
+        <div class="chart-card">
+          <header class="chart-card__header">
+            <div>
+              <h3>Form Guide (3-Race Rolling Average)</h3>
+              <p class="chart-subtitle">Track who's heating up or cooling down</p>
+            </div>
+          </header>
+          <div class="chart-container">
+            <canvas id="trend-chart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--pad">
+      <div class="container">
+        <div class="chart-card">
+          <header class="chart-card__header">
+            <div>
+              <h3>Fastest Lap Analysis</h3>
+              <p class="chart-subtitle">Average ranking position based on fastest lap times across all races</p>
+            </div>
+          </header>
+          <div class="chart-container">
+            <canvas id="fastest-lap-chart"></canvas>
+          </div>
+          <div class="fastest-lap-stats" id="fastest-lap-stats"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--alt">
+      <div class="container">
+        <div class="chart-card">
+          <header class="chart-card__header">
+            <div>
+              <h3>Head-to-Head Battle</h3>
+              <p class="chart-subtitle">Compare two drivers race-by-race</p>
+            </div>
+            <div class="chart-controls chart-controls--h2h">
+              <label class="chart-select">
+                <span>Driver 1:</span>
+                <select id="h2h-driver1"></select>
+              </label>
+              <span class="h2h-vs">vs</span>
+              <label class="chart-select">
+                <span>Driver 2:</span>
+                <select id="h2h-driver2"></select>
+              </label>
+            </div>
+          </header>
+          <div class="chart-container">
+            <canvas id="h2h-chart"></canvas>
+          </div>
+          <div class="h2h-summary" id="h2h-summary"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer__content">
+      <p>Data-driven by <code>v2/data/seasons.json</code>. Update the file, redeploy, done.</p>
+      <small>&copy; <span id="footer-year"></span> CETLA Racing League</small>
+    </div>
+  </footer>
+
+  <script src="assets/analytics.js" type="module"></script>
+</body>
+</html>

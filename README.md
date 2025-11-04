@@ -8,6 +8,7 @@ A single-page, front-end only dashboard for managing the Slayter League's Formul
 - Interactive standings table with multiple sorting options.
 - Highlight cards for leader, wins champion, and momentum "Driver to Watch" insights.
 - Session database with recent event summaries sourced from the CSV data file.
+- Dedicated analytics experience with interactive timeline playback, driver vs. team points tracking, heatmaps, and head-to-head tools.
 - Clipboard-friendly JSON snapshot for use with AI tools or reporting.
 
 ## Usage
@@ -15,6 +16,8 @@ A single-page, front-end only dashboard for managing the Slayter League's Formul
 Open `index.html` in any modern browser.
 
 Driver standings, session history, and insight cards are powered by the records inside `data/league-data.csv`. Update the CSV with your latest races, then refresh the page to see the new information reflected across the dashboard.
+
+The analytics page consumes the structured JSON payload in `v2/data/seasons.json`. Update that file to introduce new seasons, rounds, or historical statistics for the charts.
 
 Use the **Copy JSON Snapshot** button to grab the full data model (standings + sessions) for quick sharing with AI copilots, commentators, or analytics scripts.
 
@@ -29,3 +32,34 @@ Use the **Copy JSON Snapshot** button to grab the full data model (standings + s
 | `session-result` | Classified results for a driver in a specific session. Add one row per finisher. | `sessionDate`, `sessionName`, `driverName`, `team` (optional), `position`, `points`, `fastestLap` (`true`/`false`) |
 
 Populate as many rows as needed—standings and cards will automatically recalculate based on the CSV contents. Leave the header row in place and keep the file encoded as UTF-8 for best results.
+
+## Analytics data model
+
+The analytics view reads from a simple JSON document stored at `v2/data/seasons.json` with the following high-level structure:
+
+```json
+{
+  "seasons": [
+    {
+      "id": "unique-season-id",
+      "name": "Display Name",
+      "year": 2025,
+      "drivers": [
+        { "name": "Driver", "team": "Team", "points": 100, "wins": 4, "podiums": 4, "fastestLaps": 0 }
+      ],
+      "rounds": [
+        {
+          "round": 1,
+          "name": "Race Name",
+          "date": "YYYY-MM-DD",
+          "results": [
+            { "driver": "Driver", "team": "Team", "position": 1, "points": 25, "fastestLap": false }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+Add additional seasons or extend the `rounds` arrays to update the visuals. Charts will automatically re-calculate gaps, podium counts, rolling averages, and head-to-head stats from this dataset.

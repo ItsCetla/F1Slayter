@@ -1,0 +1,109 @@
+.hero--compact {
+  background: radial-gradient(circle at 12% 20%, rgba(79, 141, 247, 0.18), transparent 55%),
+    radial-gradient(circle at 85% 15%, rgba(255, 93, 122, 0.14), transparent 45%),
+    linear-gradient(180deg, rgba(10, 14, 28, 0.9), rgba(10, 14, 28, 0.35));
+}
+
+.chart-card__header h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+}
+
+.chart-card__header p {
+  max-width: 620px;
+}
+
+.timeline-btn .pause-icon {
+  font-size: 0.9rem;
+}
+
+.timeline-btn .play-icon,
+.timeline-btn .pause-icon {
+  transition: opacity 0.2s ease;
+}
+
+.timeline-slider-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: -12px -12px -14px;
+  background: radial-gradient(circle, rgba(79, 141, 247, 0.1), transparent 70%);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.timeline-slider-wrapper:focus-within::before,
+.timeline-slider-wrapper:hover::before {
+  opacity: 1;
+}
+
+.heatmap-row {
+  padding: 0.15rem 0;
+}
+
+.heatmap-cell {
+  position: relative;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.heatmap-cell--driver small {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.heatmap-cell[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translate(-50%, -0.4rem);
+  background: rgba(8, 11, 22, 0.95);
+  color: #fff;
+  padding: 0.35rem 0.55rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 30px rgba(6, 9, 20, 0.3);
+}
+
+.heatmap-cell[data-tooltip]:hover::after,
+.heatmap-cell[data-tooltip]:focus::after {
+  opacity: 1;
+}
+
+.fastest-lap-card > span {
+  display: block;
+  margin-top: 0.3rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.h2h-summary strong {
+  color: #fff;
+}
+
+.h2h-summary p {
+  margin: 0.25rem 0;
+}
+
+@media (max-width: 600px) {
+  .hero--compact {
+    padding-top: 4.25rem;
+  }
+
+  .chart-card {
+    padding: 1.25rem;
+  }
+
+  .chart-container {
+    height: 280px;
+  }
+}

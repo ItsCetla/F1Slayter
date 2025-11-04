@@ -26,12 +26,16 @@
           <span class="nav-menu__logo">🏎️</span>
           <span class="nav-menu__title">Slayter League</span>
         </div>
-        <ul class="nav-menu__links">
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav">
+          <span class="nav-toggle__label">Menu</span>
+          <span class="nav-toggle__icon" aria-hidden="true"></span>
+        </button>
+        <ul id="primary-nav" class="nav-menu__links nav-menu__links--collapsible">
           <li><a href="pages/home.html" class="nav-menu__link">Home</a></li>
           <li><a href="pages/standings.html" class="nav-menu__link">Standings</a></li>
           <li><a href="pages/sessions.html" class="nav-menu__link">Sessions</a></li>
           <li><a href="pages/calendar.html" class="nav-menu__link">Calendar</a></li>
-          <li><a href="pages/insights.html" class="nav-menu__link">Insights</a></li>
+          <li><a href="#insights" class="nav-menu__link">Insights</a></li>
           <li>
             <a href="analytics.html" class="nav-menu__link nav-menu__link--active" aria-current="page">Analytics</a>
           </li>
@@ -52,6 +56,57 @@
     </header>
 
     <main id="top" class="analytics-main">
+      <section id="insights" class="section section--pad insights-section">
+        <div class="container">
+          <header class="section__header insights-section__header">
+            <div>
+              <h2>Championship Insights</h2>
+              <p class="section__subtitle">
+                Snapshot trends that move with your season and timeline selection.
+              </p>
+            </div>
+            <div class="insights-section__meta">
+              <span id="insight-round-label">Awaiting race data…</span>
+            </div>
+          </header>
+
+          <div class="insights-grid">
+            <article class="insight-card" data-insight="leader">
+              <h3 class="insight-card__title">Championship Leader</h3>
+              <p id="insight-leader-name" class="insight-card__value">-</p>
+              <p id="insight-leader-points" class="insight-card__meta">0 pts</p>
+            </article>
+            <article class="insight-card" data-insight="wins">
+              <h3 class="insight-card__title">Most Wins</h3>
+              <p id="insight-wins-name" class="insight-card__value">-</p>
+              <p id="insight-wins-count" class="insight-card__meta">0 wins</p>
+            </article>
+            <article class="insight-card" data-insight="watch">
+              <h3 class="insight-card__title">Driver to Watch</h3>
+              <p id="insight-watch-name" class="insight-card__value">-</p>
+              <p id="insight-watch-meta" class="insight-card__meta">Stay tuned</p>
+            </article>
+          </div>
+
+          <div class="insights-panels">
+            <article class="insight-panel">
+              <header class="insight-panel__header">
+                <h3>Performance Pulse</h3>
+                <p>Where the championship favourites stand right now.</p>
+              </header>
+              <div id="insight-performance" class="insight-panel__body"></div>
+            </article>
+            <article class="insight-panel">
+              <header class="insight-panel__header">
+                <h3>Podium Spotlight</h3>
+                <p>Drivers turning starts into trophies.</p>
+              </header>
+              <div id="insight-podiums" class="insight-panel__body"></div>
+            </article>
+          </div>
+        </div>
+      </section>
+
       <section class="section section--pad" id="season-controls">
         <div class="container">
           <div class="season-controls">

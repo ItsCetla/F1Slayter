@@ -424,8 +424,248 @@ function normaliseRoundResults(results) {
   });
 }
 
+function getDriverSnapshots(limit) {
+  if (!state.metrics) return [];
+  const totalRounds = state.metrics.rounds.length;
+  const effectiveLimit = Math.max(0, Math.min(limit ?? totalRounds, totalRounds));
+  if (effectiveLimit === 0) {
+    return [];
+  }
+
+  const lastIndex = effectiveLimit - 1;
+  const recentWindow = Math.min(3, effectiveLimit);
+  const beforeWindowIndex = lastIndex - recentWindow;
+
+  return state.metrics.drivers
+    .map((driver) => {
+      const racePositions = driver.positions
+        .slice(0, effectiveLimit)
+        .filter((position) => Number.isFinite(position));
+      if (racePositions.length === 0) {
+        return null;
+      }
+
+      const points = driver.cumulativePoints[lastIndex] || 0;
+      const wins = racePositions.filter((position) => position === 1).length;
+      const podiums = racePositions.filter((position) => position > 0 && position <= 3).length;
+      const fastestLaps = state.metrics.rounds.slice(0, effectiveLimit).reduce((count, round) => {
+        const result = round.results.find((entry) => entry.driver === driver.name);
+        return count + (result?.fastestLap ? 1 : 0);
+      }, 0);
+      const bestFinish = Math.min(...racePositions);
+      const avgFinish = racePositions.reduce((sum, position) => sum + position, 0) / racePositions.length;
+      const beforeWindowPoints = beforeWindowIndex >= 0 ? driver.cumulativePoints[beforeWindowIndex] || 0 : 0;
+      const recentGain = points - beforeWindowPoints;
+
+      return {
+        name: driver.name,
+        team: driver.team,
+        points,
+        wins,
+        podiums,
+        fastestLaps,
+        bestFinish,
+        avgFinish,
+        recentGain,
+        raceCount: racePositions.length,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => {
+      if (b.points !== a.points) {
+        return b.points - a.points;
+      }
+      const aAvg = Number.isFinite(a.avgFinish) ? a.avgFinish : Infinity;
+      const bAvg = Number.isFinite(b.avgFinish) ? b.avgFinish : Infinity;
+      return aAvg - bAvg;
+    });
+}
+
+function updateInsightsPanels() {
+  if (!state.metrics) return;
+
+  const leaderNameEl = document.getElementById('insight-leader-name');
+  const leaderPointsEl = document.getElementById('insight-leader-points');
+  if (!leaderNameEl || !leaderPointsEl) {
+    return;
+  }
+
+  const winsNameEl = document.getElementById('insight-wins-name');
+  const winsCountEl = document.getElementById('insight-wins-count');
+  const watchNameEl = document.getElementById('insight-watch-name');
+  const watchMetaEl = document.getElementById('insight-watch-meta');
+  const roundLabelEl = document.getElementById('insight-round-label');
+
+  const limit = getActiveRoundCount();
+  const snapshots = getDriverSnapshots(limit);
+
+  if (roundLabelEl) {
+    if (!limit || snapshots.length === 0) {
+      roundLabelEl.textContent = 'Awaiting race data…';
+    } else if (limit === state.metrics.rounds.length) {
+      roundLabelEl.textContent = 'Insights through all completed races';
+    } else {
+      const round = state.metrics.rounds[limit - 1];
+      const label = round?.name ? round.name : `Round ${round?.round ?? limit}`;
+      roundLabelEl.textContent = `Through ${label}`;
+    }
+  }
+
+  if (snapshots.length === 0) {
+    leaderNameEl.textContent = '—';
+    leaderPointsEl.textContent = '0 pts';
+    if (winsNameEl) winsNameEl.textContent = '—';
+    if (winsCountEl) winsCountEl.textContent = '0 wins';
+    if (watchNameEl) watchNameEl.textContent = '—';
+    if (watchMetaEl) watchMetaEl.textContent = 'Race results will appear soon';
+    renderPerformanceHighlights([]);
+    renderPodiumHighlights([], limit);
+    return;
+  }
+
+  const leader = snapshots[0];
+  leaderNameEl.textContent = leader.name;
+  leaderPointsEl.textContent = `${formatNumber(leader.points)} pts`;
+
+  const winsLeader = snapshots
+    .slice()
+    .sort((a, b) => {
+      if (b.wins !== a.wins) {
+        return b.wins - a.wins;
+      }
+      if (b.points !== a.points) {
+        return b.points - a.points;
+      }
+      const aBest = Number.isFinite(a.bestFinish) ? a.bestFinish : Infinity;
+      const bBest = Number.isFinite(b.bestFinish) ? b.bestFinish : Infinity;
+      return aBest - bBest;
+    })[0];
+
+  if (winsNameEl) {
+    winsNameEl.textContent = winsLeader ? winsLeader.name : '—';
+  }
+  if (winsCountEl) {
+    const winsValue = winsLeader ? formatNumber(winsLeader.wins) : '0';
+    winsCountEl.textContent = `${winsValue} wins`;
+  }
+
+  if (watchNameEl || watchMetaEl) {
+    const windowSize = Math.max(1, Math.min(3, limit || state.metrics.rounds.length || 1));
+    const raceWord = windowSize === 1 ? 'race' : 'races';
+    const candidates = snapshots.filter((entry) => entry.name !== leader.name);
+    const positive = candidates.filter((entry) => entry.recentGain > 0);
+    const sortedCandidates = (positive.length > 0 ? positive : candidates).sort((a, b) => {
+      if (b.recentGain !== a.recentGain) {
+        return b.recentGain - a.recentGain;
+      }
+      const aBest = Number.isFinite(a.bestFinish) ? a.bestFinish : Infinity;
+      const bBest = Number.isFinite(b.bestFinish) ? b.bestFinish : Infinity;
+      return aBest - bBest;
+    });
+    const watchCandidate = sortedCandidates[0] || leader;
+
+    if (watchNameEl) {
+      watchNameEl.textContent = watchCandidate.name;
+    }
+    if (watchMetaEl) {
+      if (watchCandidate.recentGain > 0) {
+        watchMetaEl.textContent = `+${formatNumber(watchCandidate.recentGain)} pts in last ${windowSize} ${raceWord} • Best finish P${
+          Number.isFinite(watchCandidate.bestFinish) ? watchCandidate.bestFinish : '—'
+        }`;
+      } else if (Number.isFinite(watchCandidate.avgFinish)) {
+        watchMetaEl.textContent = `On pace • Avg finish P${formatNumber(watchCandidate.avgFinish)}`;
+      } else {
+        watchMetaEl.textContent = 'Consistent scorer to monitor';
+      }
+    }
+  }
+
+  renderPerformanceHighlights(snapshots);
+  renderPodiumHighlights(snapshots, limit);
+}
+
+function renderPerformanceHighlights(snapshots) {
+  const container = document.getElementById('insight-performance');
+  if (!container) return;
+
+  if (!snapshots || snapshots.length === 0) {
+    container.innerHTML = '<p class="insight-empty">No race data available yet.</p>';
+    return;
+  }
+
+  const topDrivers = snapshots.slice(0, 5);
+  const maxPoints = topDrivers.reduce((max, entry) => Math.max(max, entry.points || 0), 0) || 1;
+
+  container.innerHTML = topDrivers
+    .map((entry) => {
+      const width = Math.min(100, Math.max(6, Math.round((entry.points / maxPoints) * 100)));
+      return `
+        <article class="insight-performance__item">
+          <div class="insight-performance__header">
+            <div>
+              <p class="insight-performance__name">${entry.name}</p>
+              <span class="insight-performance__team">${entry.team}</span>
+            </div>
+            <strong class="insight-performance__points">${formatNumber(entry.points)} pts</strong>
+          </div>
+          <div class="insight-performance__bar" role="presentation">
+            <span style="width: ${width}%;"></span>
+          </div>
+          <p class="insight-performance__meta">🏆 ${formatNumber(entry.wins)} wins • 🏅 ${formatNumber(entry.podiums)} podiums • ⚡ ${
+        formatNumber(entry.fastestLaps)
+      } FL</p>
+        </article>
+      `;
+    })
+    .join('');
+}
+
+function renderPodiumHighlights(snapshots, limit) {
+  const container = document.getElementById('insight-podiums');
+  if (!container) return;
+
+  if (!snapshots || snapshots.length === 0) {
+    container.innerHTML = '<p class="insight-empty">No podium data available yet.</p>';
+    return;
+  }
+
+  const racesConsidered = Math.max(1, limit || state.metrics.rounds.length || 1);
+  const podiumDrivers = snapshots.filter((entry) => entry.podiums > 0).slice(0, 6);
+
+  if (podiumDrivers.length === 0) {
+    container.innerHTML = '<p class="insight-empty">No podium data available yet.</p>';
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="insight-podiums__grid">
+      ${podiumDrivers
+        .map((entry) => {
+          const rate = Math.round((entry.podiums / racesConsidered) * 100);
+          return `
+            <article class="insight-podiums__card">
+              <p class="insight-podiums__count">${formatNumber(entry.podiums)}</p>
+              <p class="insight-podiums__name">${entry.name}</p>
+              <p class="insight-podiums__meta">${rate}% podium rate</p>
+            </article>
+          `;
+        })
+        .join('')}
+    </div>
+  `;
+}
+
+function formatNumber(value) {
+  if (!Number.isFinite(value)) {
+    return '0';
+  }
+  const rounded = Math.round(value * 10) / 10;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+}
+
 function updateCharts(forceCreate = false) {
   if (!state.metrics) return;
+  updateInsightsPanels();
   updatePointsChart(forceCreate);
   updatePointsGapChart(forceCreate);
   updatePositionChart(forceCreate);

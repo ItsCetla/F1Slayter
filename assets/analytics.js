@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function initPage() {
   setupNavigationToggle();
   setFooterYear();
+  initScrollProgress();
   await loadSeasonData();
   populateSeasonControls();
   bindEventHandlers();
@@ -96,8 +97,8 @@ function populateSeasonControls() {
   const pills = document.getElementById('season-pills');
   if (!select || !pills) return;
 
-  select.innerHTML = '';
-  pills.innerHTML = '';
+  clearChildren(select);
+  clearChildren(pills);
 
   state.seasons.forEach((season) => {
     const option = document.createElement('option');
@@ -592,9 +593,11 @@ function renderHeatmap() {
     sortedDrivers.sort((a, b) => b.totalPoints - a.totalPoints);
   }
 
-  container.innerHTML = '';
+  clearChildren(container);
   if (!rounds.length) {
-    container.innerHTML = '<p>No race results to display yet.</p>';
+    const emptyMessage = document.createElement('p');
+    emptyMessage.textContent = 'No race results to display yet.';
+    container.appendChild(emptyMessage);
     return;
   }
   const grid = document.createElement('div');
@@ -604,9 +607,21 @@ function renderHeatmap() {
   const headerRow = document.createElement('div');
   headerRow.className = 'heatmap-row heatmap-row--header';
   headerRow.style.gridTemplateColumns = columnTemplate;
-  headerRow.innerHTML = `<div class="heatmap-cell heatmap-cell--driver">Driver</div>${rounds
-    .map((round) => `<div class="heatmap-cell">R${round.round}</div>`)
-    .join('')}`;
+  const driverHeader = createElement('div', {
+    className: 'heatmap-cell heatmap-cell--driver',
+    text: 'Driver',
+  });
+  headerRow.appendChild(driverHeader);
+  rounds.forEach((round) => {
+    const roundNumber = Number.isFinite(round.round) || typeof round.round === 'string'
+      ? round.round
+      : round.index + 1;
+    const headerCell = createElement('div', {
+      className: 'heatmap-cell',
+      text: `R${roundNumber}`,
+    });
+    headerRow.appendChild(headerCell);
+  });
   grid.appendChild(headerRow);
 
   sortedDrivers.forEach((driver) => {
@@ -615,7 +630,9 @@ function renderHeatmap() {
     row.style.gridTemplateColumns = columnTemplate;
     const driverCell = document.createElement('div');
     driverCell.className = 'heatmap-cell heatmap-cell--driver';
-    driverCell.innerHTML = `<span>${driver.name}</span><br><small>${driver.team}</small>`;
+    const nameSpan = createElement('span', { text: driver.name });
+    const teamSmall = createElement('small', { text: driver.team });
+    driverCell.append(nameSpan, teamSmall);
     row.appendChild(driverCell);
 
     rounds.forEach((round, index) => {
@@ -625,7 +642,8 @@ function renderHeatmap() {
       if (Number.isFinite(position)) {
         cell.textContent = `P${position}`;
         cell.style.background = getHeatmapBackground(position, state.metrics.maxPosition);
-        cell.dataset.tooltip = `${driver.name} finished P${position} at ${round.name}`;
+        const roundName = round.name || `Round ${round.round ?? index + 1}`;
+        cell.dataset.tooltip = `${driver.name} finished P${position} at ${roundName}`;
       } else {
         cell.textContent = '—';
         cell.style.background = 'rgba(255,255,255,0.05)';
@@ -854,32 +872,39 @@ function renderFastestLapChart(forceCreate = false) {
 function renderFastestLapStats(drivers) {
   const container = document.getElementById('fastest-lap-stats');
   if (!container) return;
-  container.innerHTML = '';
+  clearChildren(container);
   if (!drivers.length) {
-    container.innerHTML = '<p>No fastest lap data available yet.</p>';
+    const message = document.createElement('p');
+    message.textContent = 'No fastest lap data available yet.';
+    container.appendChild(message);
     return;
   }
 
-  const leader = drivers[0];
+  const [leader] = drivers;
   const mostFastestLaps = drivers.slice().sort((a, b) => b.count - a.count)[0];
   const bestAverage = drivers
     .filter((driver) => Number.isFinite(driver.avgFinish))
     .sort((a, b) => a.avgFinish - b.avgFinish)[0];
 
-  const cards = [
-    {
+  const cards = [];
+
+  if (leader) {
+    cards.push({
       title: 'Fastest Lap Standout',
-      value: `${leader.name}`,
+      value: leader.name,
       meta: Number.isFinite(leader.avgFinish)
         ? `Avg finish ${leader.avgFinish.toFixed(2)}`
         : 'Limited data',
-    },
-    {
+    });
+  }
+
+  if (mostFastestLaps) {
+    cards.push({
       title: 'Most Fastest Laps',
       value: `${mostFastestLaps.count} × ${mostFastestLaps.name}`,
       meta: 'Across the season',
-    },
-  ];
+    });
+  }
 
   if (bestAverage && bestAverage !== leader) {
     cards.push({
@@ -892,7 +917,10 @@ function renderFastestLapStats(drivers) {
   cards.forEach((card) => {
     const element = document.createElement('div');
     element.className = 'fastest-lap-card';
-    element.innerHTML = `<h4>${card.title}</h4><strong>${card.value}</strong><span>${card.meta}</span>`;
+    const title = createElement('h4', { text: card.title });
+    const value = createElement('strong', { text: card.value });
+    const meta = createElement('span', { text: card.meta });
+    element.append(title, value, meta);
     container.appendChild(element);
   });
 }
@@ -903,11 +931,19 @@ function populateHeadToHeadSelects() {
   if (!selectA || !selectB || !state.metrics) return;
 
   const drivers = state.metrics.drivers.slice().sort((a, b) => b.totalPoints - a.totalPoints);
-  const optionsMarkup = drivers
-    .map((driver) => `<option value="${driver.name}">${driver.name}</option>`)
-    .join('');
-  selectA.innerHTML = optionsMarkup;
-  selectB.innerHTML = optionsMarkup;
+  clearChildren(selectA);
+  clearChildren(selectB);
+  drivers.forEach((driver) => {
+    const optionA = document.createElement('option');
+    optionA.value = driver.name;
+    optionA.textContent = driver.name;
+    selectA.appendChild(optionA);
+
+    const optionB = document.createElement('option');
+    optionB.value = driver.name;
+    optionB.textContent = driver.name;
+    selectB.appendChild(optionB);
+  });
 
   if (drivers[0]) selectA.value = drivers[0].name;
   if (drivers[1]) selectB.value = drivers[1].name;
@@ -927,7 +963,10 @@ function updateHeadToHeadChart(forceCreate = false) {
   const summary = document.getElementById('h2h-summary');
   if (!driverA || !driverB || driverA === driverB) {
     if (summary) {
-      summary.innerHTML = '<p>Select two different drivers to compare their performances.</p>';
+      clearChildren(summary);
+      const message = document.createElement('p');
+      message.textContent = 'Select two different drivers to compare their performances.';
+      summary.appendChild(message);
     }
     if (state.charts.h2h) {
       state.charts.h2h.destroy();
@@ -993,6 +1032,8 @@ function renderHeadToHeadSummary(driverA, driverB, limit) {
   const container = document.getElementById('h2h-summary');
   if (!container) return;
 
+  clearChildren(container);
+
   let winsA = 0;
   let winsB = 0;
   let ties = 0;
@@ -1038,11 +1079,18 @@ function renderHeadToHeadSummary(driverA, driverB, limit) {
     ? `Average finishing gap: ${averageDiff > 0 ? '+' : ''}${averageDiff.toFixed(2)} places in favour of ${averageDiff >= 0 ? driverA.name : driverB.name}`
     : 'Insufficient data for average gap.';
 
-  container.innerHTML = `
-    <p><strong>${leadSummary}</strong></p>
-    <p>${bestSummary}</p>
-    <p>${avgSummary}</p>
-  `;
+  const leadParagraph = document.createElement('p');
+  const strong = document.createElement('strong');
+  strong.textContent = leadSummary;
+  leadParagraph.appendChild(strong);
+
+  const bestParagraph = document.createElement('p');
+  bestParagraph.textContent = bestSummary;
+
+  const avgParagraph = document.createElement('p');
+  avgParagraph.textContent = avgSummary;
+
+  container.append(leadParagraph, bestParagraph, avgParagraph);
 }
 
 function createOrUpdateChart(key, canvas, config, forceCreate = false) {
@@ -1152,4 +1200,40 @@ function renderError(message) {
   const main = document.querySelector('main');
   if (!main) return;
   main.innerHTML = `<section class="section"><div class="container"><p>${message}</p></div></section>`;
+}
+
+function initScrollProgress() {
+  const progress = document.querySelector('.scroll-progress');
+  if (!progress) return;
+
+  const update = () => {
+    const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+    if (scrollable <= 0) {
+      progress.style.width = '0%';
+      return;
+    }
+    const percentage = (window.scrollY / scrollable) * 100;
+    const clamped = Math.min(Math.max(percentage, 0), 100);
+    progress.style.width = `${clamped}%`;
+  };
+
+  update();
+  window.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update, { passive: true });
+}
+
+function clearChildren(element) {
+  if (!element) return;
+  element.replaceChildren();
+}
+
+function createElement(tagName, { className, text } = {}) {
+  const element = document.createElement(tagName);
+  if (className) {
+    element.className = className;
+  }
+  if (text !== undefined) {
+    element.textContent = text;
+  }
+  return element;
 }

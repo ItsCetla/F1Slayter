@@ -1,4 +1,26 @@
 const DATA_URL = 'v2/data/seasons.json';
+const EXCLUDED_DRIVER_NAMES = new Set(
+  [
+    'Carlos Sainz',
+    'Charles Leclerc',
+    'Esteban Ocon',
+    'Fernando Alonso',
+    'Gabriel Bortoleto',
+    'George Russell',
+    'Isack Hadjar',
+    'Jack Doohan',
+    'Lando Norris',
+    'Liam Lawson',
+    'Max Verstappen',
+    'Nico Hulkenberg',
+    'Oliver Bearman',
+    'Oscar Piastri',
+    'Pierre Gasly',
+    'Yuki Tsunoda',
+    'Andrea Kimi Antonelli',
+  ].map((name) => name.toLowerCase()),
+);
+
 const DRIVER_COLORS = [
   '#ff6b6b',
   '#845ef7',
@@ -243,6 +265,7 @@ function buildSeasonMetrics(season) {
       ...round,
       index,
       name: round.name || `Round ${index + 1}`,
+      results: normaliseRoundResults(round.results),
     }));
 
   const driverMap = new Map();
@@ -381,6 +404,24 @@ function buildSeasonMetrics(season) {
     teams,
     maxPosition,
   };
+}
+
+function isExcludedDriver(name) {
+  return typeof name === 'string' && EXCLUDED_DRIVER_NAMES.has(name.trim().toLowerCase());
+}
+
+function normaliseRoundResults(results) {
+  if (!Array.isArray(results)) return [];
+  const filtered = results.filter((result) => result?.driver && !isExcludedDriver(result.driver));
+  let finishingPosition = 1;
+  return filtered.map((result) => {
+    const normalised = { ...result };
+    if (Number.isFinite(result.position)) {
+      normalised.position = finishingPosition;
+      finishingPosition += 1;
+    }
+    return normalised;
+  });
 }
 
 function updateCharts(forceCreate = false) {

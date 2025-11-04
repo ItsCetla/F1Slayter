@@ -3,12 +3,13 @@
 (function() {
   'use strict';
   
-  const { loadData, formatDate, getTrackImage, isRealF1Driver, openModal, closeModal, appState } = window.F1SlayterShared;
+  const { loadData, formatDate, getTrackImage, getDriverColor, isRealF1Driver, openModal, closeModal, notifyRaceDayIfNeeded, appState } = window.F1SlayterShared;
 
   let currentFilter = "all";
 
 async function initSessionsPage() {
   await loadData();
+  notifyRaceDayIfNeeded();
   
   renderSessions();
   setupFilterControls();
@@ -114,6 +115,7 @@ function renderSessions() {
     const filteredResults = session.results.filter(result => !isRealF1Driver(result.driver));
     const winner = filteredResults.length > 0 ? filteredResults[0] : null;
     const winnerName = winner ? winner.driver : "TBD";
+    const winnerColor = winner ? getDriverColor(winner.driver) : null;
     const trackImage = getTrackImage(session.name);
     
     const highlights = session.highlights.length
@@ -145,14 +147,16 @@ function renderSessions() {
               positionLabel = "🥉";
             }
 
+            const driverColor = getDriverColor(result.driver);
+
             return `
-              <div class="session__podium-item ${positionClass}">
+              <div class="session__podium-item ${positionClass}" style="--driver-accent: ${driverColor};">
                 <div class="session__podium-position">
                   <span class="session__podium-medal">${positionLabel}</span>
                   <span class="session__podium-p">P${position}</span>
                 </div>
                 <div class="session__podium-driver">
-                  <span class="session__podium-name">${result.driver}</span>
+                  <span class="session__podium-name" style="color: ${driverColor};">${result.driver}</span>
                   <span class="session__podium-points">${points} pts ${fastest}</span>
                 </div>
               </div>
@@ -170,10 +174,12 @@ function renderSessions() {
               const points = Number.isFinite(result.points) ? result.points : 0;
               const fastest = result.fastestLap ? "⚡" : "";
               
+              const driverColor = getDriverColor(result.driver);
+
               return `
-                <div class="session__other-item">
+                <div class="session__other-item" style="--driver-accent: ${driverColor};">
                   <span class="session__other-position">P${position}</span>
-                  <span class="session__other-driver">${result.driver}</span>
+                  <span class="session__other-driver" style="color: ${driverColor};">${result.driver}</span>
                   <span class="session__other-points">${points} pts ${fastest}</span>
                 </div>
               `;
@@ -203,7 +209,7 @@ function renderSessions() {
             </div>
             <div class="session__banner-right">
               <span class="session__banner-winner-label">Race Winner</span>
-              <span class="session__banner-winner-name">🏆 ${winnerName}</span>
+              <span class="session__banner-winner-name" style="color: ${winnerColor || 'var(--color-primary)'};">🏆 ${winnerName}</span>
             </div>
           </div>
         </div>
@@ -261,20 +267,15 @@ function showSessionDetail(sessionName) {
       </h3>
       <div style="display: grid; gap: 0.5rem;">
         ${filteredResults.map(result => {
-          const podiumColors = {
-            1: '#FFD700',
-            2: '#C0C0C0',
-            3: '#CD7F32'
-          };
-          const borderColor = podiumColors[result.position] || 'rgba(255, 255, 255, 0.1)';
-          
+          const driverColor = getDriverColor(result.driver);
+
           return `
-            <div style="padding: 0.75rem 1rem; background: rgba(255, 255, 255, 0.05); 
-                        border-left: 3px solid ${borderColor}; border-radius: var(--radius-sm);
+            <div style="padding: 0.75rem 1rem; background: rgba(255, 255, 255, 0.05);
+                        border-left: 3px solid ${driverColor}; border-radius: var(--radius-sm);
                         display: flex; justify-content: space-between; align-items: center;">
               <div>
                 <strong style="font-size: 1.1rem;">P${result.position}</strong>
-                <span style="margin-left: 1rem;">${result.driver}</span>
+                <span style="margin-left: 1rem; color: ${driverColor};">${result.driver}</span>
               </div>
               <div style="text-align: right;">
                 <strong style="color: var(--color-primary);">${result.points} pts</strong>

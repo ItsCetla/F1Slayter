@@ -3,13 +3,14 @@
 (function() {
   'use strict';
   
-  const { loadData, getTeamColor, openModal, closeModal, appState, isRealF1Driver } = window.F1SlayterShared;
+  const { loadData, getDriverColor, openModal, closeModal, notifyRaceDayIfNeeded, appState, isRealF1Driver } = window.F1SlayterShared;
 
   let currentSortKey = "points";
   let hideAiDrivers = false;
 
 async function initStandingsPage() {
   await loadData();
+  notifyRaceDayIfNeeded();
 
   setupSortingControls();
   setupAiToggle();
@@ -88,12 +89,14 @@ function renderLeaderboard() {
     }
 
     const code = driver.code ? `<span style="font-size: 0.75rem; color: var(--color-muted);">${driver.code}</span>` : "";
-    
+    const driverColor = getDriverColor(driver.name);
+
     return `
-      <tr onclick="showDriverDetail('${driver.name.replace(/'/g, "\\'")}')">
+      <tr class="leaderboard__row" style="--driver-accent: ${driverColor};" onclick="showDriverDetail('${driver.name.replace(/'/g, "\\'")}')">
         <td data-label="Position">${position}</td>
         <td data-label="Driver">
           <div class="leaderboard__driver">
+            <span class="leaderboard__driver-swatch" style="background-color: ${driverColor};"></span>
             <div>
               <strong>${driver.name || "Unknown Driver"}</strong>
               ${code}
@@ -143,12 +146,13 @@ function renderTopThree() {
   const markup = topThree.map((driver, index) => {
     const positionClass = ['first', 'second', 'third'][index];
     const medal = ['🥇', '🥈', '🥉'][index];
-    
+    const accent = getDriverColor(driver.name);
+
     return `
-      <div class="spotlight-card spotlight-card--${positionClass}">
+      <div class="spotlight-card spotlight-card--${positionClass}" style="--driver-accent: ${accent};">
         <div style="font-size: 3rem; margin-bottom: 1rem;">${medal}</div>
         <h3 style="font-family: 'Orbitron', sans-serif; font-size: 1.5rem; margin: 0 0 1rem;">
-          ${driver.name}
+          <span style="color: ${accent};">${driver.name}</span>
         </h3>
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
           <div>
@@ -178,8 +182,10 @@ function renderTopThree() {
 function showDriverDetail(driverName) {
   const { drivers, sessions } = appState;
   const driver = drivers.find(d => d.name === driverName);
-  
+
   if (!driver) return;
+
+  const driverColor = getDriverColor(driver.name);
   
   const driverSessions = sessions.map(session => {
     const result = session.results.find(r => r.driver === driverName);
@@ -196,8 +202,8 @@ function showDriverDetail(driverName) {
   }).filter(Boolean);
   
   const content = `
-    <div class="driver-detail__header">
-      <h2 class="driver-detail__name">${driver.name}</h2>
+    <div class="driver-detail__header" style="border-bottom: 2px solid ${driverColor};">
+      <h2 class="driver-detail__name" style="color: ${driverColor};">${driver.name}</h2>
     </div>
     
     <div class="driver-detail__stats">

@@ -3,10 +3,11 @@
 (function() {
   'use strict';
   
-  const { loadData, formatDate, getTrackImage, openModal, closeModal, appState } = window.F1SlayterShared;
+  const { loadData, formatDate, getTrackImage, openModal, closeModal, notifyRaceDayIfNeeded, appState } = window.F1SlayterShared;
 
 async function initCalendarPage() {
   await loadData();
+  notifyRaceDayIfNeeded();
   
   updateSeasonProgress();
   setupFilterControls();

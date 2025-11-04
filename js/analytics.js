@@ -5,14 +5,17 @@
     loadData,
     appState,
     getTeamColor,
+    getDriverColor,
     isRealF1Driver,
     formatDate,
+    notifyRaceDayIfNeeded,
   } = window.F1SlayterShared;
 
   document.addEventListener('DOMContentLoaded', initAnalyticsPage);
 
   async function initAnalyticsPage() {
     await loadData();
+    notifyRaceDayIfNeeded();
 
     renderPointsTrajectory();
     renderTeamPerformance();
@@ -84,6 +87,7 @@
 
     const cardsMarkup = topDrivers
       .map((driver) => {
+        const driverColor = getDriverColor(driver.name);
         const raceSegments = sessions.map((session) => {
           const result = session.results.find((entry) => entry.driver === driver.name) || null;
           const points = result ? Number(result.points) || 0 : 0;
@@ -119,7 +123,7 @@
           return `
             <div
               class="${barClass}"
-              style="height: ${Math.min(100, Math.max(0, heightRatio))}%"
+              style="height: ${Math.min(100, Math.max(0, heightRatio))}%; --driver-accent: ${driverColor};"
               role="presentation"
               aria-hidden="true"
               title="${labelParts.join(' • ')}"
@@ -146,10 +150,10 @@
         }, null);
 
         return `
-          <article class="analytics-card">
+          <article class="analytics-card" style="--driver-accent: ${driverColor};">
             <header class="analytics-card__header">
               <div>
-                <h3 class="analytics-card__title">${driver.name}</h3>
+                <h3 class="analytics-card__title" style="color: ${driverColor};">${driver.name}</h3>
                 <p class="analytics-card__subtitle">${driver.team || 'Independent'}</p>
               </div>
               <div class="analytics-card__metric">

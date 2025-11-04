@@ -223,6 +223,111 @@ function getTeamColor(teamName) {
   return teamColors[teamName] || "#666666";
 }
 
+const driverColorPalette = [
+  "#FF6B6B", "#F7B32B", "#59C9A5", "#4D9DE0", "#9D4EDD",
+  "#FF7F50", "#2EC4B6", "#F86624", "#118AB2", "#EF476F",
+  "#FFD166", "#06D6A0", "#073B4C", "#A2D2FF", "#B5179E",
+  "#FF8FAB", "#00BBF9", "#F15BB5", "#43AA8B", "#D4A373"
+];
+
+const driverColorCache = new Map();
+
+function hashString(value) {
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash << 5) - hash + value.charCodeAt(index);
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash;
+}
+
+function getDriverColor(driverName = "") {
+  const name = driverName.trim();
+  if (!name) return "#888888";
+
+  if (driverColorCache.has(name)) {
+    return driverColorCache.get(name);
+  }
+
+  const hash = Math.abs(hashString(name));
+  const color = driverColorPalette[hash % driverColorPalette.length];
+  driverColorCache.set(name, color);
+  return color;
+}
+
+let raceDayNotificationDisplayed = false;
+let raceDayNotificationDismissed = false;
+
+function getLocalIsoDate(date = new Date()) {
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return localDate.toISOString().slice(0, 10);
+}
+
+function notifyRaceDayIfNeeded() {
+  if (raceDayNotificationDisplayed || raceDayNotificationDismissed) return;
+  if (typeof document === "undefined") return;
+
+  const { sessions } = appState;
+  if (!Array.isArray(sessions) || sessions.length === 0) return;
+
+  const todayIso = getLocalIsoDate();
+  const raceToday = sessions.find((session) => session.date === todayIso);
+  if (!raceToday) return;
+
+  const existingAlert = document.getElementById("race-day-alert");
+  if (existingAlert) {
+    const raceNameEl = existingAlert.querySelector("[data-race-name]");
+    if (raceNameEl) {
+      raceNameEl.textContent = raceToday.name || "Race Day";
+    }
+    const raceDateEl = existingAlert.querySelector("[data-race-date]");
+    if (raceDateEl) {
+      raceDateEl.textContent = formatDate(raceToday.date);
+    }
+    raceDayNotificationDisplayed = true;
+    return;
+  }
+
+  const alert = document.createElement("section");
+  alert.id = "race-day-alert";
+  alert.className = "race-day-alert";
+  alert.setAttribute("role", "status");
+  alert.setAttribute("aria-live", "polite");
+  alert.innerHTML = `
+    <div class="race-day-alert__content">
+      <span class="race-day-alert__icon" aria-hidden="true">🏁</span>
+      <div class="race-day-alert__message">
+        <strong data-race-name>${raceToday.name || "Race Day"}</strong>
+        <p>
+          It's race day! ${raceToday.name ? `${raceToday.name} is on the schedule for` : "Your league has an event on"}
+          <span data-race-date>${formatDate(raceToday.date)}</span>.
+        </p>
+      </div>
+      <button type="button" class="race-day-alert__close" aria-label="Dismiss race day alert">×</button>
+    </div>
+  `;
+
+  const closeButton = alert.querySelector(".race-day-alert__close");
+  if (closeButton) {
+    closeButton.addEventListener("click", () => {
+      raceDayNotificationDismissed = true;
+      alert.classList.add("race-day-alert--closing");
+      window.setTimeout(() => {
+        alert.remove();
+      }, 200);
+    });
+  }
+
+  const navMenu = document.querySelector(".nav-menu");
+  if (navMenu && navMenu.parentNode) {
+    navMenu.parentNode.insertBefore(alert, navMenu.nextSibling);
+  } else {
+    document.body.prepend(alert);
+  }
+
+  raceDayNotificationDisplayed = true;
+}
+
 // Track Image Mapping
 function getTrackImage(sessionName) {
   const trackImages = {
@@ -336,10 +441,12 @@ window.F1SlayterShared = {
   loadData,
   formatDate,
   getTeamColor,
+  getDriverColor,
   getTrackImage,
   isRealF1Driver,
   openModal,
   closeModal,
+  notifyRaceDayIfNeeded,
   appState,
 };
 

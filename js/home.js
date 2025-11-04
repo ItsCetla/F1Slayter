@@ -3,7 +3,7 @@
 (function() {
   'use strict';
   
-  const { loadData, formatDate, appState } = window.F1SlayterShared;
+  const { loadData, formatDate, getDriverColor, notifyRaceDayIfNeeded, appState } = window.F1SlayterShared;
 
 async function initHomePage() {
   console.log('Home: Starting initialization...');
@@ -11,6 +11,7 @@ async function initHomePage() {
   try {
     await loadData();
     console.log('Home: Data loaded successfully');
+    notifyRaceDayIfNeeded();
     console.log('Home: Drivers:', appState.drivers.length);
     console.log('Home: Sessions:', appState.sessions.length);
     
@@ -37,6 +38,9 @@ function updateQuickStats() {
   
   if (leaderNameEl && leader) {
     leaderNameEl.textContent = leader.name || "-";
+    const leaderColor = getDriverColor(leader.name);
+    leaderNameEl.style.color = leaderColor;
+    leaderNameEl.style.setProperty('--driver-accent', leaderColor);
   }
   if (leaderPointsEl && leader) {
     leaderPointsEl.textContent = `${leader.points} points`;
@@ -105,6 +109,7 @@ function renderRecentHighlights() {
   const markup = recentSessions.map(session => {
     const winner = session.results.filter(r => !window.F1SlayterShared.isRealF1Driver(r.driver))[0];
     const winnerName = winner ? winner.driver : "TBD";
+    const winnerColor = winner ? getDriverColor(winner.driver) : null;
     const sessionNameEncoded = encodeURIComponent(session.name || "");
     
     return `
@@ -113,7 +118,7 @@ function renderRecentHighlights() {
           ${session.name || "Unnamed Session"}
         </h4>
         <p style="margin: 0; color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">
-          🏆 Winner: <strong>${winnerName}</strong> • 📅 ${formatDate(session.date)}
+          🏆 Winner: <strong style="color: ${winnerColor || 'var(--color-primary)'};">${winnerName}</strong> • 📅 ${formatDate(session.date)}
         </p>
         ${session.highlights.length ? `
           <div style="margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">

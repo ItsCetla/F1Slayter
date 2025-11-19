@@ -134,6 +134,8 @@ function transformRows(rows) {
     if (!recordType) return;
 
     if (recordType === "driver") {
+      if (isRealF1Driver(row.driverName)) return;
+
       const driver = {
         name: row.driverName || "",
         code: row.driverCode || "",
@@ -158,6 +160,8 @@ function transformRows(rows) {
     }
 
     if (recordType === "session-result") {
+      if (isRealF1Driver(row.driverName)) return;
+
       const key = createSessionKey(row.sessionDate, row.sessionName);
       const session = sessionsMap.get(key) || createSessionSkeleton(row);
       session.results.push({

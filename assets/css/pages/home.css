@@ -290,13 +290,21 @@
 
 .round-strip {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(220px, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 16px;
-  overflow-x: auto;
-  padding: 4px 4px 12px;
-  margin: -4px -4px 0;
-  scroll-snap-type: x proximity;
+}
+
+/* Phones: one swipeable row instead of a tall stack. */
+@media (max-width: 720px) {
+  .round-strip {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(200px, 72%);
+    overflow-x: auto;
+    padding: 4px 4px 12px;
+    margin: -4px -4px 0;
+    scroll-snap-type: x proximity;
+  }
 }
 
 .round-card {

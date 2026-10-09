@@ -161,7 +161,7 @@ function standingsSection(league, standingsSeason, selectedSeason, championSeaso
         </table>
       </div>
       <div class="home-side">
-        ${champ ? `<article class="champ card band-dark">
+        ${champ && nextRound(selectedSeason) ? `<article class="champ card band-dark">
           <p class="kicker">${esc(championSeason.label)} champion</p>
           <h3 class="champ__name"><a href="${link("drivers/", { id: champ.id })}">${esc(champ.name)}</a></h3>
           <div class="champ__stats">

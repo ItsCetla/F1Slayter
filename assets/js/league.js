@@ -27,8 +27,11 @@ export function createLeague(raw) {
     }))
     .sort((a, b) => b.year - a.year);
 
+  const info = { ...(raw.league || {}) };
+  const timezoneIssue = checkTimeZone(info);
+
   const league = {
-    info: raw.league || {},
+    info,
     teams: raw.teams || {},
     drivers,
     seasons,
@@ -45,8 +48,31 @@ export function createLeague(raw) {
       return seasons.find((s) => s.status === "active") || seasons[0] || null;
     },
   };
-  league.issues = validate(league);
+  league.issues = [...timezoneIssue, ...validate(league)];
+
+  // Results with an unknown driver or an unusable position are reported in
+  // `issues` above and then left out, so totals stay consistent everywhere.
+  for (const season of seasons) {
+    season.rounds = season.rounds.map((round) => ({
+      ...round,
+      results: (round.results || []).filter(
+        (r) => league.resolveDriver(r.driver) && Number.isInteger(r.position) && r.position >= 1,
+      ),
+    }));
+  }
   return league;
+}
+
+function checkTimeZone(info) {
+  if (!info.timezone) return [];
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: info.timezone });
+    return [];
+  } catch {
+    const bad = info.timezone;
+    info.timezone = "America/New_York";
+    return [`league.timezone "${bad}" is not a valid time zone; using America/New_York`];
+  }
 }
 
 export function roundStatus(round, now = new Date()) {
@@ -72,11 +98,14 @@ export function latestCompletedRound(season) {
   return done[done.length - 1] || null;
 }
 
+// The next race still to be run. Rounds whose start has passed but have no
+// results yet are "pending" (see pendingRounds), not next.
 export function nextRound(season, now = new Date()) {
-  return season.rounds.find((r) => {
-    const status = roundStatus(r, now);
-    return status === "scheduled" || status === "awaiting-results";
-  }) || null;
+  return season.rounds.find((r) => roundStatus(r, now) === "scheduled") || null;
+}
+
+export function pendingRounds(season, now = new Date()) {
+  return season.rounds.filter((r) => roundStatus(r, now) === "awaiting-results");
 }
 
 export function pointsFor(league, result) {
@@ -342,7 +371,11 @@ function validate(league) {
         seenDrivers.add(id);
         seenPositions.add(result.position);
       }
-      if (round.start && !parseStart(round)) issues.push(`${where}: unreadable start "${round.start}"`);
+      if (round.start && !parseStart(round)) {
+        issues.push(`${where}: unreadable start "${round.start}"`);
+      } else if (round.start && !/(Z|[+-]\d\d:\d\d)$/.test(round.start)) {
+        issues.push(`${where}: start "${round.start}" needs a time and UTC offset, e.g. 2026-10-20T20:00:00-04:00`);
+      }
     }
   }
   return issues;

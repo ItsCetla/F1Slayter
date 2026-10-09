@@ -440,7 +440,8 @@ function chartsUnavailable() {
 function renderInsights(table) {
   const rows = table.rows;
   const cards = document.getElementById("insightCards");
-  const leader = pickLeader(rows);
+  // Same order as the standings page (points, then countback).
+  const leader = rows[0];
   const mostWins = rows.slice().sort((a, b) => b.wins - a.wins || b.points - a.points || best(a) - best(b))[0];
   const watch = pickWatch(rows, leader);
   const runnerUp = rows.find((row) => row.id !== leader.id);
@@ -450,7 +451,7 @@ function renderInsights(table) {
     const margin = leader.points - runnerUp.points;
     leaderMeta = margin > 0
       ? `+${margin} pts over ${esc(runnerUp.name)}`
-      : `Level with ${esc(runnerUp.name)} · ahead on average finish`;
+      : `Level with ${esc(runnerUp.name)} · ahead on countback`;
   }
 
   const span = Math.min(3, state.through);
@@ -481,12 +482,6 @@ function renderInsights(table) {
 
   renderPulse(rows);
   renderPodiumSpotlight(rows);
-}
-
-// Ties on points go to the better average finish.
-function pickLeader(rows) {
-  const top = rows.filter((row) => row.points === rows[0].points);
-  return top.sort((a, b) => avg(a) - avg(b) || a.rank - b.rank)[0];
 }
 
 // Biggest points haul over the last (up to) three rounds, leader excluded.

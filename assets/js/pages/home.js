@@ -1,6 +1,6 @@
 import {
-  standings, teamStandings, seasonSummary, nextRound, latestCompletedRound, parseStart, roundStatus,
-  roundWinner, teamColor, pointsFor,
+  standings, teamStandings, seasonSummary, nextRound, pendingRounds, latestCompletedRound, parseStart,
+  roundStatus, roundWinner, teamColor, pointsFor,
 } from "../league.js";
 import {
   initPage, esc, link, flag, countryName, driverId, teamChip, finishChip, signed, trackMap, roundTitle,
@@ -24,52 +24,59 @@ function render({ league, season }) {
     : league.seasons.find((s) => s.year <= season.year && latestCompletedRound(s)) || null;
   const lastChampionSeason = league.seasons.find((s) => s.status === "complete" && s.year <= season.year && latestCompletedRound(s));
 
+  // "race": countdown to the next round. "summary": no rounds left to run but
+  // results exist, so feature the champion/leader. "preseason": nothing yet.
+  const next = nextRound(season);
+  const heroType = next ? "race" : latestCompletedRound(season) ? "summary" : "preseason";
+
   main.innerHTML = [
-    heroSection(league, season, lastChampionSeason),
+    heroType === "summary" ? summaryHero(league, season) : raceHero(league, season, next, lastChampionSeason),
     seasonWithResults ? latestResultSection(league, seasonWithResults, season) : "",
-    seasonWithResults ? standingsSection(league, seasonWithResults, season, lastChampionSeason) : "",
+    seasonWithResults
+      ? standingsSection(league, seasonWithResults, season, heroType === "summary" ? null : lastChampionSeason)
+      : "",
     scheduleSection(league, season),
     seasonWithResults ? statsSection(league, seasonWithResults) : "",
   ].join("");
 
-  const next = nextRound(season);
   if (next) startCountdown(document.getElementById("heroCountdown"), parseStart(next));
 }
 
-function heroSection(league, season, championSeason) {
-  const next = nextRound(season);
-  if (!next) {
-    // Season finished: celebrate the champion instead of a countdown.
-    const table = standings(league, season);
-    const champ = table.rows[0];
-    const summary = seasonSummary(league, season);
-    return `<section class="hero band-dark">
-      <div class="speed-stripes" aria-hidden="true"></div>
-      <div class="container hero__inner">
-        <div class="hero__copy">
-          <p class="kicker">${esc(season.label)} · ${esc(season.year)} · ${season.status === "complete" ? "Final" : "Latest"}</p>
-          <h1 class="hero__title">${champ ? `${esc(champ.name)}<span class="hero__title-sub">${season.status === "complete" ? "Champion" : "Leads the championship"}</span>` : esc(season.label)}</h1>
-          ${champ ? `<p class="hero__meta">${champ.points} points · ${champ.wins} wins from ${summary.racesCompleted} races · ${champ.podiums} podiums</p>` : ""}
-          <div class="btn-row hero__actions">
-            <a class="btn" href="${link("standings/")}">Final standings</a>
-            <a class="btn btn--ghost" href="${link("results/")}">All results</a>
-          </div>
+// No rounds left to run: celebrate the champion (or current leader).
+function summaryHero(league, season) {
+  const champ = standings(league, season).rows[0];
+  const summary = seasonSummary(league, season);
+  const final = season.status === "complete";
+  return `<section class="hero band-dark">
+    <div class="speed-stripes" aria-hidden="true"></div>
+    <div class="container hero__inner">
+      <div class="hero__copy">
+        <p class="kicker">${esc(season.label)} · ${esc(season.year)} · ${final ? "Final" : "Latest"}</p>
+        <h1 class="hero__title">${esc(champ.name)}<span class="hero__title-sub">${final ? "Champion" : "Leads the championship"}</span></h1>
+        <p class="hero__meta">${champ.points} points · ${champ.wins} wins from ${summary.racesCompleted} races · ${champ.podiums} podiums</p>
+        ${pendingNote(season)}
+        <div class="btn-row hero__actions">
+          <a class="btn" href="${link("standings/")}">${final ? "Final standings" : "Standings"}</a>
+          <a class="btn btn--ghost" href="${link("results/")}">All results</a>
         </div>
       </div>
-    </section>`;
-  }
+    </div>
+  </section>`;
+}
 
-  const start = parseStart(next);
-  const status = roundStatus(next);
+// Next race with countdown. `next` is null before a season's calendar exists.
+function raceHero(league, season, next, championSeason) {
+  const start = parseStart(next || {});
   const tbd = isTbd(next);
   const champ = championSeason ? standings(league, championSeason).rows[0] : null;
   return `<section class="hero band-dark">
     <div class="speed-stripes" aria-hidden="true"></div>
     <div class="container hero__inner">
       <div class="hero__copy">
-        <p class="kicker">${esc(season.label)} · Round ${esc(next.round)}${status === "awaiting-results" ? ' · <span class="badge badge--red">Results pending</span>' : ""}</p>
+        <p class="kicker">${esc(season.label)} · ${next ? `Round ${esc(next.round)}` : esc(season.year)}</p>
         <h1 class="hero__title">${tbd ? `${esc(season.label)}<span class="hero__title-sub">Next race to be announced</span>` : esc(roundTitle(next))}</h1>
-        ${tbd ? `<p class="hero__meta">The ${esc(season.label)} calendar is being finalised. Check back for the first round.</p>` : `<p class="hero__meta">${flag(next.country, countryName(next.country))}<span>${esc(next.circuit)}</span><span aria-hidden="true">·</span><span>${start ? `${esc(fmt.long(start))} · ${esc(fmt.time(start))}` : "Date TBC"}</span></p>`}
+        ${tbd ? `<p class="hero__meta">The ${esc(season.label)} calendar is being finalised. Check back for the ${next && next.round > 1 ? "next" : "first"} round.</p>` : `<p class="hero__meta">${flag(next.country, countryName(next.country))}<span>${esc(next.circuit)}</span><span aria-hidden="true">·</span><span>${start ? `${esc(fmt.long(start))} · ${esc(fmt.time(start))}` : "Date TBC"}</span></p>`}
+        ${pendingNote(season)}
         <div class="hero__countdown">
           <p class="hero__countdown-label">${start ? "Lights out in" : "Countdown starts once the date is set"}</p>
           <div id="heroCountdown"></div>
@@ -112,7 +119,7 @@ function latestResultSection(league, resultSeason, selectedSeason) {
           const row = byId.get(res.id);
           const driver = league.drivers.get(res.id);
           return `<article class="podium__card podium__card--p${res.position} card" style="--team:${esc(teamColor(league, res.team))}">
-            <p class="podium__pos">${res.position}<span>${res.position === 1 ? "st" : res.position === 2 ? "nd" : "rd"}</span></p>
+            <p class="podium__pos">${res.position}<span>${ordinal(res.position).replace(/^\d+/, "")}</span></p>
             <h3 class="podium__name"><a href="${link("drivers/", { id: res.id })}">${esc(driver.name)}</a></h3>
             <p class="podium__team">${esc(res.team || "")}</p>
             <p class="podium__pts"><strong>+${pointsFor(league, res)}</strong> pts${res.fastestLap ? ' · <span class="fl-badge">Fastest lap</span>' : ""}</p>
@@ -136,7 +143,7 @@ function standingsSection(league, standingsSeason, selectedSeason, championSeaso
   return `<section class="section container" aria-labelledby="standingsTitle">
     <div class="section-head">
       <div>
-        <p class="kicker">${esc(standingsSeason.label)} · ${final ? "Final" : `After round ${table.rounds.length}`}</p>
+        <p class="kicker">${esc(standingsSeason.label)} · ${final ? "Final" : `After round ${table.rounds.at(-1).round}`}</p>
         <h2 class="section-title" id="standingsTitle">Driver standings</h2>
       </div>
       <a class="more-link" href="${link("standings/", { season: standingsSeason.id })}">Full standings</a>
@@ -161,7 +168,7 @@ function standingsSection(league, standingsSeason, selectedSeason, championSeaso
         </table>
       </div>
       <div class="home-side">
-        ${champ && nextRound(selectedSeason) ? `<article class="champ card band-dark">
+        ${champ ? `<article class="champ card band-dark">
           <p class="kicker">${esc(championSeason.label)} champion</p>
           <h3 class="champ__name"><a href="${link("drivers/", { id: champ.id })}">${esc(champ.name)}</a></h3>
           <div class="champ__stats">
@@ -228,7 +235,7 @@ function statsSection(league, statsSeason) {
     [s.racesCompleted, "Races", statsSeason.label],
     [s.drivers, "Drivers", "League entrants"],
     [s.distinctWinners, "Different winners", ""],
-    s.mostWins ? [s.mostWins.wins, "Most wins", s.mostWins.name] : null,
+    s.mostWins && s.mostWins.wins ? [s.mostWins.wins, "Most wins", s.mostWins.name] : null,
     s.mostFastestLaps && s.mostFastestLaps.fastestLaps ? [s.mostFastestLaps.fastestLaps, "Most fastest laps", s.mostFastestLaps.name] : null,
     s.longestWinStreak ? [s.longestWinStreak.length, "Longest win streak", `${s.longestWinStreak.driver.name} · R${s.longestWinStreak.from}–R${s.longestWinStreak.to}`] : null,
   ].filter(Boolean);
@@ -241,4 +248,13 @@ function statsSection(league, statsSeason) {
       ${tiles.map(([value, label, meta]) => `<div class="card stat-tile f1-corner"><div class="stat"><span class="stat__value">${esc(value)}</span><span class="stat__label">${esc(label)}</span></div>${meta ? `<p class="stat__meta">${esc(meta)}</p>` : ""}</div>`).join("")}
     </div>
   </section>`;
+}
+
+// Races that have been run but whose results aren't entered yet.
+function pendingNote(season) {
+  const pending = pendingRounds(season);
+  if (!pending.length) return "";
+  return `<p class="hero__pending"><span class="badge badge--red">Results pending</span> ${pending
+    .map((r) => `<a href="${link("results/", { round: r.round })}">Round ${esc(r.round)} · ${esc(roundTitle(r))}</a>`)
+    .join(", ")}</p>`;
 }

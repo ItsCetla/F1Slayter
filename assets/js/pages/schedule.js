@@ -316,7 +316,6 @@ function wireCalendarButton(league, season, dated) {
 function buildIcs(league, season, rounds) {
   const leagueName = league.info.name || "Slayter League";
   const host = league.info.site || window.location.host || "slayter-league";
-  const total = season.rounds.filter((r) => r.status !== "cancelled").length;
   const stamp = icsDate(new Date());
   const lines = [
     "BEGIN:VCALENDAR",
@@ -333,7 +332,7 @@ function buildIcs(league, season, rounds) {
     page.hash = `round-${round.round}`;
     const where = [round.circuit && round.circuit !== "TBD" ? round.circuit : "", countryName(round.country)].filter(Boolean).join(", ");
     const details = [
-      `${season.label} · Round ${round.round} of ${total}`,
+      `${season.label} · Round ${round.round}`,
       round.laps ? `${round.laps} laps${round.lengthKm ? ` × ${round.lengthKm} km` : ""}` : "",
       page.href,
     ].filter(Boolean).join("\n");

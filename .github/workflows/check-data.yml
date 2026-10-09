@@ -1,0 +1,19 @@
+# Catches mistakes in hand-edited league data (unknown drivers, duplicate
+# positions, dates without a UTC offset) before they reach the live site.
+name: Check league data
+
+on:
+  push:
+    paths: ["data/**", "assets/js/league.js", "tests/**"]
+  pull_request:
+    paths: ["data/**", "assets/js/league.js", "tests/**"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test tests/league.test.mjs

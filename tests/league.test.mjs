@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import {
   createLeague, standings, seasonSummary, nextRound, roundStatus, headToHead,
-  teamStandings, driverCareer, seasonEntries,
+  teamStandings, driverCareer, seasonEntries, pendingRounds,
 } from "../assets/js/league.js";
 
 const raw = JSON.parse(await readFile(new URL("../data/league.json", import.meta.url), "utf8"));
@@ -73,7 +73,9 @@ test("round status and next round", () => {
   assert.equal(roundStatus(season.rounds[1], now), "awaiting-results");
   assert.equal(roundStatus(season.rounds[2], now), "scheduled");
   assert.equal(roundStatus(season.rounds[3], now), "cancelled");
-  assert.equal(nextRound(season, now).round, 2);
+  // A past round without results is pending, not "next".
+  assert.equal(nextRound(season, now).round, 3);
+  assert.deepEqual(pendingRounds(season, now).map((r) => r.round), [2]);
 });
 
 test("validation catches bad results", () => {
@@ -110,4 +112,26 @@ test("driver career and season entries", () => {
   assert.equal(career.seasons.length, 1);
   assert.equal(seasonEntries(league, s1).length, 7);
   assert.equal(seasonEntries(league, league.season("season-2")).length, 0);
+});
+
+test("bad data is reported and kept out of every total", () => {
+  const messy = createLeague({
+    league: { points: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1], timezone: "America/NewYork" },
+    drivers: [{ id: "a", name: "A" }],
+    seasons: [{ id: "x", label: "X", year: 1, rounds: [
+      { round: 1, start: "2026-11-03T20:00:00", results: [
+        { driver: "a", team: "Haas", position: 1 },
+        { driver: "typo", team: "Haas", position: 9 },
+        { driver: "a", team: "Haas", position: "<b>" },
+      ] },
+    ] }],
+  });
+  assert.equal(messy.info.timezone, "America/New_York");
+  assert.ok(messy.issues.some((i) => i.includes("not a valid time zone")));
+  assert.ok(messy.issues.some((i) => i.includes("needs a time and UTC offset")));
+  assert.ok(messy.issues.some((i) => i.includes('unknown driver "typo"')));
+  const season = messy.seasons[0];
+  assert.equal(season.rounds[0].results.length, 1);
+  assert.equal(standings(messy, season).rows[0].points, 25);
+  assert.equal(teamStandings(messy, season).rows[0].points, 25);
 });

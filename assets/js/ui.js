@@ -41,8 +41,10 @@ export function link(path = "", params = {}) {
   return url.pathname + url.search + url.hash;
 }
 
+// Site files resolve against the site root; full URLs (e.g. a hosted track map) pass through.
 export function asset(path) {
-  return new URL(path, ROOT).pathname;
+  const url = new URL(path, ROOT);
+  return url.origin === ROOT.origin ? url.pathname : url.href;
 }
 
 export function flag(countryCode, label = "") {
@@ -301,6 +303,20 @@ function renderRaceDayBanner(league) {
   document.getElementById("site-header")?.after(banner);
 }
 
+// Data problems are only shown to whoever is checking an edit: on a local
+// server, or on the live site with ?debug in the URL.
+function renderDataIssues(issues) {
+  if (!issues.length) return;
+  const local = ["localhost", "127.0.0.1", ""].includes(window.location.hostname);
+  if (!local && !new URLSearchParams(window.location.search).has("debug")) return;
+  const box = document.createElement("div");
+  box.className = "data-issues";
+  box.setAttribute("role", "alert");
+  box.innerHTML = `<div class="container"><strong>league.json has ${issues.length} problem${issues.length === 1 ? "" : "s"}</strong>
+    <ul>${issues.map((issue) => `<li>${esc(issue)}</li>`).join("")}</ul></div>`;
+  document.getElementById("site-header")?.after(box);
+}
+
 export function renderError(error, retry) {
   const main = document.getElementById("main");
   if (!main) return;
@@ -328,6 +344,7 @@ export async function initPage(pageKey) {
     return null;
   }
   for (const issue of league.issues) console.warn(`[league.json] ${issue}`);
+  renderDataIssues(league.issues);
 
   timeZone = league.info.timezone || timeZone;
   const params = new URLSearchParams(window.location.search);

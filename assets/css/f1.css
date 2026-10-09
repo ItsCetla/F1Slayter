@@ -364,6 +364,25 @@ p {
   cursor: pointer;
 }
 
+/* ---------- Data issues (local / ?debug only) ---------- */
+
+.data-issues {
+  background: #fff4d6;
+  color: #4a3600;
+  border-bottom: 2px solid #e0a800;
+  font-size: 14px;
+}
+
+.data-issues .container {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.data-issues ul {
+  margin: 6px 0 0;
+  padding-left: 20px;
+}
+
 /* ---------- Page head ---------- */
 
 .page-head {

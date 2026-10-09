@@ -94,8 +94,14 @@ lets an old gamertag resolve to the same driver.
 
 ### Check your edit
 
-The browser console warns about data problems (unknown drivers, two drivers in the same
-position, unreadable dates). With Node installed you can also run the tests:
+Data problems (an unknown driver id, two drivers in the same position, a `start` without a UTC
+offset, an invalid time zone) are listed in a yellow banner when you run the site locally, or on
+the live site when you add `?debug` to the URL (e.g. `https://f1.cetla.dev/?debug`). Bad results
+are left out of every total until they're fixed, so one typo can't make the driver and team tables
+disagree.
+
+Every push that touches `data/` also runs the data tests on GitHub (Actions tab, "Check league
+data"). To run them yourself with Node installed:
 
 ```bash
 node --test tests/league.test.mjs

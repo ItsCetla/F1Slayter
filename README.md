@@ -13,6 +13,7 @@ Website for the Slayter League, a CETLA league racing the F1 video game. A stati
 | `/standings/` | Driver standings; `?view=teams` for team standings |
 | `/drivers/` | Driver cards; `?id=<driver id>` shows a driver profile with career stats |
 | `/analytics/` | Timeline playback, insights and charts (points, gaps, positions, heatmap, form, head-to-head) |
+| `/replays/` | Race replays: "coming soon" until videos are added, then a gallery and player (`?round=N`) |
 
 Every page takes `?season=<season id>` (the header's season picker sets it); without it the
 active season is shown. Links from the old site (`pages/*.html`, `analytics.html`) redirect to
@@ -43,6 +44,20 @@ using the race position they actually finished (AI cars included, so P14 is fine
   `"points": 12`. Set `"fastestLapPoint": true` in `league` if fastest lap should earn a point.
 - Leave out drivers who didn't start; the site shows them as DNS.
 - Optional `"highlights": ["...", "..."]` on the round shows on the results page.
+
+### Add a race replay
+
+Add a `replay` link to the round once the video is up:
+
+```json
+{"round": 1, "name": "Qatar", "...": "...", "replay": "https://www.youtube.com/watch?v=VIDEO_ID", "results": [...]}
+```
+
+A **Replay** button then appears next to that race on the schedule, the results pages and the
+home page, and the race shows up on `/replays/` (which says "coming soon" until the first
+replay exists). YouTube and Twitch VOD links play right on the site; any other `https://` link
+(Google Drive, Streamable, …) opens on its own site. Links that aren't `http(s)` are ignored and
+flagged in the `?debug` banner.
 
 ### Schedule a round
 
@@ -121,7 +136,7 @@ python3 -m http.server 8000
 
 ```
 index.html                 home page
-schedule/ results/ standings/ drivers/ analytics/   one index.html per page
+schedule/ results/ standings/ drivers/ analytics/ replays/   one index.html per page
 404.html                   GitHub Pages not-found page
 data/league.json           all league data
 assets/js/league.js        data model: loads league.json, derives standings and stats

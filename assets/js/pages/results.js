@@ -4,6 +4,7 @@ import {
 } from "../league.js";
 import {
   initPage, esc, link, flag, countryName, driverId, teamChip, trackMap, roundTitle, isTbd, fmt, ordinal,
+  replayButton,
 } from "../ui.js";
 
 const SEP = '<span class="race-hero__sep" aria-hidden="true">·</span>';
@@ -98,6 +99,8 @@ function summaryView(league, season) {
       </div>`;
   }
 
+  // The replay column only appears once the season has at least one replay.
+  const anyReplay = season.rounds.some((round) => round.replay);
   return `${head}
     <section class="container" aria-labelledby="summaryTitle">
       <h2 class="sr-only" id="summaryTitle">${esc(season.label)} Grands Prix</h2>
@@ -110,15 +113,17 @@ function summaryView(league, season) {
             <th scope="col" class="hide-sm">Team</th>
             <th scope="col" class="hide-sm">Fastest lap</th>
             <th scope="col" class="num hide-sm">Laps</th>
+            ${anyReplay ? '<th scope="col" class="res-replay">Replay</th>' : ""}
           </tr></thead>
-          <tbody>${season.rounds.map((round) => summaryRow(league, round)).join("")}</tbody>
+          <tbody>${season.rounds.map((round) => summaryRow(league, round, anyReplay)).join("")}</tbody>
         </table>
       </div>
       <p class="note">Winner and fastest lap among league drivers. Select a Grand Prix for the full classification.</p>
     </section>`;
 }
 
-function summaryRow(league, round) {
+function summaryRow(league, round, anyReplay) {
+  const replayCell = anyReplay ? `<td class="res-replay">${replayButton(round, { compact: true })}</td>` : "";
   const status = roundStatus(round);
   const start = parseStart(round);
   const complete = status === "complete";
@@ -134,6 +139,7 @@ function summaryRow(league, round) {
       <td class="hide-sm"><span class="muted">—</span></td>
       <td class="hide-sm"><span class="muted">—</span></td>
       <td class="num hide-sm">${round.laps ? esc(round.laps) : '<span class="muted">—</span>'}</td>
+      ${replayCell}
     </tr>`;
   }
 
@@ -150,6 +156,7 @@ function summaryRow(league, round) {
     <td class="hide-sm">${winResult ? teamChip(winResult.team, teamColor(league, winResult.team)) : '<span class="muted">—</span>'}</td>
     <td class="hide-sm">${fastest ? `<span class="res-fl"><span class="res-fl__dot" aria-hidden="true"></span>${esc(fastest.name)}</span>` : '<span class="muted">—</span>'}</td>
     <td class="num hide-sm">${round.laps ? esc(round.laps) : '<span class="muted">—</span>'}</td>
+    ${replayCell}
   </tr>`;
 }
 
@@ -207,6 +214,7 @@ function raceHeader(season, round, status) {
         ${highlights.length
           ? `<ul class="race-hero__highlights" aria-label="Race highlights">${highlights.map((h) => `<li>${esc(h)}</li>`).join("")}</ul>`
           : ""}
+        ${round.replay ? `<div class="race-hero__actions">${replayButton(round, { label: "Watch replay" })}</div>` : ""}
       </div>
       <div class="race-hero__visual">${trackMap(round)}</div>
     </div>

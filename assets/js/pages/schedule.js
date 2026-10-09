@@ -3,6 +3,7 @@ import {
 } from "../league.js";
 import {
   initPage, esc, link, flag, countryName, trackMap, roundTitle, isTbd, fmt, fmtDate, startCountdown,
+  replayButton,
 } from "../ui.js";
 
 // Filter tabs. Rounds that have been raced but await results count as
@@ -242,7 +243,10 @@ function podium(league, round) {
     </ol>
     <div class="sched-card__links">
       ${fastest ? `<p class="sched-card__fl"><span class="sched-card__fl-dot" aria-hidden="true"></span>Fastest lap <strong>${esc(fastest.name)}</strong></p>` : '<span></span>'}
-      <a class="more-link" href="${link("results/", { round: round.round })}" aria-label="Round ${esc(round.round)} results">Results</a>
+      <span class="sched-card__actions">
+        ${replayButton(round, { compact: true })}
+        <a class="more-link" href="${link("results/", { round: round.round })}" aria-label="Round ${esc(round.round)} results">Results</a>
+      </span>
     </div>`;
 }
 

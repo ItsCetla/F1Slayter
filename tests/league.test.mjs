@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import {
   createLeague, standings, seasonSummary, nextRound, roundStatus, headToHead,
-  teamStandings, driverCareer, seasonEntries, pendingRounds,
+  teamStandings, driverCareer, seasonEntries, pendingRounds, parseVideo,
 } from "../assets/js/league.js";
 
 const raw = JSON.parse(await readFile(new URL("../data/league.json", import.meta.url), "utf8"));
@@ -153,4 +153,26 @@ test("Season 2 calendar: 9 Thursday rounds at 8:45 PM Eastern", () => {
     assert.equal(local, "Thu 8:45 PM", `R${round.round} ${round.name}`);
   }
   assert.equal(nextRound(s2, new Date("2026-10-09T12:00:00Z")).name, "Qatar");
+});
+
+test("replay links: only http(s) survive, known hosts parse for embedding", () => {
+  const l = createLeague({
+    drivers: [],
+    seasons: [{ id: "x", label: "X", year: 1, rounds: [
+      { round: 1, replay: "https://youtu.be/dQw4w9WgXcQ?t=90", results: [] },
+      { round: 2, replay: "javascript:alert(1)", results: [] },
+      { round: 3, replay: "https://www.twitch.tv/videos/123456789", results: [] },
+    ] }],
+  });
+  const [r1, r2, r3] = l.seasons[0].rounds;
+  assert.equal(r2.replay, undefined);
+  assert.ok(l.issues.some((i) => i.includes("must be a full http(s) link")));
+  assert.deepEqual(parseVideo(r1.replay), { kind: "youtube", id: "dQw4w9WgXcQ", start: 90, url: "https://youtu.be/dQw4w9WgXcQ?t=90" });
+  assert.equal(parseVideo("https://www.youtube.com/watch?v=dQw4w9WgXcQ").id, "dQw4w9WgXcQ");
+  assert.equal(parseVideo("https://youtube.com/live/dQw4w9WgXcQ").kind, "youtube");
+  assert.deepEqual(parseVideo(r3.replay), { kind: "twitch", id: "123456789", url: "https://www.twitch.tv/videos/123456789" });
+  assert.equal(parseVideo("https://drive.google.com/file/d/abc/view").kind, "link");
+  // Anything that isn't a clean video id falls back to a plain link.
+  assert.equal(parseVideo("https://youtube.com/watch?v=<script>").kind, "link");
+  assert.equal(parseVideo("not a url"), null);
 });

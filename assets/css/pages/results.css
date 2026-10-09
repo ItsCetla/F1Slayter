@@ -408,3 +408,16 @@
     display: none;
   }
 }
+
+.race-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.res-summary .res-replay {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}

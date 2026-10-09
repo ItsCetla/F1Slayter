@@ -12,6 +12,7 @@ const NAV = [
   { key: "standings", label: "Standings", path: "standings/" },
   { key: "drivers", label: "Drivers", path: "drivers/" },
   { key: "analytics", label: "Analytics", path: "analytics/" },
+  { key: "replays", label: "Replays", path: "replays/" },
 ];
 
 const FLAG_CDN = "https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/flags/4x3/";
@@ -89,6 +90,18 @@ export function finishChip(position, { fastestLap = false, title = "" } = {}) {
   if (fastestLap) cls += " fin--fl";
   const label = title || `P${position}${fastestLap ? ", fastest lap" : ""}`;
   return `<span class="${cls}" title="${esc(label)}">${position}</span>`;
+}
+
+const PLAY_ICON = `<svg class="btn-replay__icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg>`;
+
+// "Watch replay" button, rendered only for rounds that have a replay link.
+// Opens the round on the replays page; pass `season` when the round isn't from
+// the season currently selected.
+export function replayButton(round, { season = null, compact = false, label = "Replay" } = {}) {
+  if (!round || !round.replay) return "";
+  const params = { round: round.round };
+  if (season) params.season = season.id;
+  return `<a class="btn-replay${compact ? " btn-replay--compact" : ""}" href="${link("replays/", params)}" aria-label="Watch the Round ${esc(round.round)} replay">${PLAY_ICON}<span>${esc(label)}</span></a>`;
 }
 
 export function finishLegend() {

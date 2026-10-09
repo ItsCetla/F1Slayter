@@ -53,14 +53,50 @@ export function createLeague(raw) {
   // Results with an unknown driver or an unusable position are reported in
   // `issues` above and then left out, so totals stay consistent everywhere.
   for (const season of seasons) {
-    season.rounds = season.rounds.map((round) => ({
-      ...round,
-      results: (round.results || []).filter(
-        (r) => league.resolveDriver(r.driver) && Number.isInteger(r.position) && r.position >= 1,
-      ),
-    }));
+    season.rounds = season.rounds.map((round) => {
+      const clean = {
+        ...round,
+        results: (round.results || []).filter(
+          (r) => league.resolveDriver(r.driver) && Number.isInteger(r.position) && r.position >= 1,
+        ),
+      };
+      // Only http(s) links ever reach an href or the player.
+      if (clean.replay !== undefined && !isWebUrl(clean.replay)) delete clean.replay;
+      return clean;
+    });
   }
   return league;
+}
+
+function isWebUrl(value) {
+  try {
+    const url = new URL(String(value));
+    return url.protocol === "https:" || url.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+// Recognises links the replays page can play in place. Anything else is
+// opened on its own site. Ids are pattern-checked so only they reach an embed URL.
+export function parseVideo(value) {
+  if (!isWebUrl(value)) return null;
+  const url = new URL(value);
+  const host = url.hostname.replace(/^(www\.|m\.)/, "");
+  let id = null;
+  if (host === "youtu.be") id = url.pathname.slice(1);
+  else if (host === "youtube.com" || host === "youtube-nocookie.com") {
+    id = url.searchParams.get("v") || (url.pathname.match(/^\/(?:embed|live|shorts)\/([^/]+)/) || [])[1];
+  }
+  if (id && /^[A-Za-z0-9_-]{11}$/.test(id)) {
+    const start = parseInt(url.searchParams.get("t") || url.searchParams.get("start") || "", 10);
+    return { kind: "youtube", id, start: Number.isFinite(start) ? start : 0, url: url.href };
+  }
+  if (host === "twitch.tv") {
+    const vod = (url.pathname.match(/^\/videos\/(\d+)/) || [])[1];
+    if (vod) return { kind: "twitch", id: vod, url: url.href };
+  }
+  return { kind: "link", host, url: url.href };
 }
 
 function checkTimeZone(info) {
@@ -375,6 +411,9 @@ function validate(league) {
         }
         seenDrivers.add(id);
         seenPositions.add(result.position);
+      }
+      if (round.replay !== undefined && !isWebUrl(round.replay)) {
+        issues.push(`${where}: replay "${round.replay}" must be a full http(s) link`);
       }
       if (round.start && !parseStart(round)) {
         issues.push(`${where}: unreadable start "${round.start}"`);

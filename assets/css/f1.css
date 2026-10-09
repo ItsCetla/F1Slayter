@@ -461,6 +461,13 @@ p {
   text-transform: uppercase;
 }
 
+.section-head__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+}
+
 .more-link {
   display: inline-flex;
   align-items: center;
@@ -623,6 +630,69 @@ p {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+/* Replay button: appears next to races that have a video. */
+.btn-replay {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px 0 12px;
+  border-radius: 999px;
+  background: var(--carbon);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.15s ease;
+}
+
+.btn-replay:hover {
+  background: var(--red);
+}
+
+.btn-replay__icon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 5px 4px 5px 6px;
+  border-radius: 50%;
+  background: var(--red);
+  color: #fff;
+}
+
+.btn-replay:hover .btn-replay__icon {
+  background: #fff;
+  color: var(--red);
+}
+
+.btn-replay--compact {
+  min-height: 36px;
+  padding: 0 12px 0 6px;
+  font-size: 12px;
+}
+
+.btn-replay--compact .btn-replay__icon {
+  width: 20px;
+  height: 20px;
+  padding: 4px 3px 4px 5px;
+}
+
+/* On dark bands the pill flips to white. */
+.band-dark .btn-replay {
+  background: #fff;
+  color: var(--carbon);
+}
+
+.band-dark .btn-replay:hover {
+  background: var(--red);
+  color: #fff;
 }
 
 /* ---------- Segmented tabs & selects ---------- */

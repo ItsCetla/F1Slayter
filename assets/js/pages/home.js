@@ -4,7 +4,7 @@ import {
 } from "../league.js";
 import {
   initPage, esc, link, flag, countryName, driverId, teamChip, finishChip, signed, trackMap, roundTitle,
-  isTbd, fmt, startCountdown, ordinal,
+  isTbd, fmt, startCountdown, ordinal, replayButton,
 } from "../ui.js";
 
 const ctx = await initPage("home");
@@ -111,7 +111,10 @@ function latestResultSection(league, resultSeason, selectedSeason) {
         <p class="kicker">${other ? `${esc(resultSeason.label)} · ` : ""}Latest result · Round ${esc(round.round)}</p>
         <h2 class="section-title" id="latestTitle">${flag(round.country)} ${esc(roundTitle(round))}</h2>
       </div>
-      <a class="more-link" href="${link("results/", { season: resultSeason.id, round: round.round })}">Full classification</a>
+      <div class="section-head__actions">
+        ${replayButton(round, { season: resultSeason, label: "Watch replay" })}
+        <a class="more-link" href="${link("results/", { season: resultSeason.id, round: round.round })}">Full classification</a>
+      </div>
     </div>
     <div class="podium">
       ${order

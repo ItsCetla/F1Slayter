@@ -6,6 +6,8 @@ import {
   initPage, esc, link, flag, countryName, driverId, teamChip, trackMap, roundTitle, isTbd, fmt, ordinal,
 } from "../ui.js";
 
+const SEP = '<span class="race-hero__sep" aria-hidden="true">·</span>';
+
 const ctx = await initPage("results");
 if (ctx) render(ctx);
 
@@ -42,16 +44,18 @@ function render({ league, season, params }) {
 function viewTabs(season, current = null) {
   const latest = latestCompletedRound(season);
   const raceRound = current || latest;
+  if (!raceRound) return "";
   return `<nav class="tabs res-tabs" aria-label="Results view">
     <a href="${link("results/")}"${current ? "" : ' aria-current="page"'}>All races</a>
-    ${raceRound ? `<a href="${link("results/", { round: raceRound.round })}"${current ? ' aria-current="page"' : ""}>Race by race</a>` : ""}
+    <a href="${link("results/", { round: raceRound.round })}"${current ? ' aria-current="page"' : ""}>Race by race</a>
   </nav>`;
 }
 
 function statusBadge(status, round) {
   if (status === "cancelled") return '<span class="badge">Cancelled</span>';
   if (status === "awaiting-results") return '<span class="badge badge--red">Results pending</span>';
-  if (isTbd(round) || !parseStart(round)) return '<span class="badge">To be announced</span>';
+  if (isTbd(round)) return '<span class="badge">To be announced</span>';
+  if (!parseStart(round)) return '<span class="badge">Date TBC</span>';
   return '<span class="badge">Upcoming</span>';
 }
 
@@ -198,8 +202,8 @@ function raceHeader(season, round, status) {
         <h1 class="race-hero__title">${esc(roundTitle(round))}</h1>
         ${tbd
           ? '<p class="race-hero__meta">Venue and date to be announced.</p>'
-          : `<p class="race-hero__meta">${country ? `${flag(round.country, country)}<span>${esc(country)}</span><span aria-hidden="true">·</span>` : ""}<span>${esc(round.circuit || "")}</span></p>
-            <p class="race-hero__meta race-hero__meta--sub">${start ? `<time datetime="${esc(start.toISOString())}">${esc(fmt.long(start))} · ${esc(fmt.time(start))}</time>` : "Date TBC"}${distance ? `<span aria-hidden="true">·</span><span>${distance}</span>` : ""}</p>`}
+          : `<p class="race-hero__meta">${country ? `<span class="race-hero__place">${flag(round.country, country)}<span>${esc(country)}</span></span>${SEP}` : ""}<span>${esc(round.circuit || "")}</span></p>
+            <p class="race-hero__meta race-hero__meta--sub">${start ? `<time datetime="${esc(start.toISOString())}">${esc(fmt.long(start))} · ${esc(fmt.time(start))}</time>` : "<span>Date TBC</span>"}${distance ? `${SEP}<span>${distance}</span>` : ""}</p>`}
         ${highlights.length
           ? `<ul class="race-hero__highlights" aria-label="Race highlights">${highlights.map((h) => `<li>${esc(h)}</li>`).join("")}</ul>`
           : ""}
@@ -315,7 +319,7 @@ function champCell(row, beforeRank) {
   const before = beforeRank.get(row.id);
   let move;
   if (before === undefined) {
-    move = '<span class="move move--new">New</span>';
+    move = '<span class="move move--new"><span aria-hidden="true">New</span><span class="sr-only">first race of the season</span></span>';
   } else {
     const diff = before - row.rank;
     if (diff > 0) move = `<span class="move move--up"><span class="move__icon" aria-hidden="true"></span><span aria-hidden="true">${diff}</span><span class="sr-only">up ${diff}</span></span>`;
@@ -331,7 +335,7 @@ function noResults(league, season, round, status) {
     cancelled: ["Round cancelled", "This round was cancelled and does not count towards the championship."],
     "awaiting-results": ["Results pending", "This race has been run. The classification will appear here once the results are in."],
     scheduled: [
-      isTbd(round) ? "Not raced yet" : "Not raced yet",
+      "Not raced yet",
       isTbd(round) ? "This round hasn't been announced yet. Results appear here after the race." : "Results appear here after the race. Check the schedule for the start time.",
     ],
   }[status] || ["No results", ""];

@@ -13,6 +13,8 @@ const FILTERS = [
   { key: "completed", label: "Completed", match: (kind) => ["complete", "awaiting-results"].includes(kind) },
 ];
 
+const RACE_HOURS = 2; // calendar event length
+
 const ctx = await initPage("schedule");
 if (ctx) render(ctx);
 
@@ -37,7 +39,7 @@ function render({ league, season }) {
       <h2 class="sr-only" id="roundsTitle">Rounds</h2>
       ${items.length > 1 ? filterBar(items) : ""}
       <div class="sched-grid${fallback ? " sched-grid--pending" : ""}" id="roundGrid">
-        ${items.map(({ round, kind }) => roundCard(league, season, round, kind)).join("")}
+        ${items.map(({ round, kind }) => roundCard(league, round, kind)).join("")}
         ${announced ? "" : pendingNotice(season, fallback)}
       </div>
       <div class="card empty-state sched-filter-empty" id="filterEmpty" hidden></div>
@@ -134,7 +136,6 @@ function wireFilters(items, season) {
   };
 
   buttons.forEach((b) => b.addEventListener("click", () => apply(b.dataset.filter)));
-  return apply;
 }
 
 // ---------- Round cards ----------
@@ -149,7 +150,7 @@ function kindOf(round, next) {
   return "scheduled";
 }
 
-function roundCard(league, season, round, kind) {
+function roundCard(league, round, kind) {
   if (kind === "tbd") return tbdCard(round);
   const start = parseStart(round);
   const corner = kind === "next" ? " f1-corner--red" : kind === "complete" ? "" : " sched-card--quiet";
@@ -311,8 +312,6 @@ function wireCalendarButton(league, season, dated) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
 }
-
-const RACE_HOURS = 2;
 
 function buildIcs(league, season, rounds) {
   const leagueName = league.info.name || "Slayter League";

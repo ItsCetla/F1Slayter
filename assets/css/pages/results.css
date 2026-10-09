@@ -2,6 +2,13 @@
 
 .res-tabs a {
   min-height: 44px;
+  white-space: nowrap;
+}
+
+/* Shared .pos styles the cell font; keep header cells like the other headers. */
+.f1-table th.pos {
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .res-empty {
@@ -130,6 +137,12 @@
   color: var(--on-dark);
 }
 
+.race-hero__place {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .race-hero__meta--sub {
   margin-top: 6px;
   font-size: 16px;
@@ -172,6 +185,18 @@
   color: var(--on-dark-2);
 }
 
+@media (max-width: 560px) {
+  .race-hero__meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .race-hero__sep {
+    display: none;
+  }
+}
+
 @media (max-width: 860px) {
   .race-hero__inner {
     grid-template-columns: 1fr;
@@ -191,7 +216,7 @@
 .res-toolbar {
   justify-content: space-between;
   align-items: center;
-  margin: 24px 0 8px;
+  margin: 24px 0 20px;
 }
 
 .res-roundnav {
@@ -225,6 +250,10 @@
 }
 
 @media (max-width: 720px) {
+  .page-head .res-tabs {
+    width: 100%;
+  }
+
   .res-toolbar {
     flex-direction: column;
     align-items: stretch;
@@ -266,10 +295,10 @@
 /* ---------- Classification ---------- */
 
 .res-class {
-  margin-top: clamp(20px, 3vw, 32px);
+  margin-top: clamp(28px, 4vw, 40px);
 }
 
-.res-class__table .pos {
+.res-class__table td.pos {
   font-size: 20px;
 }
 

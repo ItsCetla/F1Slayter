@@ -441,4 +441,8 @@ a.sched-podium__name:hover {
     justify-content: center;
     padding: 0 10px;
   }
+
+  .sched-card__map .track-map {
+    aspect-ratio: 2 / 1;
+  }
 }

@@ -166,6 +166,95 @@ function compareRows(a, b) {
   return a.name.localeCompare(b.name);
 }
 
+// Constructors-style table: every result's points go to the team the driver
+// raced for in that round, so mid-season team switches are handled.
+export function teamStandings(league, season, { throughRound = Infinity } = {}) {
+  const rounds = completedRounds(season, throughRound);
+  const teams = new Map();
+  rounds.forEach((round, index) => {
+    for (const result of round.results) {
+      const team = result.team || "Unassigned";
+      if (!teams.has(team)) {
+        teams.set(team, {
+          team,
+          color: teamColor(league, result.team),
+          points: 0,
+          wins: 0,
+          podiums: 0,
+          drivers: new Set(),
+          cumulative: new Array(rounds.length).fill(0),
+          roundPoints: new Array(rounds.length).fill(0),
+          finishCounts: [],
+          name: team,
+        });
+      }
+      const row = teams.get(team);
+      const points = pointsFor(league, result);
+      row.points += points;
+      row.roundPoints[index] += points;
+      if (result.position === 1) row.wins += 1;
+      if (result.position <= 3) row.podiums += 1;
+      row.finishCounts[result.position] = (row.finishCounts[result.position] || 0) + 1;
+      const driverId = league.resolveDriver(result.driver);
+      if (driverId) row.drivers.add(driverId);
+    }
+  });
+  const table = Array.from(teams.values());
+  for (const row of table) {
+    let running = 0;
+    row.cumulative = row.roundPoints.map((p) => (running += p));
+    row.drivers = Array.from(row.drivers).map((id) => league.drivers.get(id)).filter(Boolean);
+  }
+  table.sort(compareRows);
+  const leaderPoints = table.length ? table[0].points : 0;
+  table.forEach((row, index) => {
+    row.rank = index + 1;
+    row.gap = row.points - leaderPoints;
+  });
+  return { rounds, rows: table };
+}
+
+// Drivers entered in a season: explicit `entries` if the season lists them,
+// otherwise everyone who has a result in it.
+export function seasonEntries(league, season) {
+  if (Array.isArray(season.entries) && season.entries.length) {
+    return season.entries
+      .map((entry) => {
+        const driver = league.driver(entry.driver);
+        return driver ? { ...driver, team: entry.team || null, teamColor: teamColor(league, entry.team) } : null;
+      })
+      .filter(Boolean);
+  }
+  return standings(league, season).rows.map((row) => ({
+    ...league.drivers.get(row.id),
+    team: row.team,
+    teamColor: row.teamColor,
+  }));
+}
+
+// One driver's record across every season, newest first.
+export function driverCareer(league, driverId) {
+  const seasons = [];
+  const totals = { points: 0, wins: 0, podiums: 0, fastestLaps: 0, starts: 0, titles: 0, bestFinish: null };
+  for (const season of league.seasons) {
+    const table = standings(league, season);
+    const row = table.rows.find((r) => r.id === driverId);
+    if (!row) continue;
+    const champion = season.status === "complete" && row.rank === 1;
+    seasons.push({ season, row, rounds: table.rounds, champion });
+    totals.points += row.points;
+    totals.wins += row.wins;
+    totals.podiums += row.podiums;
+    totals.fastestLaps += row.fastestLaps;
+    totals.starts += row.starts;
+    if (champion) totals.titles += 1;
+    if (row.bestFinish !== null) {
+      totals.bestFinish = totals.bestFinish === null ? row.bestFinish : Math.min(totals.bestFinish, row.bestFinish);
+    }
+  }
+  return { driver: league.drivers.get(driverId) || null, seasons, totals };
+}
+
 export function teamColor(league, team) {
   return (team && league.teams[team]) || "#8A8F98";
 }

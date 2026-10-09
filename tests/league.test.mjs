@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import {
   createLeague, standings, seasonSummary, nextRound, roundStatus, headToHead,
+  teamStandings, driverCareer, seasonEntries,
 } from "../assets/js/league.js";
 
 const raw = JSON.parse(await readFile(new URL("../data/league.json", import.meta.url), "utf8"));
@@ -90,4 +91,23 @@ test("head to head", () => {
   const h2h = headToHead(table, "cbreezyll", "comanderhp");
   assert.equal(h2h.shared, 7);
   assert.equal(h2h.aAhead + h2h.bAhead, 7);
+});
+
+test("team standings credit the team raced for in each round", () => {
+  const table = teamStandings(league, s1);
+  const total = table.rows.reduce((sum, r) => sum + r.points, 0);
+  assert.equal(total, 190 + 99 + 88 + 70 + 33 + 12 + 8);
+  const ferrari = table.rows.find((r) => r.team === "Ferrari");
+  // TasteThebo R1-R4 (100) + Cbreezyll R5-R8 (0+18+18+18) + ComanderHP R7 (15) + Woo0pig R1-R4 (0)
+  assert.equal(ferrari.points, 100 + 54 + 15);
+  assert.equal(table.rows[0].rank, 1);
+});
+
+test("driver career and season entries", () => {
+  const career = driverCareer(league, "tastethebo");
+  assert.equal(career.totals.titles, 1);
+  assert.equal(career.totals.wins, 7);
+  assert.equal(career.seasons.length, 1);
+  assert.equal(seasonEntries(league, s1).length, 7);
+  assert.equal(seasonEntries(league, league.season("season-2")).length, 0);
 });

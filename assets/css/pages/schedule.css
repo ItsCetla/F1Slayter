@@ -1,0 +1,448 @@
+/* Schedule page */
+
+.sched-head__copy {
+  flex: 1 1 420px;
+  min-width: 0;
+}
+
+.sched-head__copy .lede a {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.sched-progress {
+  width: min(420px, 100%);
+  height: 4px;
+  margin-top: 16px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.sched-progress span {
+  display: block;
+  height: 100%;
+  background: var(--red);
+}
+
+.sched-head__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.sched-head__actions .btn[disabled] {
+  border-color: var(--line-strong);
+  color: var(--ink-3);
+  cursor: not-allowed;
+}
+
+.sched-head__actions .btn[disabled]:hover {
+  background: transparent;
+}
+
+.sched-head__hint {
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+/* Filters */
+
+.sched-toolbar {
+  margin-bottom: 20px;
+}
+
+.sched-tabs button {
+  gap: 8px;
+  min-height: 44px;
+}
+
+.sched-tabs__count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(21, 21, 30, 0.08);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sched-tabs [aria-pressed="true"] .sched-tabs__count {
+  background: var(--red);
+  color: #fff;
+}
+
+.sched-filter-empty {
+  margin-top: 4px;
+}
+
+/* Grid of round cards */
+
+.sched-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 272px), 1fr));
+  gap: clamp(16px, 2vw, 24px);
+  align-items: stretch;
+}
+
+.sched-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 16px 18px 18px;
+}
+
+.sched-card[hidden],
+.sched-pending[hidden] {
+  display: none;
+}
+
+.sched-card--quiet {
+  border-color: var(--line-strong);
+}
+
+.sched-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 26px;
+}
+
+.sched-card__round {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+.sched-card__when {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 12px;
+  margin-top: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sched-card__date {
+  line-height: 1;
+}
+
+.sched-card__day {
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.sched-card__month {
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+}
+
+.sched-card__time {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.sched-card__place {
+  margin-top: 12px;
+}
+
+.sched-card__country {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.sched-card__title {
+  margin-top: 6px;
+  font-size: 22px;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.sched-card__title a {
+  text-decoration: none;
+}
+
+.sched-card__title a:hover {
+  color: var(--red);
+}
+
+.sched-card__circuit {
+  margin-top: 4px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.sched-card__distance {
+  font-size: 14px;
+  color: var(--ink-3);
+}
+
+.sched-card__map {
+  margin-top: 14px;
+}
+
+.sched-card__map .track-map {
+  aspect-ratio: 16 / 9;
+  padding: 8px;
+  border: 1px solid var(--line);
+}
+
+.sched-card__foot {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.sched-card__status {
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+/* Compact podium for finished rounds */
+
+.sched-podium {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sched-podium li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sched-podium__pos {
+  width: 18px;
+  font-size: 17px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.sched-podium li:first-child .sched-podium__pos {
+  color: var(--red);
+}
+
+.sched-podium .team-bar {
+  height: 18px;
+}
+
+.sched-podium__code {
+  width: 38px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.sched-podium__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  color: var(--ink-2);
+  text-decoration: none;
+}
+
+a.sched-podium__name:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+.sched-card__links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 12px;
+  margin-top: 4px;
+}
+
+.sched-card__fl {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.sched-card__fl strong {
+  color: var(--ink);
+}
+
+.sched-card__fl-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--purple);
+}
+
+/* Next race */
+
+.sched-card--next {
+  box-shadow: var(--shadow-lg);
+}
+
+.sched-card__countdown {
+  padding: 12px;
+  border-radius: var(--radius);
+  background: var(--carbon);
+  color: var(--on-dark);
+}
+
+.sched-card__label {
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--on-dark-3);
+}
+
+.sched-card__countdown .countdown__unit {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 4px 6px;
+}
+
+.sched-card__countdown .countdown__num {
+  font-size: 28px;
+}
+
+/* Muted states */
+
+.sched-card--cancelled {
+  background: transparent;
+  border-style: dashed;
+  border-left: 2px dashed var(--line-strong);
+  border-bottom: 2px dashed var(--line-strong);
+  color: var(--ink-3);
+}
+
+.sched-card--cancelled .sched-card__round,
+.sched-card--cancelled .sched-card__country,
+.sched-card--cancelled .sched-card__circuit,
+.sched-card--cancelled .sched-card__time,
+.sched-card--cancelled .sched-card__month {
+  color: var(--ink-3);
+}
+
+.sched-card--cancelled .sched-card__title {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.sched-card--cancelled .sched-card__map {
+  opacity: 0.45;
+  filter: grayscale(1);
+}
+
+.sched-card--tbd {
+  border-color: var(--line-strong);
+}
+
+.sched-card--tbd .sched-card__day {
+  color: var(--ink-3);
+}
+
+/* Deep-link highlight */
+
+.sched-card.is-target {
+  animation: sched-target 2.6s ease-out;
+}
+
+@keyframes sched-target {
+  0%,
+  45% {
+    box-shadow: 0 0 0 4px var(--red), var(--shadow-lg);
+  }
+  100% {
+    box-shadow: 0 0 0 4px rgba(225, 6, 0, 0);
+  }
+}
+
+/* Season with no announced calendar */
+
+.sched-pending {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  min-height: 280px;
+  overflow: hidden;
+  border-top-right-radius: var(--radius-lg);
+}
+
+.sched-pending__body {
+  position: relative;
+  max-width: 560px;
+  padding: clamp(22px, 3vw, 36px);
+}
+
+.sched-pending__title {
+  font-size: clamp(26px, 3.2vw, 40px);
+  text-transform: uppercase;
+}
+
+.sched-pending__body > p:not(.kicker) {
+  margin-top: 12px;
+  color: var(--on-dark-2);
+}
+
+.sched-pending .btn-row {
+  margin-top: 22px;
+}
+
+@media (min-width: 700px) {
+  .sched-grid--pending .sched-pending {
+    grid-column: 2 / -1;
+  }
+}
+
+@media (max-width: 860px) {
+  .sched-pending .speed-stripes {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .sched-head__actions,
+  .sched-head__actions .btn {
+    width: 100%;
+  }
+
+  .sched-tabs {
+    display: flex;
+    width: 100%;
+  }
+
+  .sched-tabs button {
+    flex: 1;
+    justify-content: center;
+    padding: 0 10px;
+  }
+
+  .sched-card__map .track-map {
+    aspect-ratio: 2 / 1;
+  }
+}

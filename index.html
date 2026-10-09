@@ -1,243 +1,33 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="refresh" content="0; url=pages/home.html" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
-    <meta name="format-detection" content="telephone=no" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <title>F1 Slayter League - Redirecting...</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Slayter League — F1 game league</title>
+    <meta name="description" content="Standings, results, schedule and analytics for the Slayter League, a CETLA F1 game league." />
+    <meta name="theme-color" content="#15151e" />
+    <link rel="icon" href="assets/img/mark.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Roboto:wght@300;400;500;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="styles.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="assets/css/f1.css" />
+    <link rel="stylesheet" href="assets/css/pages/home.css" />
   </head>
   <body>
-    <div class="scroll-progress"></div>
-    
-    <!-- Dynamic Navigation Menu -->
-    <nav class="nav-menu nav-menu--top">
-      <div class="nav-menu__container">
-        <div class="nav-menu__brand">
-          <span class="nav-menu__logo">🏎️</span>
-          <span class="nav-menu__title">Slayter League</span>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header id="site-header" class="site-header"></header>
+    <main id="main" class="main">
+      <section class="hero band-dark" aria-busy="true">
+        <div class="container hero__inner">
+          <div class="hero__copy">
+            <div class="skeleton" style="height: 18px; width: 180px"></div>
+            <div class="skeleton" style="height: 64px; width: min(560px, 90%); margin-top: 16px"></div>
+            <div class="skeleton" style="height: 72px; width: 260px; margin-top: 24px"></div>
+          </div>
         </div>
-        <ul class="nav-menu__links">
-          <li><a href="#dashboard" class="nav-menu__link">Standings</a></li>
-          <li><a href="#sessions" class="nav-menu__link">Sessions</a></li>
-          <li><a href="#calendar" class="nav-menu__link">Calendar</a></li>
-        </ul>
-      </div>
-    </nav>
-    
-    <header class="hero">
-      <div class="hero__overlay"></div>
-      <div class="hero__content">
-        <p class="hero__eyebrow">Slayter League</p>
-        <h1 class="hero__title">F1 Drivers Leaderboard</h1>
-        <p class="hero__subtitle">
-          Live session tracking, driver standings, and performance insights for
-          your custom league.
-        </p>
-        <a class="hero__cta" href="#dashboard">View Dashboard</a>
-      </div>
-    </header>
-
-    <main id="dashboard" class="dashboard">
-      <!-- Left Column -->
-      <div class="dashboard__left">
-        <section class="panel panel--leaderboard">
-          <header class="panel__header">
-            <h2>Current Standings</h2>
-            <div class="panel__controls">
-              <label class="select">
-                <span>Sort by</span>
-                <select id="sortSelect">
-                  <option value="points">Points</option>
-                  <option value="wins">Wins</option>
-                  <option value="podiums">Podiums</option>
-                  <option value="fastestLaps">Fastest Laps</option>
-                </select>
-              </label>
-            </div>
-          </header>
-
-          <div class="leaderboard__scroll" role="region" aria-live="polite">
-            <table class="leaderboard">
-              <thead>
-                <tr>
-                  <th scope="col">#</th>
-                  <th scope="col">Driver</th>
-                  <th scope="col">PTS</th>
-                  <th scope="col">Wins</th>
-                  <th scope="col">Podiums</th>
-                  <th scope="col">Fastest Laps</th>
-                </tr>
-              </thead>
-              <tbody id="leaderboardBody"></tbody>
-            </table>
-          </div>
-        </section>
-
-        <section id="sessions" class="panel panel--sessions">
-          <header class="panel__header">
-            <h2>Recent Sessions</h2>
-          </header>
-
-          <div class="sessions__intro">
-            <p class="sessions__hint">
-              Complete race results and highlights from your league sessions
-            </p>
-          </div>
-          
-          <div id="sessionList" class="session-list"></div>
-          <p id="statusMessage" class="sessions__status" role="status"></p>
-        </section>
-      </div>
-
-      <!-- Right Column -->
-      <div class="dashboard__right">
-        <section class="panel panel--insights">
-          <header class="panel__header">
-            <h2>Championship Insights</h2>
-          </header>
-          <div class="insights">
-            <article class="card">
-              <h3 class="card__label">Championship Leader</h3>
-              <p id="leaderName" class="card__value">-</p>
-              <p id="leaderPoints" class="card__meta">0 pts</p>
-            </article>
-            <article class="card">
-              <h3 class="card__label">Most Wins</h3>
-              <p id="winsLeader" class="card__value">-</p>
-              <p id="winsCount" class="card__meta">0 wins</p>
-            </article>
-            <article class="card">
-              <h3 class="card__label">Driver to Watch</h3>
-              <p id="watchName" class="card__value">-</p>
-              <p id="watchMeta" class="card__meta">-</p>
-            </article>
-          </div>
-        </section>
-
-        <!-- Season Calendar -->
-        <section id="calendar" class="panel panel--calendar">
-          <header class="panel__header">
-            <h2>Season Calendar</h2>
-          </header>
-          <div class="calendar">
-            <div class="calendar__item calendar__item--completed">
-              <span class="calendar__date">Race 1</span>
-              <div class="calendar__details">
-                <span class="calendar__track">Abu Dhabi GP</span>
-                <span class="calendar__time">Oct 7 • 8:00 PM ET</span>
-              </div>
-              <span class="calendar__status">✓</span>
-            </div>
-            <div class="calendar__item calendar__item--completed">
-              <span class="calendar__date">Race 2</span>
-              <div class="calendar__details">
-                <span class="calendar__track">Las Vegas GP</span>
-                <span class="calendar__time">Oct 14 • 8:00 PM ET</span>
-              </div>
-              <span class="calendar__status">✓</span>
-            </div>
-            <div class="calendar__item calendar__item--completed">
-              <span class="calendar__date">Race 3</span>
-              <div class="calendar__details">
-                <span class="calendar__track">Bahrain GP</span>
-                <span class="calendar__time">Oct 21 • 8:00 PM ET</span>
-              </div>
-              <span class="calendar__status">✓</span>
-            </div>
-            <div class="calendar__item calendar__item--completed">
-              <span class="calendar__date">Race 4</span>
-              <div class="calendar__details">
-                <span class="calendar__track">Saudi Arabia GP</span>
-                <span class="calendar__time">Oct 28 • 8:00 PM ET • Jeddah</span>
-              </div>
-              <span class="calendar__status">✓</span>
-            </div>
-            <div class="calendar__item calendar__item--completed">
-              <span class="calendar__date">Race 5</span>
-              <div class="calendar__details">
-                <span class="calendar__track">Azerbaijan GP</span>
-                <span class="calendar__time">Nov 4 • 8:00 PM ET • Baku</span>
-              </div>
-              <span class="calendar__status">✓</span>
-            </div>
-            <div class="calendar__item calendar__item--completed">
-              <span class="calendar__date">Race 6</span>
-              <div class="calendar__details">
-                <span class="calendar__track">Miami GP</span>
-                <span class="calendar__time">Nov 11 • 8:00 PM ET</span>
-              </div>
-              <span class="calendar__status">✓</span>
-            </div>
-            <div class="calendar__item calendar__item--completed">
-              <span class="calendar__date">Race 7</span>
-              <div class="calendar__details">
-                <span class="calendar__track">Japan GP</span>
-                <span class="calendar__time">Nov 18 • 8:00 PM ET • Suzuka</span>
-              </div>
-              <span class="calendar__status">✓</span>
-            </div>
-            <div class="calendar__item calendar__item--completed">
-              <span class="calendar__date">Race 8</span>
-              <div class="calendar__details">
-                <span class="calendar__track">Austria GP</span>
-                <span class="calendar__time">Nov 25 • 8:00 PM ET • Red Bull Ring</span>
-              </div>
-              <span class="calendar__status">✓</span>
-            </div>
-            <div class="calendar__item calendar__item--future">
-              <span class="calendar__date">Race 9</span>
-              <div class="calendar__details">
-                <span class="calendar__track">Singapore GP</span>
-                <span class="calendar__time">Dec 9 • 8:00 PM ET</span>
-              </div>
-              <span class="calendar__status">⏱️</span>
-            </div>
-            <div class="calendar__item calendar__item--future">
-              <span class="calendar__date">Race 10</span>
-              <div class="calendar__details">
-                <span class="calendar__track">Netherlands GP</span>
-                <span class="calendar__time">Dec 16 • 8:00 PM ET • Zandvoort</span>
-              </div>
-              <span class="calendar__status">⏱️</span>
-            </div>
-            <div class="calendar__item calendar__item--future">
-              <span class="calendar__date">Race 11</span>
-              <div class="calendar__details">
-                <span class="calendar__track">Australia GP</span>
-                <span class="calendar__time">Dec 23 • 8:00 PM ET • Melbourne</span>
-              </div>
-              <span class="calendar__status">⏱️</span>
-            </div>
-            <div class="calendar__item calendar__item--future">
-              <span class="calendar__date">Race 12</span>
-              <div class="calendar__details">
-                <span class="calendar__track">United States GP</span>
-                <span class="calendar__time">Dec 30 • 8:00 PM ET • Austin</span>
-              </div>
-              <span class="calendar__status">🏁</span>
-            </div>
-          </div>
-        </section>
-      </div>
+      </section>
     </main>
-
-    <footer class="footer">
-      <p>
-        Built for the Slayter League • Copy the JSON snapshot into your AI tools
-        to generate commentary, predictions, and highlights.
-      </p>
-    </footer>
-
-    <script src="script.js"></script>
+    <footer id="site-footer" class="site-footer"></footer>
+    <script type="module" src="assets/js/pages/home.js"></script>
   </body>
 </html>

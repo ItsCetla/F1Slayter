@@ -1,0 +1,348 @@
+{
+  "league": {
+    "name": "Slayter League",
+    "parent": "CETLA",
+    "site": "f1.cetla.dev",
+    "timezone": "America/New_York",
+    "points": [25, 18, 15, 12, 10, 8, 6, 4, 2, 1],
+    "fastestLapPoint": false
+  },
+  "teams": {
+    "Ferrari": "#DC0000",
+    "Red Bull": "#3671C6",
+    "Mercedes": "#27F4D2",
+    "McLaren": "#FF8000",
+    "Aston Martin": "#229971",
+    "Alpine": "#FF87BC",
+    "Williams": "#64C4FF",
+    "Kick Sauber": "#52E252",
+    "Haas": "#B6BABD",
+    "Racing Bulls": "#6692FF",
+    "Audi": "#F50537",
+    "Cadillac": "#C4A35A"
+  },
+  "drivers": [
+    {"id": "tastethebo", "name": "TasteThebo", "code": "TAS", "aliases": ["SirTasteTheRambo"]},
+    {"id": "cbreezyll", "name": "Cbreezyll", "code": "CBZ", "aliases": ["Cbreezy"]},
+    {"id": "comanderhp", "name": "ComanderHP", "code": "CHP"},
+    {"id": "theslayterr-ttv", "name": "TheSlayterr-ttv", "code": "SLY", "aliases": ["Slayterr", "TheSlayterr-TV"]},
+    {"id": "itscetla", "name": "ItsCetla", "code": "CET", "aliases": ["Cetla"]},
+    {"id": "raptor33m", "name": "Raptor33M", "code": "RAP"},
+    {"id": "woo0pig", "name": "Woo0pig", "code": "WOO"},
+    {"id": "mitch", "name": "Mitch", "code": "MIT"},
+    {"id": "jack", "name": "Jack", "code": "JAC"},
+    {"id": "rambo", "name": "Rambo", "code": "RAM"},
+    {"id": "izzy", "name": "Izzy", "code": "IZZ", "aliases": ["Izzy Hunter"]},
+    {"id": "kickstartmykart", "name": "KickStartMyKart", "code": "KIC", "aliases": ["KickStart"]},
+    {"id": "fleshtorpedo", "name": "FleshTorpedo", "code": "FLE", "aliases": ["Flesh Torpedo"]},
+    {"id": "hdzsanti", "name": "HdzSanti", "code": "HDZ", "aliases": ["Santi"]}
+  ],
+  "seasons": [
+    {
+      "id": "season-2",
+      "label": "Season 2",
+      "year": 2026,
+      "status": "active",
+      "entries": [
+        {"driver": "itscetla", "team": "Red Bull"},
+        {"driver": "cbreezyll", "team": "Mercedes"},
+        {"driver": "mitch", "team": "Audi"},
+        {"driver": "jack", "team": "Alpine"},
+        {"driver": "rambo", "team": "Haas"},
+        {"driver": "izzy", "team": "Cadillac"},
+        {"driver": "theslayterr-ttv", "team": "McLaren"},
+        {"driver": "kickstartmykart", "team": "Ferrari"},
+        {"driver": "fleshtorpedo", "team": "Racing Bulls"},
+        {"driver": "hdzsanti", "team": "Williams"}
+      ],
+      "rounds": [
+        {
+          "round": 1,
+          "name": "Qatar",
+          "grandPrix": "Qatar Grand Prix",
+          "circuit": "Lusail International Circuit",
+          "country": "QA",
+          "laps": 29,
+          "lengthKm": 5.419,
+          "start": "2026-10-22T20:45:00-04:00",
+          "results": []
+        },
+        {
+          "round": 2,
+          "name": "United States",
+          "grandPrix": "United States Grand Prix",
+          "circuit": "Circuit of the Americas",
+          "country": "US",
+          "laps": 28,
+          "lengthKm": 5.513,
+          "start": "2026-10-29T20:45:00-04:00",
+          "trackImage": "assets/tracks/united-states.webp",
+          "results": []
+        },
+        {
+          "round": 3,
+          "name": "Las Vegas",
+          "grandPrix": "Las Vegas Grand Prix",
+          "circuit": "Las Vegas Street Circuit",
+          "country": "US",
+          "laps": 25,
+          "lengthKm": 6.201,
+          "start": "2026-11-05T20:45:00-05:00",
+          "trackImage": "assets/tracks/las-vegas.webp",
+          "results": []
+        },
+        {
+          "round": 4,
+          "name": "Italy",
+          "grandPrix": "Italian Grand Prix",
+          "circuit": "Autodromo Nazionale Monza",
+          "country": "IT",
+          "laps": 27,
+          "lengthKm": 5.793,
+          "start": "2026-11-12T20:45:00-05:00",
+          "results": []
+        },
+        {
+          "round": 5,
+          "name": "Austria",
+          "grandPrix": "Austrian Grand Prix",
+          "circuit": "Red Bull Ring",
+          "country": "AT",
+          "laps": 36,
+          "lengthKm": 4.318,
+          "start": "2026-11-19T20:45:00-05:00",
+          "trackImage": "assets/tracks/austria.avif",
+          "results": []
+        },
+        {
+          "round": 6,
+          "name": "Bahrain",
+          "grandPrix": "Bahrain Grand Prix",
+          "circuit": "Bahrain International Circuit",
+          "country": "BH",
+          "laps": 29,
+          "lengthKm": 5.412,
+          "start": "2026-11-26T20:45:00-05:00",
+          "trackImage": "assets/tracks/bahrain.avif",
+          "results": []
+        },
+        {
+          "round": 7,
+          "name": "Australia",
+          "grandPrix": "Australian Grand Prix",
+          "circuit": "Albert Park Circuit",
+          "country": "AU",
+          "laps": 29,
+          "lengthKm": 5.278,
+          "start": "2026-12-03T20:45:00-05:00",
+          "trackImage": "assets/tracks/australia.webp",
+          "results": []
+        },
+        {
+          "round": 8,
+          "name": "Abu Dhabi",
+          "grandPrix": "Abu Dhabi Grand Prix",
+          "circuit": "Yas Marina Circuit",
+          "country": "AE",
+          "laps": 29,
+          "lengthKm": 5.281,
+          "start": "2026-12-10T20:45:00-05:00",
+          "trackImage": "assets/tracks/abu-dhabi.avif",
+          "results": []
+        },
+        {
+          "round": 9,
+          "name": "Belgium",
+          "grandPrix": "Belgian Grand Prix",
+          "circuit": "Circuit de Spa-Francorchamps",
+          "country": "BE",
+          "laps": 22,
+          "lengthKm": 7.004,
+          "start": "2026-12-17T20:45:00-05:00",
+          "results": []
+        }
+      ]
+    },
+    {
+      "id": "season-1",
+      "label": "Season 1",
+      "year": 2025,
+      "status": "complete",
+      "rounds": [
+        {
+          "round": 1,
+          "name": "Abu Dhabi",
+          "grandPrix": "Abu Dhabi Grand Prix",
+          "circuit": "Yas Marina Circuit",
+          "country": "AE",
+          "laps": 58,
+          "lengthKm": 5.281,
+          "start": "2025-10-07T20:00:00-04:00",
+          "status": "complete",
+          "highlights": ["TasteThebo seals race one victory"],
+          "results": [
+            {"driver": "tastethebo", "team": "Ferrari", "position": 1},
+            {"driver": "comanderhp", "team": "Red Bull", "position": 2},
+            {"driver": "theslayterr-ttv", "team": "Mercedes", "position": 4},
+            {"driver": "cbreezyll", "team": "Red Bull", "position": 6},
+            {"driver": "itscetla", "team": "Mercedes", "position": 11},
+            {"driver": "woo0pig", "team": "Ferrari", "position": 19}
+          ],
+          "trackImage": "assets/tracks/abu-dhabi.avif"
+        },
+        {
+          "round": 2,
+          "name": "Las Vegas",
+          "grandPrix": "Las Vegas Grand Prix",
+          "circuit": "Las Vegas Strip Circuit",
+          "country": "US",
+          "laps": 50,
+          "lengthKm": 6.201,
+          "start": "2025-10-14T20:00:00-04:00",
+          "status": "complete",
+          "highlights": ["TasteThebo wins under the lights", "Cbreezyll clocks fastest lap"],
+          "results": [
+            {"driver": "tastethebo", "team": "Ferrari", "position": 1},
+            {"driver": "comanderhp", "team": "Red Bull", "position": 2},
+            {"driver": "cbreezyll", "team": "Red Bull", "position": 10, "fastestLap": true},
+            {"driver": "woo0pig", "team": "Ferrari", "position": 13},
+            {"driver": "theslayterr-ttv", "team": "Mercedes", "position": 19},
+            {"driver": "itscetla", "team": "Mercedes", "position": 20},
+            {"driver": "raptor33m", "team": "Alpine", "position": 21}
+          ],
+          "trackImage": "assets/tracks/las-vegas.webp"
+        },
+        {
+          "round": 3,
+          "name": "Bahrain",
+          "grandPrix": "Bahrain Grand Prix",
+          "circuit": "Bahrain International Circuit",
+          "country": "BH",
+          "laps": 57,
+          "lengthKm": 5.412,
+          "start": "2025-10-21T20:00:00-04:00",
+          "status": "complete",
+          "highlights": ["TasteThebo opens with victory", "Cbreezyll grabs fastest lap"],
+          "results": [
+            {"driver": "tastethebo", "team": "Ferrari", "position": 1},
+            {"driver": "cbreezyll", "team": "Red Bull", "position": 2, "fastestLap": true},
+            {"driver": "itscetla", "team": "Mercedes", "position": 6},
+            {"driver": "theslayterr-ttv", "team": "Mercedes", "position": 7},
+            {"driver": "raptor33m", "team": "Alpine", "position": 11},
+            {"driver": "comanderhp", "team": "Red Bull", "position": 18},
+            {"driver": "woo0pig", "team": "Ferrari", "position": 20}
+          ],
+          "trackImage": "assets/tracks/bahrain.avif"
+        },
+        {
+          "round": 4,
+          "name": "Saudi Arabia",
+          "grandPrix": "Saudi Arabian Grand Prix",
+          "circuit": "Jeddah Corniche Circuit",
+          "country": "SA",
+          "laps": 50,
+          "lengthKm": 6.174,
+          "start": "2025-10-28T20:00:00-04:00",
+          "status": "complete",
+          "highlights": ["TasteThebo makes it four straight", "Raptor33M snags fastest lap"],
+          "results": [
+            {"driver": "tastethebo", "team": "Ferrari", "position": 1},
+            {"driver": "cbreezyll", "team": "Red Bull", "position": 2},
+            {"driver": "theslayterr-ttv", "team": "Mercedes", "position": 3},
+            {"driver": "itscetla", "team": "Mercedes", "position": 4},
+            {"driver": "comanderhp", "team": "Red Bull", "position": 5},
+            {"driver": "raptor33m", "team": "Alpine", "position": 12, "fastestLap": true},
+            {"driver": "woo0pig", "team": "Ferrari", "position": 20}
+          ],
+          "trackImage": "assets/tracks/saudi-arabia.webp"
+        },
+        {
+          "round": 5,
+          "name": "Azerbaijan",
+          "grandPrix": "Azerbaijan Grand Prix",
+          "circuit": "Baku City Circuit",
+          "country": "AZ",
+          "laps": 51,
+          "lengthKm": 6.003,
+          "start": "2025-11-04T20:00:00-05:00",
+          "status": "complete",
+          "highlights": ["SirTasteTheRambo claims debut win"],
+          "results": [
+            {"driver": "tastethebo", "team": "Williams", "position": 1},
+            {"driver": "raptor33m", "team": "Alpine", "position": 4},
+            {"driver": "itscetla", "team": "Kick Sauber", "position": 10},
+            {"driver": "cbreezyll", "team": "Ferrari", "position": 12},
+            {"driver": "woo0pig", "team": "McLaren", "position": 16},
+            {"driver": "theslayterr-ttv", "team": "Aston Martin", "position": 19}
+          ],
+          "trackImage": "assets/tracks/azerbaijan.webp"
+        },
+        {
+          "round": 6,
+          "name": "Miami",
+          "grandPrix": "Miami Grand Prix",
+          "circuit": "Miami International Autodrome",
+          "country": "US",
+          "laps": 57,
+          "lengthKm": 5.412,
+          "start": "2025-11-11T20:00:00-05:00",
+          "status": "complete",
+          "highlights": ["ComanderHP takes victory"],
+          "results": [
+            {"driver": "comanderhp", "team": "Red Bull", "position": 1},
+            {"driver": "cbreezyll", "team": "Ferrari", "position": 2},
+            {"driver": "tastethebo", "team": "Williams", "position": 3},
+            {"driver": "theslayterr-ttv", "team": "Aston Martin", "position": 4},
+            {"driver": "woo0pig", "team": "McLaren", "position": 11},
+            {"driver": "itscetla", "team": "Kick Sauber", "position": 20},
+            {"driver": "raptor33m", "team": "Alpine", "position": 21}
+          ],
+          "trackImage": "assets/tracks/miami.webp"
+        },
+        {
+          "round": 7,
+          "name": "Japan",
+          "grandPrix": "Japanese Grand Prix",
+          "circuit": "Suzuka Circuit",
+          "country": "JP",
+          "laps": 53,
+          "lengthKm": 5.807,
+          "start": "2025-11-18T20:00:00-05:00",
+          "status": "complete",
+          "highlights": ["SirTasteTheRambo wins at Suzuka"],
+          "results": [
+            {"driver": "tastethebo", "team": "Williams", "position": 1},
+            {"driver": "cbreezyll", "team": "Ferrari", "position": 2},
+            {"driver": "comanderhp", "team": "Ferrari", "position": 3},
+            {"driver": "itscetla", "team": "Kick Sauber", "position": 4},
+            {"driver": "theslayterr-ttv", "team": "Aston Martin", "position": 5},
+            {"driver": "woo0pig", "team": "McLaren", "position": 13},
+            {"driver": "raptor33m", "team": "Alpine", "position": 21}
+          ]
+        },
+        {
+          "round": 8,
+          "name": "Austria",
+          "grandPrix": "Austrian Grand Prix",
+          "circuit": "Red Bull Ring",
+          "country": "AT",
+          "laps": 71,
+          "lengthKm": 4.318,
+          "start": "2025-11-25T20:00:00-05:00",
+          "status": "complete",
+          "highlights": ["SirTasteTheRambo dominates at Red Bull Ring"],
+          "results": [
+            {"driver": "tastethebo", "team": "Williams", "position": 1},
+            {"driver": "cbreezyll", "team": "Ferrari", "position": 2},
+            {"driver": "theslayterr-ttv", "team": "Aston Martin", "position": 3},
+            {"driver": "woo0pig", "team": "McLaren", "position": 6},
+            {"driver": "comanderhp", "team": "Red Bull", "position": 9},
+            {"driver": "itscetla", "team": "Kick Sauber", "position": 19},
+            {"driver": "raptor33m", "team": "Alpine", "position": 21}
+          ],
+          "trackImage": "assets/tracks/austria.avif"
+        }
+      ]
+    }
+  ]
+}

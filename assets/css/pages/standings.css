@@ -1,0 +1,348 @@
+/* Standings page */
+
+.page-head__inner .tabs {
+  flex-shrink: 0;
+}
+
+/* Top-three spotlight */
+
+.spotlight {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(12px, 2vw, 24px);
+}
+
+.spot {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "pos id"
+    "stats stats";
+  align-items: start;
+  gap: 16px 18px;
+  padding: 20px 22px 22px;
+  border-top: 6px solid var(--team);
+  border-top-right-radius: var(--radius-lg);
+}
+
+.spot__pos {
+  grid-area: pos;
+  font-size: 56px;
+  font-weight: 900;
+  line-height: 0.9;
+}
+
+.spot__pos span {
+  margin-left: 2px;
+  font-size: 18px;
+  vertical-align: top;
+}
+
+.spot--p1 .spot__pos {
+  color: var(--red);
+}
+
+.spot__id {
+  grid-area: id;
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.spot__name {
+  font-size: clamp(20px, 2.2vw, 26px);
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.spot__name a {
+  text-decoration: none;
+}
+
+.spot__name a:hover {
+  text-decoration: underline;
+}
+
+.spot__team {
+  margin-top: 4px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.spot__stats {
+  grid-area: stats;
+  display: flex;
+  gap: 28px;
+  margin: 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.spot__stats div {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+}
+
+.spot__stats dt {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.spot__stats dd {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.spot__of {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink-3);
+}
+
+@media (max-width: 720px) {
+  .spotlight {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .spot {
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    grid-template-areas: "pos id stats";
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-top: 0;
+    border-left: 5px solid var(--team);
+    border-radius: var(--radius);
+    border-top-right-radius: var(--radius-lg);
+  }
+
+  .spot__pos {
+    font-size: 34px;
+  }
+
+  .spot__pos span {
+    font-size: 13px;
+  }
+
+  .spot__id {
+    padding-top: 0;
+  }
+
+  .spot__name {
+    font-size: 18px;
+  }
+
+  .spot__team {
+    margin-top: 2px;
+    font-size: 14px;
+  }
+
+  .spot__stats {
+    gap: 14px;
+    padding-top: 0;
+    border-top: 0;
+    text-align: right;
+  }
+
+  .spot__stats div {
+    align-items: flex-end;
+  }
+
+  .spot__stats dd {
+    font-size: 22px;
+  }
+
+  .spot__stats dt {
+    font-size: 11px;
+  }
+
+  .spot__of {
+    font-size: 13px;
+  }
+}
+
+/* Table block */
+
+.standings-block {
+  margin-top: clamp(24px, 4vw, 40px);
+}
+
+.standings-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin-bottom: 14px;
+}
+
+.standings-toolbar__title {
+  font-size: clamp(22px, 3vw, 30px);
+  text-transform: uppercase;
+}
+
+.standings-toolbar .muted {
+  margin-top: 4px;
+  font-size: 14px;
+}
+
+.sort-note {
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.sort-note:empty {
+  display: none;
+}
+
+.standings-table .is-sorted {
+  font-weight: 900;
+  color: var(--ink);
+}
+
+.standings-table th.is-sorted {
+  box-shadow: inset 0 -3px 0 var(--red);
+}
+
+.standings-table td.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.standings-table .gap {
+  color: var(--ink-2);
+}
+
+.gap-leader {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+.standings-table abbr {
+  text-decoration: none;
+}
+
+@media (max-width: 720px) {
+  .standings-table .pos {
+    width: 44px;
+  }
+
+  /* The Last 5 column is hidden on phones, so its legend is too. */
+  .standings-legend {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .standings-table .driver-id__code {
+    display: none;
+  }
+}
+
+/* Teams */
+
+.team-id {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.team-id__name {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.team-drivers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+}
+
+.team-driver {
+  white-space: nowrap;
+}
+
+.team-driver a {
+  font-weight: 600;
+}
+
+.team-driver .muted {
+  font-size: 13px;
+}
+
+.team-drivers--sm {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .team-drivers--sm {
+    display: flex;
+    margin: 4px 0 0 14px;
+    font-size: 14px;
+  }
+
+  .team-drivers--sm .team-driver a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+  }
+}
+
+/* Empty season */
+
+.empty-state h2 {
+  font-size: 24px;
+  text-transform: uppercase;
+}
+
+.standings-empty {
+  border-top: 4px solid var(--red);
+  border-top-right-radius: var(--radius-lg);
+}
+
+.entry-list {
+  max-width: 560px;
+  margin: 24px auto 0;
+  text-align: left;
+}
+
+.entry-list .entry-list__title {
+  margin-bottom: 8px;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.entry-list ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.entry-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  border-bottom: 1px solid var(--line);
+}
+
+.entry-list .driver-id__name {
+  text-decoration: none;
+}
+
+.entry-list .driver-id__name:hover {
+  text-decoration: underline;
+}

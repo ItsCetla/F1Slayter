@@ -1,0 +1,741 @@
+/* Drivers page: grid of driver cards + driver profile */
+
+.empty-state h2 {
+  font-size: 24px;
+  text-transform: uppercase;
+}
+
+.drivers-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 24px;
+  margin-bottom: clamp(16px, 2vw, 24px);
+  padding: 14px 20px;
+  border-left: 4px solid var(--red);
+  color: var(--ink-2);
+}
+
+.drivers-notice strong {
+  color: var(--ink);
+}
+
+/* ---------- Driver cards ---------- */
+
+.driver-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: clamp(12px, 2vw, 24px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dcard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 236px;
+  height: 100%;
+  padding: 20px 22px 0;
+  overflow: hidden;
+  border-radius: var(--radius);
+  border-top-right-radius: 28px;
+  background: var(--team);
+  color: var(--on-team);
+  text-decoration: none;
+  box-shadow: var(--shadow);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Decorative speed stripes. --stripe is the opposite of the text colour, so
+   text that crosses a stripe only gains contrast. */
+.dcard::before,
+.dcard::after {
+  content: "";
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  right: 22px;
+  width: 28px;
+  background: var(--stripe, #000);
+  opacity: 0.1;
+  transform: skewX(-20deg);
+  pointer-events: none;
+}
+
+.dcard::after {
+  right: 62px;
+  width: 10px;
+  opacity: 0.08;
+}
+
+.dcard:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.dcard:focus-visible {
+  outline-offset: 3px;
+}
+
+.dcard__code {
+  position: relative;
+  font-size: 76px;
+  font-weight: 900;
+  font-style: italic;
+  line-height: 0.9;
+  letter-spacing: -0.01em;
+}
+
+.dcard__name {
+  position: relative;
+  margin-top: 14px;
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1.05;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.dcard__team {
+  position: relative;
+  margin: 4px 0 20px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.dcard__standing {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: auto -22px 0;
+  padding: 12px 22px 14px;
+  border-top: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+}
+
+.dcard__rank {
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.dcard__rank sup {
+  margin-left: 1px;
+  font-size: 13px;
+}
+
+.dcard__pts {
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.dcard__pts small {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dcard__none {
+  min-height: 26px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 520px) {
+  .dcard {
+    display: grid;
+    grid-template-columns: minmax(116px, auto) minmax(0, 1fr);
+    grid-template-areas:
+      "code name"
+      "code team"
+      "standing standing";
+    column-gap: 16px;
+    min-height: 0;
+    padding-top: 16px;
+  }
+
+  .dcard__code {
+    grid-area: code;
+    align-self: center;
+    margin-bottom: 16px;
+    font-size: 48px;
+  }
+
+  .dcard__name {
+    grid-area: name;
+    align-self: end;
+    margin-top: 0;
+    font-size: 20px;
+  }
+
+  .dcard__team {
+    grid-area: team;
+    align-self: start;
+    margin-bottom: 16px;
+  }
+
+  .dcard__standing {
+    grid-area: standing;
+    margin-top: 0;
+    padding-top: 10px;
+    padding-bottom: 12px;
+  }
+}
+
+/* ---------- Profile hero ---------- */
+
+.dhero {
+  position: relative;
+  overflow: hidden;
+  border-top: 6px solid var(--team);
+  padding: 20px 0 clamp(32px, 5vw, 56px);
+}
+
+.dhero__stripes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.dhero__stripes::before,
+.dhero__stripes::after {
+  content: "";
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  right: 7%;
+  width: 18px;
+  background: var(--team);
+  transform: skewX(-20deg);
+}
+
+.dhero__stripes::after {
+  right: calc(7% + 34px);
+  width: 8px;
+  opacity: 0.6;
+}
+
+.dhero__inner {
+  position: relative;
+}
+
+.dhero__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  color: var(--on-dark-2);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.dhero__back::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-bottom: 2px solid var(--red);
+  border-left: 2px solid var(--red);
+  transform: rotate(45deg);
+}
+
+.dhero__back:hover {
+  color: var(--on-dark);
+  text-decoration: underline;
+}
+
+.dhero__main {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 16px clamp(20px, 3vw, 40px);
+  margin-top: clamp(12px, 2vw, 24px);
+}
+
+.dhero__plate {
+  display: grid;
+  place-items: center;
+  width: clamp(120px, 14vw, 180px);
+  aspect-ratio: 1;
+  border-radius: var(--radius);
+  border-top-right-radius: 32px;
+  background: var(--team);
+  color: var(--on-team);
+  font-size: clamp(42px, 5vw, 64px);
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.01em;
+}
+
+.dhero__name {
+  font-size: clamp(38px, 7vw, 84px);
+  text-transform: uppercase;
+  letter-spacing: -0.015em;
+  line-height: 0.95;
+  overflow-wrap: anywhere;
+}
+
+.dhero__team {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--on-dark-2);
+}
+
+.dhero__code {
+  padding-left: 10px;
+  border-left: 1px solid var(--carbon-line);
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  color: var(--on-dark-3);
+}
+
+.dhero__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.dhero__standing {
+  position: relative;
+  min-width: 220px;
+  padding: 16px 20px 18px;
+  border: 1px solid var(--carbon-line);
+  border-radius: var(--radius);
+  border-top-right-radius: var(--radius-lg);
+  background: var(--carbon-2);
+  text-align: right;
+}
+
+.dhero__pos {
+  font-size: clamp(56px, 8vw, 96px);
+  font-weight: 900;
+  line-height: 0.9;
+}
+
+.dhero__pos sup {
+  margin-left: 2px;
+  font-size: 0.32em;
+}
+
+.dhero__pos-label {
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--on-dark-2);
+}
+
+.dhero__pos-label--none {
+  margin-top: 0;
+  font-size: 15px;
+  color: var(--on-dark);
+}
+
+@media (max-width: 860px) {
+  .dhero__main {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .dhero__standing {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 14px;
+    min-width: 0;
+    padding: 12px 16px;
+    text-align: left;
+  }
+
+  .dhero__stripes {
+    display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .dhero__main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dhero__plate {
+    width: auto;
+    aspect-ratio: auto;
+    justify-self: start;
+    padding: 6px 18px;
+    font-size: 34px;
+  }
+
+  .dhero__pos {
+    font-size: 56px;
+  }
+}
+
+/* ---------- Season overview ---------- */
+
+.overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(16px, 2vw, 24px);
+  align-items: stretch;
+}
+
+@media (max-width: 1024px) {
+  .overview {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dstats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dstats .stat-tile {
+  padding: 14px 14px 14px 16px;
+}
+
+.dstats .stat__value {
+  font-size: clamp(28px, 3vw, 38px);
+  font-variant-numeric: proportional-nums;
+}
+
+.dstats .stat__meta {
+  font-size: 13px;
+}
+
+.dstats--career {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  margin-bottom: clamp(16px, 2vw, 24px);
+}
+
+@media (max-width: 1024px) {
+  .dstats--career {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .dstats,
+  .dstats--career {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ---------- Chart ---------- */
+
+.chart-card {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 18px 18px 10px;
+  border-top-right-radius: var(--radius-lg);
+}
+
+.chart-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+}
+
+.chart-card__title {
+  font-size: 18px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.chart-card__sub {
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+.chart {
+  position: relative;
+  flex: 1;
+  min-height: 220px;
+  margin-top: 8px;
+  border-radius: 6px;
+}
+
+.chart__svg {
+  overflow: visible;
+}
+
+.chart__grid line {
+  stroke: var(--line);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.chart__axis text {
+  fill: var(--ink-3);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart__axis .chart__axis-title {
+  fill: var(--ink-2);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.chart__area {
+  fill: var(--red);
+  opacity: 0.1;
+}
+
+.chart__line {
+  fill: none;
+  stroke: var(--red);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart__cross {
+  stroke: var(--ink-3);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.chart__dot {
+  fill: var(--red);
+  stroke: var(--card);
+  stroke-width: 2;
+}
+
+.chart__dot--dns {
+  fill: var(--card);
+  stroke: var(--red);
+}
+
+.chart__dot.is-active {
+  r: 6;
+}
+
+.chart__end {
+  fill: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.chart__tip {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 128px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--carbon);
+  color: var(--on-dark-2);
+  font-size: 13px;
+  line-height: 1.3;
+  white-space: nowrap;
+  box-shadow: var(--shadow-lg);
+  pointer-events: none;
+  transform: translate(12px, -100%);
+}
+
+.chart__tip--left {
+  transform: translate(calc(-100% - 12px), -100%);
+}
+
+.chart__tip strong {
+  color: var(--on-dark);
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.chart__tip[hidden] {
+  display: none;
+}
+
+/* ---------- Race-by-race table ---------- */
+
+.race-table .gp {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 32px;
+  font-weight: 700;
+}
+
+.race-table td.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.race-table th abbr,
+.career-table abbr {
+  text-decoration: none;
+}
+
+.race-table .is-dns td {
+  background: #fbfaf8;
+}
+
+.race-table .dns {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.move {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 4px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.move::before {
+  content: "";
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+}
+
+.move--up {
+  color: #127a3a;
+}
+
+.move--up::before {
+  border-bottom: 6px solid currentColor;
+}
+
+.move--down {
+  color: var(--red-dark);
+}
+
+.move--down::before {
+  border-top: 6px solid currentColor;
+}
+
+.gp__short {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .race-table .gp {
+    gap: 8px;
+  }
+
+  .gp__long {
+    display: none;
+  }
+
+  .gp__short {
+    display: inline;
+  }
+}
+
+/* ---------- Career ---------- */
+
+.career-table th[scope="row"] {
+  padding: 12px;
+  font-size: 15px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+  text-align: left;
+}
+
+.career-table tbody tr:last-child th {
+  border-bottom: 0;
+}
+
+.career-season {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 10px;
+}
+
+.career-season a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  font-weight: 900;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.career-season__meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.career-season__meta .muted {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .career-table th[scope="row"] {
+    padding: 12px 8px;
+  }
+}
+
+@media (max-width: 600px) {
+  .career-season {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .career-season a {
+    min-height: 0;
+  }
+}
+
+.career-table .is-current {
+  box-shadow: inset 4px 0 0 var(--red);
+}
+
+.career-teams {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+
+.drivers-notice--profile {
+  padding: 20px 24px;
+}
+
+.drivers-notice__title {
+  font-size: 22px;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.drivers-notice--profile p {
+  margin-top: 4px;
+}
+
+.drivers-missing {
+  border-top: 4px solid var(--red);
+  border-top-right-radius: var(--radius-lg);
+}

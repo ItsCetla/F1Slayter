@@ -1,12 +1,23 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="refresh" content="0; url=../analytics.html#insights" />
-    <title>Redirecting…</title>
+    <meta charset="utf-8" />
+    <title>Redirecting… — Slayter League</title>
+    <meta name="robots" content="noindex" />
+    <meta http-equiv="refresh" content="0; url=../analytics/?season=season-1#insights" />
+    <link rel="canonical" href="../analytics/" />
+    <script>
+      // Old URL from the previous site; forward to its new home.
+      (function () {
+        // The old analytics page showed the 2025 season, so default to Season 1.
+        var target = "../analytics/";
+        var search = location.search || "?season=season-1";
+        var hash = location.hash || "#insights";
+        location.replace(target + search + hash);
+      })();
+    </script>
   </head>
   <body>
-    <p>Redirecting to the combined insights and analytics experience…</p>
-    <p><a href="../analytics.html#insights">Continue to the analytics hub</a>.</p>
+    <p>This page has moved to <a href="../analytics/">../analytics/</a>.</p>
   </body>
 </html>

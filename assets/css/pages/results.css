@@ -1,0 +1,381 @@
+/* Results page */
+
+.res-tabs a {
+  min-height: 44px;
+}
+
+.res-empty {
+  margin-top: 4px;
+}
+
+/* ---------- Season summary ---------- */
+
+.res-summary td {
+  white-space: nowrap;
+}
+
+.res-gp {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 32px;
+  font-weight: 700;
+  white-space: normal;
+}
+
+.res-gp__round {
+  min-width: 24px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+}
+
+.res-gp:hover .res-gp__name {
+  color: var(--red);
+}
+
+.res-date {
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+.res-summary__pending .res-gp__name {
+  color: var(--ink-2);
+}
+
+.res-summary__cancelled .res-gp__name {
+  text-decoration: line-through;
+}
+
+.res-fl {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.res-fl__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--purple);
+}
+
+@media (max-width: 720px) {
+  .res-gp {
+    gap: 8px;
+  }
+
+  .res-gp__round {
+    display: none;
+  }
+
+  .res-summary .driver-id__code {
+    display: none;
+  }
+
+  .res-summary td:first-child {
+    white-space: normal;
+    min-width: 128px;
+  }
+}
+
+/* ---------- Race header band ---------- */
+
+.race-hero {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(28px, 5vw, 56px) 0 clamp(32px, 5vw, 60px);
+}
+
+.race-hero__inner {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(24px, 4vw, 56px);
+}
+
+.race-hero__round {
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+.race-hero__round span {
+  font-weight: 700;
+  color: var(--on-dark-3);
+}
+
+.race-hero__title {
+  margin-top: 6px;
+  font-size: clamp(34px, 5.6vw, 72px);
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  line-height: 0.98;
+  overflow-wrap: anywhere;
+}
+
+.race-hero__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin-top: 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--on-dark);
+}
+
+.race-hero__meta--sub {
+  margin-top: 6px;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--on-dark-2);
+}
+
+.race-hero__highlights {
+  display: grid;
+  gap: 6px;
+  margin: 22px 0 0;
+  padding: 16px 0 0;
+  border-top: 1px solid var(--carbon-line);
+  list-style: none;
+}
+
+.race-hero__highlights li {
+  position: relative;
+  padding-left: 22px;
+  color: var(--on-dark-2);
+}
+
+.race-hero__highlights li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.6em;
+  width: 12px;
+  height: 3px;
+  background: var(--red);
+}
+
+.race-hero__visual .track-map {
+  box-shadow: var(--shadow-lg);
+  border-top-right-radius: var(--radius-lg);
+}
+
+.race-hero__visual .track-map--empty {
+  background: repeating-linear-gradient(-45deg, var(--carbon-2) 0 10px, var(--carbon-3) 10px 20px);
+  color: var(--on-dark-2);
+}
+
+@media (max-width: 860px) {
+  .race-hero__inner {
+    grid-template-columns: 1fr;
+  }
+
+  .race-hero__visual {
+    max-width: 480px;
+  }
+
+  .race-hero .speed-stripes {
+    display: none;
+  }
+}
+
+/* ---------- Toolbar: view tabs + round navigation ---------- */
+
+.res-toolbar {
+  justify-content: space-between;
+  align-items: center;
+  margin: 24px 0 8px;
+}
+
+.res-roundnav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.res-roundnav__field {
+  min-width: 0;
+}
+
+.res-roundnav .select {
+  min-width: 260px;
+  max-width: 100%;
+}
+
+.res-step {
+  padding: 0 14px;
+}
+
+.res-step[aria-disabled="true"] {
+  border-color: var(--line-strong);
+  color: var(--ink-3);
+  cursor: default;
+}
+
+.res-step[aria-disabled="true"]:hover {
+  background: transparent;
+}
+
+@media (max-width: 720px) {
+  .res-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .res-tabs {
+    display: flex;
+  }
+
+  .res-tabs a {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .res-roundnav__field {
+    flex: 1;
+  }
+
+  .res-roundnav .select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .res-step {
+    width: 44px;
+    padding: 0;
+  }
+
+  .res-step__text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+/* ---------- Classification ---------- */
+
+.res-class {
+  margin-top: clamp(20px, 3vw, 32px);
+}
+
+.res-class__table .pos {
+  font-size: 20px;
+}
+
+.res-class__win .pos {
+  color: var(--red);
+}
+
+.res-driver {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.res-driver .fl-badge {
+  flex-shrink: 0;
+}
+
+.res-champ {
+  white-space: nowrap;
+}
+
+.res-champ__inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.res-champ__pos {
+  min-width: 34px;
+  font-weight: 900;
+}
+
+.res-champ__pts {
+  min-width: 52px;
+  font-size: 14px;
+  color: var(--ink-3);
+}
+
+.move {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 36px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.move__icon {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+}
+
+.move--up {
+  color: #0f8a43;
+}
+
+.move--up .move__icon {
+  border-bottom: 7px solid currentColor;
+}
+
+.move--down {
+  color: var(--red);
+}
+
+.move--down .move__icon {
+  border-top: 7px solid currentColor;
+}
+
+.move--same .move__icon {
+  width: 10px;
+  height: 3px;
+  border: 0;
+  border-radius: 1px;
+  background: var(--line-strong);
+}
+
+.move--new {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #ecebe7;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.res-leader {
+  margin-top: 16px;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+
+.res-leader a {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+@media (max-width: 720px) {
+  .res-champ__pts {
+    display: none;
+  }
+
+  .res-class__table .driver-id__code {
+    display: none;
+  }
+}

@@ -587,7 +587,10 @@ function renderHeatmap(table) {
         </tr>`)
         .join("")}</tbody>
     </table>
-  </div>`;
+  </div>
+  <p class="heatmap__hint" hidden>Swipe sideways to see every round</p>`;
+  const scroller = document.querySelector("#heatmap .heatmap__scroll");
+  document.querySelector("#heatmap .heatmap__hint").hidden = scroller.scrollWidth <= scroller.clientWidth + 1;
 }
 
 function wireHeatmap() {
@@ -800,6 +803,15 @@ function lineOptions({ reverse = false, yMin, yMax, yStep, yTick, valueText, asc
   if (yMax !== undefined) y.max = yMax;
   if (yStep) y.ticks.stepSize = yStep;
   if (yTick) y.ticks.callback = yTick;
+  // Position axes: Chart.js would tick P1, P2, P4, P6…; use P1, P5, P10… like timing graphics.
+  if (reverse && yMin === 1 && !yStep) {
+    y.afterBuildTicks = (axis) => {
+      const step = axis.max <= 10 ? (phone ? 3 : 1) : 5;
+      const values = [1];
+      for (let v = step; v <= axis.max; v += step) if (v > 1) values.push(v);
+      axis.ticks = values.map((value) => ({ value }));
+    };
+  }
   return {
     ...baseOptions(),
     interaction: { mode: "index", intersect: false },

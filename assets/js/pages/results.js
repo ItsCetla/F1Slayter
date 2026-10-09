@@ -14,7 +14,7 @@ if (ctx) render(ctx);
 function render({ league, season, params }) {
   const main = document.getElementById("main");
   if (!season) {
-    main.innerHTML = `<div class="container"><div class="card empty-state"><h3>No seasons yet</h3><p>Add a season to data/league.json.</p></div></div>`;
+    main.innerHTML = `<div class="container"><div class="card empty-state"><h2>No seasons yet</h2><p>Add a season to data/league.json.</p></div></div>`;
     return;
   }
 
@@ -88,7 +88,7 @@ function summaryView(league, season) {
     return `${head}
       <div class="container">
         <div class="card empty-state res-empty">
-          <h3>No results yet</h3>
+          <h2>No results yet</h2>
           <p>Results for ${esc(season.label)} appear here after each race, with the winner, fastest lap and full classification.${fallback ? ` Until then, catch up on ${esc(fallback.label)}.` : ""}</p>
           <div class="btn-row">
             ${fallback ? `<a class="btn" href="${link("results/", { season: fallback.id })}">${esc(fallback.label)} results</a>` : ""}
@@ -165,7 +165,7 @@ function notFoundView(season, value) {
     </section>
     <div class="container">
       <div class="card empty-state">
-        <h3>No round “${esc(value)}”</h3>
+        <h2>No round “${esc(value)}”</h2>
         <p>${esc(season.label)} has ${rounds} ${rounds === 1 ? "round" : "rounds"}. The link may be out of date, or the race belongs to another season.</p>
         <div class="btn-row">
           <a class="btn" href="${link("results/")}">${esc(season.label)} results</a>
@@ -340,7 +340,7 @@ function noResults(league, season, round, status) {
     ],
   }[status] || ["No results", ""];
   return `<div class="card empty-state res-empty">
-    <h3>${esc(copy[0])}</h3>
+    <h2>${esc(copy[0])}</h2>
     <p>${esc(copy[1])}</p>
     <div class="btn-row">
       <a class="btn" href="${link("schedule/")}#round-${esc(round.round)}">View on schedule</a>

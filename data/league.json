@@ -139,7 +139,7 @@
             {"driver": "raptor33m", "team": "Alpine", "position": 12, "fastestLap": true},
             {"driver": "woo0pig", "team": "Ferrari", "position": 20}
           ],
-          "trackImage": "assets/tracks/saudi-arabia.jpg"
+          "trackImage": "assets/tracks/saudi-arabia.webp"
         },
         {
           "round": 5,
@@ -160,7 +160,7 @@
             {"driver": "woo0pig", "team": "McLaren", "position": 16},
             {"driver": "theslayterr-ttv", "team": "Aston Martin", "position": 19}
           ],
-          "trackImage": "assets/tracks/azerbaijan.jpg"
+          "trackImage": "assets/tracks/azerbaijan.webp"
         },
         {
           "round": 6,
@@ -182,7 +182,7 @@
             {"driver": "itscetla", "team": "Kick Sauber", "position": 20},
             {"driver": "raptor33m", "team": "Alpine", "position": 21}
           ],
-          "trackImage": "assets/tracks/miami.jpg"
+          "trackImage": "assets/tracks/miami.webp"
         },
         {
           "round": 7,

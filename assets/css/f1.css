@@ -5,6 +5,7 @@
 :root {
   --red: #e10600;
   --red-dark: #b80500;
+  --red-on-dark: #ff5a52; /* F1 red fails contrast as small text on carbon */
   --carbon: #15151e;
   --carbon-2: #1f1f29;
   --carbon-3: #2c2c37;
@@ -209,6 +210,7 @@ p {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-height: 44px;
   text-decoration: none;
   color: var(--on-dark);
   flex-shrink: 0;
@@ -322,6 +324,11 @@ p {
 
   .topbar .container {
     justify-content: flex-end;
+    min-height: 52px;
+  }
+
+  .season-picker select {
+    min-height: 44px;
   }
 }
 
@@ -1044,6 +1051,8 @@ p {
 
 .track-map {
   display: grid;
+  /* Definite track so the image's 100% height resolves and contain works. */
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
   place-items: center;
   aspect-ratio: 16 / 10;
   padding: 12px;
@@ -1055,6 +1064,8 @@ p {
 .track-map img {
   width: 100%;
   height: 100%;
+  min-width: 0;
+  min-height: 0;
   object-fit: contain;
 }
 

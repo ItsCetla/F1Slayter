@@ -46,7 +46,7 @@ function pageHead(season, table, view) {
     <div class="container page-head__inner">
       <div>
         <p class="kicker">${esc(season.label)} · ${esc(season.year)} · ${esc(progress)}</p>
-        <h1 class="title">${view === "teams" ? "Team" : "Driver"} standings</h1>
+        <h1 class="title">${esc(season.label)} <em>${view === "teams" ? "Team" : "Driver"} standings</em></h1>
       </div>
       <nav class="tabs" aria-label="Standings view">${tab("drivers", "Drivers")}${tab("teams", "Teams")}</nav>
     </div>

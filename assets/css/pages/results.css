@@ -109,7 +109,7 @@
   font-weight: 900;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--red);
+  color: var(--red-on-dark);
 }
 
 .race-hero__round span {

@@ -755,6 +755,13 @@ button.series-legend__item:hover {
   -webkit-overflow-scrolling: touch;
 }
 
+.heatmap__hint {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
 .heat {
   width: 100%;
   border-collapse: separate;

@@ -13,7 +13,7 @@ if (ctx) render(ctx);
 function render({ league, season }) {
   const main = document.getElementById("main");
   if (!season) {
-    main.innerHTML = `<div class="container"><div class="card empty-state"><h3>No seasons yet</h3><p>Add a season to data/league.json.</p></div></div>`;
+    main.innerHTML = `<div class="container"><div class="card empty-state"><h2>No seasons yet</h2><p>Add a season to data/league.json.</p></div></div>`;
     return;
   }
 

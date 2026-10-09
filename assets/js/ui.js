@@ -215,16 +215,27 @@ function renderHeader(pageKey) {
     </nav>`;
 
   const toggle = header.querySelector(".nav-toggle");
+  const nav = header.querySelector(".navbar");
+  const close = () => {
+    header.classList.remove("nav-open");
+    toggle.setAttribute("aria-expanded", "false");
+  };
   toggle.addEventListener("click", () => {
     const open = header.classList.toggle("nav-open");
     toggle.setAttribute("aria-expanded", String(open));
   });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && header.classList.contains("nav-open")) {
-      header.classList.remove("nav-open");
-      toggle.setAttribute("aria-expanded", "false");
+      close();
       toggle.focus();
     }
+  });
+  // The open menu covers the page, so close it once focus or a click goes elsewhere.
+  nav.addEventListener("focusout", (event) => {
+    if (header.classList.contains("nav-open") && !nav.contains(event.relatedTarget)) close();
+  });
+  document.addEventListener("click", (event) => {
+    if (header.classList.contains("nav-open") && !nav.contains(event.target)) close();
   });
 }
 
@@ -256,11 +267,12 @@ function wireSeasonPicker(league, season) {
     window.location.href = url.pathname + url.search;
   });
 
-  // Keep nav links on the selected season.
+  // Keep nav and logo links on the selected season.
   document.querySelectorAll("[data-nav]").forEach((a) => {
     const item = NAV.find((n) => n.key === a.dataset.nav);
     if (item) a.href = link(item.path);
   });
+  document.querySelectorAll(".brand").forEach((a) => (a.href = link("")));
 }
 
 const BANNER_KEY = "slayter-raceday-dismissed";

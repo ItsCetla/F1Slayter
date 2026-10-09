@@ -119,7 +119,7 @@ function renderGrid(main, league, season) {
   main.innerHTML = `<header class="page-head">
       <div class="container">
         <p class="kicker">${esc(season.label)} · ${esc(season.year)}</p>
-        <h1 class="title">Drivers</h1>
+        <h1 class="title">${esc(season.label)} <em>Drivers</em></h1>
         <p class="lede">${league.drivers.size} league drivers${table.rounds.length ? `, ordered by the ${esc(season.label)} championship` : ""}. Pick a driver for their season and career record.</p>
       </div>
     </header>

@@ -131,11 +131,11 @@ function fastestLapFlags(league, rounds) {
 
 function driverTable(table, flags, sort) {
   const rows = table.rows.slice().sort((a, b) => b[sort.key] - a[sort.key] || a.rank - b.rank);
-  const th = (key, label, extra = "") => {
-    const sorted = key === sort.key;
-    return `<th scope="col" class="num${extra}${sorted ? " is-sorted" : ""}"${sorted ? ' aria-sort="descending"' : ""}>${label}</th>`;
-  };
-  const td = (key, value, extra = "") => `<td class="num${extra}${key === sort.key ? " is-sorted" : ""}">${value}</td>`;
+  // The sorted column stays visible on phones even if it is normally hidden there.
+  const cls = (key, extra) => (key === sort.key ? `num${extra.replace(" hide-sm", "")} is-sorted` : `num${extra}`);
+  const th = (key, label, extra = "") =>
+    `<th scope="col" class="${cls(key, extra)}"${key === sort.key ? ' aria-sort="descending"' : ""}>${label}</th>`;
+  const td = (key, value, extra = "") => `<td class="${cls(key, extra)}">${value}</td>`;
 
   return `<table class="f1-table standings-table">
     <caption class="sr-only">Driver standings${sort.key === "points" ? "" : `, sorted by ${esc(sort.label.toLowerCase())}`}</caption>

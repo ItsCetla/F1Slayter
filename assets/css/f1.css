@@ -1056,6 +1056,7 @@ p {
   text-align: center;
 }
 
+.empty-state h2,
 .empty-state h3 {
   font-size: 24px;
   text-transform: uppercase;

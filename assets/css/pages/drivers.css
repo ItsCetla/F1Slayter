@@ -684,13 +684,20 @@
 
 .career-season__meta {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 4px 10px;
 }
 
 .career-season__meta .muted {
   font-size: 14px;
   font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .career-table th[scope="row"] {
+    padding: 12px 8px;
+  }
 }
 
 @media (max-width: 600px) {

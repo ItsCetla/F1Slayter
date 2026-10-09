@@ -142,7 +142,6 @@ function emptyState(league, season) {
         <polyline points="0,110 46,100 92,98 138,86 184,76 230,72 276,60 320,52" fill="none" stroke="#15151e" stroke-opacity=".35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         <polyline points="0,112 46,106 92,104 138,100 184,96 230,90 276,88 320,80" fill="none" stroke="#c9c6bf" stroke-width="2" stroke-dasharray="6 5" stroke-linecap="round"/>
       </svg>
-      <p class="kicker">${esc(season.label)} · ${esc(season.year)}</p>
       <h2 class="an-empty__title" id="emptyTitle">No race data yet</h2>
       <p class="an-empty__text">Points progression, championship positions, form and head-to-heads unlock after ${esc(season.label)}'s first race results are in.${other ? ` ${esc(other.label)} is ready to explore now.` : ""}</p>
       <div class="btn-row">
@@ -419,11 +418,9 @@ function update() {
   renderCharts(table);
 }
 
+// Without Chart.js (CDN blocked/offline) the data tables and summaries still render.
 function renderCharts(table) {
-  if (!window.Chart) {
-    chartsUnavailable();
-    // Tables and summaries still render without Chart.js.
-  }
+  if (!window.Chart) chartsUnavailable();
   for (const render of Object.values(LINE_CHARTS)) render(table);
   renderPodium(table);
   renderFastest(table);
@@ -814,6 +811,8 @@ function lineOptions({ reverse = false, yMin, yMax, yStep, yTick, valueText, asc
     layout: { padding: { top: 8, right: phone ? 8 : 44, left: 0 } },
     scales: {
       x: {
+        // A lone round would sit on the y axis; centre it instead.
+        offset: state.through === 1,
         grid: { display: false },
         border: { color: AXIS },
         ticks: { color: INK_3, font: { size: phone ? 11 : 12, weight: 600 }, maxRotation: 0, autoSkipPadding: 8 },
@@ -849,6 +848,7 @@ function seriesStyle(id, { dashed = false } = {}) {
     borderJoinStyle: "round",
     tension: 0,
     spanGaps: false,
+    clip: 8, // keep markers on the axis edges (P1, max points) whole
     pointStyle,
     pointRadius: stroke ? 5 : 4,
     pointHoverRadius: stroke ? 7 : 6,
@@ -861,6 +861,7 @@ function seriesStyle(id, { dashed = false } = {}) {
 }
 
 function renderSeriesLegend(key, rows, hidden) {
+  if (!window.Chart) return;
   document.getElementById(`${key}Legend`).innerHTML = `<ul class="series-legend" role="list" aria-label="Drivers shown. Press a driver to hide or show their line.">${rows
     .map((row) => `<li><button type="button" class="series-legend__item" data-series="${esc(row.id)}" aria-pressed="${!hidden.has(row.id)}" title="${esc(row.name)}">${swatch(row.id)}<span class="series-legend__name">${esc(row.name)}</span><span class="series-legend__code" aria-hidden="true">${esc(row.code)}</span></button></li>`)
     .join("")}</ul>`;
@@ -886,7 +887,7 @@ function renderPodium(table) {
   const phone = PHONE.matches;
   const counts = rows.map((row) => FINISH_BANDS.map((band) => row.positions.filter((p) => p !== null && band.test(p)).length));
 
-  document.getElementById("podiumLegend").innerHTML = `<ul class="series-legend series-legend--static" role="list">${FINISH_BANDS
+  if (window.Chart) document.getElementById("podiumLegend").innerHTML = `<ul class="series-legend series-legend--static" role="list">${FINISH_BANDS
     .map((band) => `<li><span class="series-legend__item"><span class="swatch-box" style="background:${band.color}"></span>${band.label}</span></li>`)
     .join("")}</ul>`;
   document.getElementById("podiumTable").innerHTML = `<table class="f1-table data-table">
@@ -1097,7 +1098,7 @@ function renderH2H(table) {
   const rows = [h.a, h.b];
   const maxPos = Math.max(10, ...rows.flatMap((row) => row.positions.filter((p) => p !== null)));
 
-  document.getElementById("h2hLegend").innerHTML = `<ul class="series-legend series-legend--static" role="list">${rows
+  if (window.Chart) document.getElementById("h2hLegend").innerHTML = `<ul class="series-legend series-legend--static" role="list">${rows
     .map((row, i) => `<li><span class="series-legend__item">${swatch(row.id, { dashed: i === 1 })}<span>${esc(row.name)}${i === 1 ? " (dashed)" : ""}</span></span></li>`)
     .join("")}</ul>`;
   document.getElementById("h2hTable").innerHTML = `<table class="f1-table data-table">
@@ -1224,7 +1225,7 @@ function setChartLabel(key, text) {
 }
 
 function setBoxHeight(key, px) {
-  document.getElementById(`${key}Box`).style.height = `${px}px`;
+  if (window.Chart) document.getElementById(`${key}Box`).style.height = `${px}px`;
 }
 
 // Vertical hairline at the hovered round.

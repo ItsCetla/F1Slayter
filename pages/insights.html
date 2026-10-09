@@ -1,12 +1,21 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="refresh" content="0; url=../analytics.html#insights" />
-    <title>Redirecting…</title>
+    <meta charset="utf-8" />
+    <title>Redirecting… — Slayter League</title>
+    <meta name="robots" content="noindex" />
+    <meta http-equiv="refresh" content="0; url=../analytics/" />
+    <link rel="canonical" href="../analytics/" />
+    <script>
+      // Old URL from the previous site; forward to its new home.
+      (function () {
+        var target = "../analytics/";
+        if (!location.hash) { location.replace(target + location.search + "#insights"); return; }
+        location.replace(target + location.search + location.hash);
+      })();
+    </script>
   </head>
   <body>
-    <p>Redirecting to the combined insights and analytics experience…</p>
-    <p><a href="../analytics.html#insights">Continue to the analytics hub</a>.</p>
+    <p>This page has moved to <a href="../analytics/">../analytics/</a>.</p>
   </body>
 </html>

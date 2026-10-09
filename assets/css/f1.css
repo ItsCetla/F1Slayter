@@ -40,7 +40,8 @@
 
 html {
   -webkit-text-size-adjust: 100%;
-  scroll-padding-top: calc(var(--header-h) + 16px);
+  /* Sticky header = 36px top bar + navbar. */
+  scroll-padding-top: calc(var(--header-h) + 52px);
 }
 
 body {
@@ -613,7 +614,7 @@ p {
 .tabs button {
   display: inline-flex;
   align-items: center;
-  min-height: 40px;
+  min-height: 44px;
   padding: 0 18px;
   border: 0;
   border-radius: 6px;
@@ -724,9 +725,12 @@ p {
 
 .f1-table .pos {
   width: 56px;
+  text-align: center;
+}
+
+.f1-table td.pos {
   font-weight: 900;
   font-size: 17px;
-  text-align: center;
 }
 
 .f1-table .pts {
@@ -999,6 +1003,7 @@ p {
   border-radius: 8px;
   background: var(--carbon-2);
   border: 1px solid var(--carbon-line);
+  color: var(--on-dark);
 }
 
 .countdown__num {

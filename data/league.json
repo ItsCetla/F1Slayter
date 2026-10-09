@@ -95,7 +95,7 @@
             {"driver": "itscetla", "team": "Mercedes", "position": 20},
             {"driver": "raptor33m", "team": "Alpine", "position": 21}
           ],
-          "trackImage": "assets/tracks/las-vegas.png"
+          "trackImage": "assets/tracks/las-vegas.webp"
         },
         {
           "round": 3,

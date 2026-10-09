@@ -232,12 +232,6 @@
   text-decoration: none;
 }
 
-/* The shared .pos cell style also enlarges its header; keep headers uniform. */
-.standings-table th.pos {
-  font-size: 12px;
-  font-weight: 700;
-}
-
 @media (max-width: 720px) {
   .standings-table .pos {
     width: 44px;

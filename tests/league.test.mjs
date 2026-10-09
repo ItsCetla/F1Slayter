@@ -1,0 +1,93 @@
+// Run with: node --test tests/
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import {
+  createLeague, standings, seasonSummary, nextRound, roundStatus, headToHead,
+} from "../assets/js/league.js";
+
+const raw = JSON.parse(await readFile(new URL("../data/league.json", import.meta.url), "utf8"));
+const league = createLeague(raw);
+const s1 = league.season("season-1");
+
+test("league.json has no data issues", () => {
+  assert.deepEqual(league.issues, []);
+});
+
+test("Season 1 standings derive from results", () => {
+  const table = standings(league, s1);
+  const got = table.rows.map((r) => [r.name, r.points, r.wins, r.podiums, r.fastestLaps]);
+  assert.deepEqual(got, [
+    ["TasteThebo", 190, 7, 8, 0],
+    ["Cbreezyll", 99, 0, 5, 2],
+    ["ComanderHP", 88, 1, 4, 0],
+    ["TheSlayterr-ttv", 70, 0, 2, 0],
+    ["ItsCetla", 33, 0, 0, 0],
+    ["Raptor33M", 12, 0, 0, 1],
+    ["Woo0pig", 8, 0, 0, 0],
+  ]);
+  assert.deepEqual(table.rows[0].cumulative, [25, 50, 75, 100, 125, 140, 165, 190]);
+  assert.equal(table.rows[1].gap, -91);
+});
+
+test("timeline: standings through round 4", () => {
+  const table = standings(league, s1, { throughRound: 4 });
+  assert.equal(table.rounds.length, 4);
+  assert.equal(table.rows[0].points, 100);
+  assert.equal(table.rows.find((r) => r.name === "ComanderHP").points, 46);
+});
+
+test("season summary", () => {
+  const summary = seasonSummary(league, s1);
+  assert.equal(summary.racesCompleted, 8);
+  assert.equal(summary.distinctWinners, 2);
+  assert.equal(summary.mostFastestLaps.name, "Cbreezyll");
+  assert.equal(summary.longestWinStreak.driver.name, "TasteThebo");
+  assert.equal(summary.longestWinStreak.length, 5);
+});
+
+test("points tie is broken by countback, not name", () => {
+  const tied = createLeague({
+    league: { points: [3, 2, 1] },
+    drivers: [{ id: "a", name: "Zed" }, { id: "b", name: "Amy" }],
+    seasons: [{ id: "x", year: 1, rounds: [
+      { round: 1, results: [{ driver: "a", position: 1 }, { driver: "b", position: 2 }] },
+      { round: 2, results: [{ driver: "b", position: 3 }] },
+    ] }],
+  });
+  const rows = standings(tied, tied.seasons[0]).rows;
+  assert.equal(rows[0].points, rows[1].points);
+  assert.deepEqual(rows.map((r) => r.id), ["a", "b"]);
+});
+
+test("round status and next round", () => {
+  const now = new Date("2026-10-09T12:00:00Z");
+  const season = { rounds: [
+    { round: 1, start: "2026-10-01T20:00:00-04:00", results: [{ driver: "a", position: 1 }] },
+    { round: 2, start: "2026-10-06T20:00:00-04:00", results: [] },
+    { round: 3, start: "2026-10-13T20:00:00-04:00", results: [] },
+    { round: 4, status: "cancelled", results: [] },
+  ] };
+  assert.equal(roundStatus(season.rounds[0], now), "complete");
+  assert.equal(roundStatus(season.rounds[1], now), "awaiting-results");
+  assert.equal(roundStatus(season.rounds[2], now), "scheduled");
+  assert.equal(roundStatus(season.rounds[3], now), "cancelled");
+  assert.equal(nextRound(season, now).round, 2);
+});
+
+test("validation catches bad results", () => {
+  const bad = createLeague({
+    drivers: [{ id: "a", name: "A" }],
+    seasons: [{ id: "x", label: "X", year: 1, rounds: [
+      { round: 1, results: [{ driver: "a", position: 1 }, { driver: "ghost", position: 1 }] },
+    ] }],
+  });
+  assert.equal(bad.issues.length, 2);
+});
+
+test("head to head", () => {
+  const table = standings(league, s1);
+  const h2h = headToHead(table, "cbreezyll", "comanderhp");
+  assert.equal(h2h.shared, 7);
+  assert.equal(h2h.aAhead + h2h.bAhead, 7);
+});

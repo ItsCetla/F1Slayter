@@ -255,7 +255,7 @@ function wireSeasonPicker(league, season) {
   const select = document.getElementById("seasonSelect");
   if (!select) return;
   select.innerHTML = league.seasons
-    .map((s) => `<option value="${esc(s.id)}"${s.id === season.id ? " selected" : ""}>${esc(s.label)} · ${esc(s.year)}</option>`)
+    .map((s) => `<option value="${esc(s.id)}"${s.id === season.id ? " selected" : ""}>${esc(s.label)} · ${esc(s.year)}${s.status === "active" ? " (current)" : ""}</option>`)
     .join("");
   select.disabled = false;
   select.addEventListener("change", () => {

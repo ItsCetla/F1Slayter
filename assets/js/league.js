@@ -355,6 +355,11 @@ export function headToHead(table, idA, idB) {
 function validate(league) {
   const issues = [];
   for (const season of league.seasons) {
+    for (const entry of season.entries || []) {
+      if (!league.resolveDriver(entry.driver)) {
+        issues.push(`${season.label} entries: unknown driver "${entry.driver}" (add them to "drivers")`);
+      }
+    }
     for (const round of season.rounds) {
       const where = `${season.label} R${round.round}`;
       const seenDrivers = new Set();

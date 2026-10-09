@@ -104,39 +104,61 @@ function renderGrid(main, league, season) {
   document.title = "Drivers — Slayter League";
   const table = standings(league, season);
   const byId = new Map(table.rows.map((row) => [row.id, row]));
-  const cards = Array.from(league.drivers.values()).map((driver) => {
+  const entryOrder = (season.entries || []).map((e) => league.resolveDriver(e.driver)).filter(Boolean);
+  const card = (driver) => {
     const team = currentTeam(league, season, driver.id);
     return { driver, team, row: byId.get(driver.id) || null, color: team ? teamColor(league, team) : NEUTRAL };
-  });
-  cards.sort((a, b) => {
+  };
+
+  // This season's field: everyone entered or with a result. Ordered by the
+  // championship once racing starts, by the entry list before that.
+  const inSeason = (id) => byId.has(id) || entryOrder.includes(id);
+  const all = Array.from(league.drivers.values());
+  const field = all.filter((d) => inSeason(d.id)).map(card);
+  field.sort((a, b) => {
     if (a.row && b.row) return a.row.rank - b.row.rank;
     if (a.row || b.row) return a.row ? -1 : 1;
-    return a.driver.name.localeCompare(b.driver.name, "en", { sensitivity: "base" });
+    return entryOrder.indexOf(a.driver.id) - entryOrder.indexOf(b.driver.id);
   });
+  const others = all
+    .filter((d) => !inSeason(d.id))
+    .map(card)
+    .sort((a, b) => a.driver.name.localeCompare(b.driver.name, "en", { sensitivity: "base" }));
+  // A season with no roster yet: show everyone in the main grid. Past seasons
+  // only show their own field, not drivers who joined later.
+  const main_ = field.length ? field : others;
+  const rest = field.length && season.status !== "complete" ? others : [];
 
   const fallback = table.rounds.length ? null : league.seasons.find((s) => s.id !== season.id && latestCompletedRound(s));
+  const lede = field.length
+    ? `${field.length} drivers ${table.rounds.length ? `in the ${esc(season.label)} championship` : `entered for ${esc(season.label)}`}`
+    : `${league.drivers.size} league drivers`;
 
   main.innerHTML = `<header class="page-head">
       <div class="container">
         <p class="kicker">${esc(season.label)} · ${esc(season.year)}</p>
         <h1 class="title">${esc(season.label)} <em>Drivers</em></h1>
-        <p class="lede">${league.drivers.size} league drivers${table.rounds.length ? `, ordered by the ${esc(season.label)} championship` : ""}. Pick a driver for their season and career record.</p>
+        <p class="lede">${lede}. Pick a driver for their season and career record.</p>
       </div>
     </header>
     <div class="container">
       ${table.rounds.length ? "" : `<div class="card drivers-notice">
-        <p><strong>No ${esc(season.label)} races yet.</strong> Cards show each driver's most recent team; positions appear after Round 1.</p>
+        <p><strong>No ${esc(season.label)} races yet.</strong> ${field.length ? "Cards show each driver's team for this season;" : "Cards show each driver's most recent team;"} positions appear after Round 1.</p>
         ${fallback ? `<a class="more-link" href="${link("drivers/", { season: fallback.id })}">${esc(fallback.label)} drivers</a>` : ""}
       </div>`}
-      <ul class="driver-grid" role="list">${cards.map((card) => driverCard(season, card)).join("")}</ul>
+      <ul class="driver-grid" role="list">${main_.map((c) => driverCard(season, c, field.length > 0)).join("")}</ul>
+      ${rest.length ? `<section class="section" aria-labelledby="otherDrivers">
+        <div class="section-head"><h2 class="section-title" id="otherDrivers">Other league drivers</h2></div>
+        <ul class="driver-grid" role="list">${rest.map((c) => driverCard(season, c, false)).join("")}</ul>
+      </section>` : ""}
     </div>`;
 }
 
-function driverCard(season, { driver, team, row, color }) {
+function driverCard(season, { driver, team, row, color }, entered) {
   const code = driver.code || driver.name.slice(0, 3).toUpperCase();
   const standing = row
     ? `<span class="dcard__rank">${row.rank}<sup>${suffix(row.rank)}</sup></span><span class="dcard__pts">${row.points} <small>pts</small></span>`
-    : `<span class="dcard__none">No starts in ${esc(season.label)}</span>`;
+    : `<span class="dcard__none">${entered ? `${esc(season.label)} entrant` : `Not racing in ${esc(season.label)}`}</span>`;
   return `<li>
     <a class="dcard" href="${link("drivers/", { id: driver.id })}" style="${teamStyle(color)}">
       <span class="dcard__code" aria-hidden="true">${esc(code)}</span>

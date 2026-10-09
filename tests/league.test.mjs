@@ -111,7 +111,9 @@ test("driver career and season entries", () => {
   assert.equal(career.totals.wins, 7);
   assert.equal(career.seasons.length, 1);
   assert.equal(seasonEntries(league, s1).length, 7);
-  assert.equal(seasonEntries(league, league.season("season-2")).length, 0);
+  const s2 = seasonEntries(league, league.season("season-2"));
+  assert.equal(s2.length, 10);
+  assert.equal(s2.find((d) => d.id === "itscetla").team, "Red Bull");
 });
 
 test("bad data is reported and kept out of every total", () => {
@@ -134,4 +136,18 @@ test("bad data is reported and kept out of every total", () => {
   assert.equal(season.rounds[0].results.length, 1);
   assert.equal(standings(messy, season).rows[0].points, 25);
   assert.equal(teamStandings(messy, season).rows[0].points, 25);
+});
+
+test("Season 2 calendar: 9 Thursday rounds at 8:45 PM Eastern", () => {
+  const s2 = league.season("season-2");
+  assert.equal(league.currentSeason.id, "season-2");
+  assert.equal(s2.rounds.length, 9);
+  for (const round of s2.rounds) {
+    const start = new Date(round.start);
+    const local = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York", weekday: "short", hour: "numeric", minute: "2-digit",
+    }).format(start);
+    assert.equal(local, "Thu 8:45 PM", `R${round.round} ${round.name}`);
+  }
+  assert.equal(nextRound(s2, new Date("2026-10-09T12:00:00Z")).name, "Qatar");
 });

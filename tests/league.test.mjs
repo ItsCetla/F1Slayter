@@ -172,6 +172,9 @@ test("replay links: only http(s) survive, known hosts parse for embedding", () =
   assert.equal(parseVideo("https://youtube.com/live/dQw4w9WgXcQ").kind, "youtube");
   assert.deepEqual(parseVideo(r3.replay), { kind: "twitch", id: "123456789", url: "https://www.twitch.tv/videos/123456789" });
   assert.equal(parseVideo("https://drive.google.com/file/d/abc/view").kind, "link");
+  assert.equal(parseVideo("https://youtu.be/dQw4w9WgXcQ?t=1m30s").start, 90);
+  assert.equal(parseVideo("https://youtu.be/dQw4w9WgXcQ?t=1h2m3s").start, 3723);
+  assert.equal(parseVideo("https://youtu.be/dQw4w9WgXcQ?t=junk").start, 0);
   // Anything that isn't a clean video id falls back to a plain link.
   assert.equal(parseVideo("https://youtube.com/watch?v=<script>").kind, "link");
   assert.equal(parseVideo("not a url"), null);

@@ -77,6 +77,14 @@ function isWebUrl(value) {
   }
 }
 
+// YouTube start times: "90", "90s" or "1h2m30s".
+function parseStartTime(value) {
+  const match = /^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s?)?$/.exec(String(value || "").trim());
+  if (!match) return 0;
+  const [, h = 0, m = 0, sec = 0] = match;
+  return Number(h) * 3600 + Number(m) * 60 + Number(sec);
+}
+
 // Recognises links the replays page can play in place. Anything else is
 // opened on its own site. Ids are pattern-checked so only they reach an embed URL.
 export function parseVideo(value) {
@@ -89,8 +97,8 @@ export function parseVideo(value) {
     id = url.searchParams.get("v") || (url.pathname.match(/^\/(?:embed|live|shorts)\/([^/]+)/) || [])[1];
   }
   if (id && /^[A-Za-z0-9_-]{11}$/.test(id)) {
-    const start = parseInt(url.searchParams.get("t") || url.searchParams.get("start") || "", 10);
-    return { kind: "youtube", id, start: Number.isFinite(start) ? start : 0, url: url.href };
+    const start = parseStartTime(url.searchParams.get("t") || url.searchParams.get("start"));
+    return { kind: "youtube", id, start, url: url.href };
   }
   if (host === "twitch.tv") {
     const vod = (url.pathname.match(/^\/videos\/(\d+)/) || [])[1];

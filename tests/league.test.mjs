@@ -19,7 +19,7 @@ test("Season 1 standings derive from results", () => {
   const table = standings(league, s1);
   const got = table.rows.map((r) => [r.name, r.points, r.wins, r.podiums, r.fastestLaps]);
   assert.deepEqual(got, [
-    ["TasteThebo", 190, 7, 8, 0],
+    ["Rambo", 190, 7, 8, 0],
     ["Cbreezyll", 99, 0, 5, 2],
     ["ComanderHP", 88, 1, 4, 0],
     ["TheSlayterr-ttv", 70, 0, 2, 0],
@@ -43,7 +43,7 @@ test("season summary", () => {
   assert.equal(summary.racesCompleted, 8);
   assert.equal(summary.distinctWinners, 2);
   assert.equal(summary.mostFastestLaps.name, "Cbreezyll");
-  assert.equal(summary.longestWinStreak.driver.name, "TasteThebo");
+  assert.equal(summary.longestWinStreak.driver.name, "Rambo");
   assert.equal(summary.longestWinStreak.length, 5);
 });
 
@@ -100,13 +100,16 @@ test("team standings credit the team raced for in each round", () => {
   const total = table.rows.reduce((sum, r) => sum + r.points, 0);
   assert.equal(total, 190 + 99 + 88 + 70 + 33 + 12 + 8);
   const ferrari = table.rows.find((r) => r.team === "Ferrari");
-  // TasteThebo R1-R4 (100) + Cbreezyll R5-R8 (0+18+18+18) + ComanderHP R7 (15) + Woo0pig R1-R4 (0)
+  // Rambo R1-R4 (100) + Cbreezyll R5-R8 (0+18+18+18) + ComanderHP R7 (15) + Woo0pig R1-R4 (0)
   assert.equal(ferrari.points, 100 + 54 + 15);
   assert.equal(table.rows[0].rank, 1);
 });
 
 test("driver career and season entries", () => {
-  const career = driverCareer(league, "tastethebo");
+  // TasteThebo (Season 1) and Rambo (Season 2) are one driver.
+  assert.equal(league.resolveDriver("TasteThebo"), "rambo");
+  assert.equal(league.resolveDriver("tastethebo"), "rambo");
+  const career = driverCareer(league, "rambo");
   assert.equal(career.totals.titles, 1);
   assert.equal(career.totals.wins, 7);
   assert.equal(career.seasons.length, 1);

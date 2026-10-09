@@ -22,7 +22,7 @@
     "Cadillac": "#C4A35A"
   },
   "drivers": [
-    {"id": "tastethebo", "name": "TasteThebo", "code": "TAS", "aliases": ["SirTasteTheRambo"]},
+    {"id": "rambo", "name": "Rambo", "code": "RAM", "aliases": ["TasteThebo", "SirTasteTheRambo"]},
     {"id": "cbreezyll", "name": "Cbreezyll", "code": "CBZ", "aliases": ["Cbreezy"]},
     {"id": "comanderhp", "name": "ComanderHP", "code": "CHP"},
     {"id": "theslayterr-ttv", "name": "TheSlayterr-ttv", "code": "SLY", "aliases": ["Slayterr", "TheSlayterr-TV"]},
@@ -31,7 +31,6 @@
     {"id": "woo0pig", "name": "Woo0pig", "code": "WOO"},
     {"id": "mitch", "name": "Mitch", "code": "MIT"},
     {"id": "jack", "name": "Jack", "code": "JAC"},
-    {"id": "rambo", "name": "Rambo", "code": "RAM"},
     {"id": "izzy", "name": "Izzy", "code": "IZZ", "aliases": ["Izzy Hunter"]},
     {"id": "kickstartmykart", "name": "KickStartMyKart", "code": "KIC", "aliases": ["KickStart"]},
     {"id": "fleshtorpedo", "name": "FleshTorpedo", "code": "FLE", "aliases": ["Flesh Torpedo"]},
@@ -181,7 +180,7 @@
           "status": "complete",
           "highlights": ["TasteThebo seals race one victory"],
           "results": [
-            {"driver": "tastethebo", "team": "Ferrari", "position": 1},
+            {"driver": "rambo", "team": "Ferrari", "position": 1},
             {"driver": "comanderhp", "team": "Red Bull", "position": 2},
             {"driver": "theslayterr-ttv", "team": "Mercedes", "position": 4},
             {"driver": "cbreezyll", "team": "Red Bull", "position": 6},
@@ -202,7 +201,7 @@
           "status": "complete",
           "highlights": ["TasteThebo wins under the lights", "Cbreezyll clocks fastest lap"],
           "results": [
-            {"driver": "tastethebo", "team": "Ferrari", "position": 1},
+            {"driver": "rambo", "team": "Ferrari", "position": 1},
             {"driver": "comanderhp", "team": "Red Bull", "position": 2},
             {"driver": "cbreezyll", "team": "Red Bull", "position": 10, "fastestLap": true},
             {"driver": "woo0pig", "team": "Ferrari", "position": 13},
@@ -224,7 +223,7 @@
           "status": "complete",
           "highlights": ["TasteThebo opens with victory", "Cbreezyll grabs fastest lap"],
           "results": [
-            {"driver": "tastethebo", "team": "Ferrari", "position": 1},
+            {"driver": "rambo", "team": "Ferrari", "position": 1},
             {"driver": "cbreezyll", "team": "Red Bull", "position": 2, "fastestLap": true},
             {"driver": "itscetla", "team": "Mercedes", "position": 6},
             {"driver": "theslayterr-ttv", "team": "Mercedes", "position": 7},
@@ -246,7 +245,7 @@
           "status": "complete",
           "highlights": ["TasteThebo makes it four straight", "Raptor33M snags fastest lap"],
           "results": [
-            {"driver": "tastethebo", "team": "Ferrari", "position": 1},
+            {"driver": "rambo", "team": "Ferrari", "position": 1},
             {"driver": "cbreezyll", "team": "Red Bull", "position": 2},
             {"driver": "theslayterr-ttv", "team": "Mercedes", "position": 3},
             {"driver": "itscetla", "team": "Mercedes", "position": 4},
@@ -268,7 +267,7 @@
           "status": "complete",
           "highlights": ["SirTasteTheRambo claims debut win"],
           "results": [
-            {"driver": "tastethebo", "team": "Williams", "position": 1},
+            {"driver": "rambo", "team": "Williams", "position": 1},
             {"driver": "raptor33m", "team": "Alpine", "position": 4},
             {"driver": "itscetla", "team": "Kick Sauber", "position": 10},
             {"driver": "cbreezyll", "team": "Ferrari", "position": 12},
@@ -291,7 +290,7 @@
           "results": [
             {"driver": "comanderhp", "team": "Red Bull", "position": 1},
             {"driver": "cbreezyll", "team": "Ferrari", "position": 2},
-            {"driver": "tastethebo", "team": "Williams", "position": 3},
+            {"driver": "rambo", "team": "Williams", "position": 3},
             {"driver": "theslayterr-ttv", "team": "Aston Martin", "position": 4},
             {"driver": "woo0pig", "team": "McLaren", "position": 11},
             {"driver": "itscetla", "team": "Kick Sauber", "position": 20},
@@ -311,7 +310,7 @@
           "status": "complete",
           "highlights": ["SirTasteTheRambo wins at Suzuka"],
           "results": [
-            {"driver": "tastethebo", "team": "Williams", "position": 1},
+            {"driver": "rambo", "team": "Williams", "position": 1},
             {"driver": "cbreezyll", "team": "Ferrari", "position": 2},
             {"driver": "comanderhp", "team": "Ferrari", "position": 3},
             {"driver": "itscetla", "team": "Kick Sauber", "position": 4},
@@ -332,7 +331,7 @@
           "status": "complete",
           "highlights": ["SirTasteTheRambo dominates at Red Bull Ring"],
           "results": [
-            {"driver": "tastethebo", "team": "Williams", "position": 1},
+            {"driver": "rambo", "team": "Williams", "position": 1},
             {"driver": "cbreezyll", "team": "Ferrari", "position": 2},
             {"driver": "theslayterr-ttv", "team": "Aston Martin", "position": 3},
             {"driver": "woo0pig", "team": "McLaren", "position": 6},

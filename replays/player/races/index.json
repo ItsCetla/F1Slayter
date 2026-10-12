@@ -1,0 +1,9 @@
+{
+ "version": 1,
+ "races": [],
+ "site": {
+  "brand": "Slayter League",
+  "back": "../",
+  "backText": "All replays"
+ }
+}

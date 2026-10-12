@@ -14,6 +14,7 @@ Website for the Slayter League, a CETLA league racing the F1 video game. A stati
 | `/drivers/` | Driver cards; `?id=<driver id>` shows a driver profile with career stats |
 | `/analytics/` | Timeline playback, insights and charts (points, gaps, positions, heatmap, form, head-to-head) |
 | `/replays/` | Race replays: "coming soon" until videos are added, then a gallery and player (`?round=N`) |
+| `/replays/player/` | The 3D race viewer from F1 Pit Wall: `?race=<id>` opens one race, with no `race` it lists them |
 
 Every page takes `?season=<season id>` (the header's season picker sets it); without it the
 active season is shown. Links from the old site (`pages/*.html`, `analytics.html`) redirect to
@@ -58,6 +59,29 @@ home page, and the race shows up on `/replays/` (which says "coming soon" until 
 replay exists). YouTube and Twitch VOD links play right on the site; any other `https://` link
 (Google Drive, Streamable, …) opens on its own site. Links that aren't `http(s)` are ignored and
 flagged in the `?debug` banner.
+
+### Add a 3D race replay (F1 Pit Wall)
+
+A race recorded with F1 Pit Wall can go up as a 3D replay instead of a video: every car from the
+game's own telemetry, with onboard, overhead and broadcast cameras, a timing tower, and any
+driver's race lap by lap with their passes and highlights.
+
+1. In Pit Wall, open the race in the Replays tab and press **Export for website** (or run
+   `py -3.12 web_build.py "captures\<day>\<session>"`).
+2. Copy the `web\player` folder it writes over `replays/player/` here, keeping what is already
+   there: each race is its own folder in `replays/player/races/`, and `races/index.json` lists
+   them all.
+3. Give the round the link the export prints:
+
+   ```json
+   {"round": 1, "...": "...", "replay": "https://f1.cetla.dev/replays/player/?race=<id>", "results": [...]}
+   ```
+
+With `"site"` in Pit Wall's `web.json` set to a clone of this repo, steps 2 and 3 happen by
+themselves. The round's replay page then shows the 3D picture with its scrubber and an
+**Open viewer** button for the full viewer. A round has one `replay` link, so a 3D replay takes the
+place of a video link on that round. The 3D view loads three.js from cdn.jsdelivr.net; without it
+the viewer falls back to the 2D track map.
 
 ### Schedule a round
 
@@ -145,6 +169,7 @@ assets/js/pages/*.js       one script per page
 assets/css/f1.css          design system
 assets/css/pages/*.css     page-specific styles
 assets/tracks/             circuit maps
+replays/player/            F1 Pit Wall's 3D race viewer and its races (copied in from Pit Wall's export)
 tests/                     node --test unit tests for the data model
 pages/, analytics.html     redirects from the old site's URLs
 ```

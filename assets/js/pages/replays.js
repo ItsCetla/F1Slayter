@@ -1,7 +1,7 @@
 import {
   parseVideo, parseStart, roundStatus, roundWinner, latestCompletedRound, nextRound, teamColor, pointsFor,
 } from "../league.js";
-import { initPage, esc, link, flag, countryName, driverId, roundTitle, isTbd, fmt } from "../ui.js";
+import { initPage, esc, link, asset, flag, countryName, driverId, roundTitle, isTbd, fmt } from "../ui.js";
 
 // Spaced so it reads right inline; flex rows drop the spaces and use their gap.
 const SEP = ' <span class="rp-sep" aria-hidden="true">·</span> ';
@@ -76,6 +76,7 @@ function replayRounds(season) {
 }
 
 function hostName(video) {
+  if (video.kind === "pitwall") return "3D replay";
   if (video.kind === "youtube") return "YouTube";
   if (video.kind === "twitch") return "Twitch";
   return HOSTS[video.host] || video.host;
@@ -94,6 +95,11 @@ function isRaced(round) {
 function dateTag(round, format = fmt.short) {
   const start = parseStart(round);
   return start ? `<time datetime="${esc(start.toISOString())}">${esc(format(start))}</time>` : "Date TBC";
+}
+
+// The site's own 3D race viewer, opened on one race.
+function viewerHref(video) {
+  return `${asset("replays/player/")}?race=${encodeURIComponent(video.id)}`;
 }
 
 function externalLink(video, text, cls = "") {
@@ -301,6 +307,10 @@ function stageHead(season, round, label = "") {
 
 function player(round, video) {
   const title = `${roundTitle(round)} replay`;
+  if (video.kind === "pitwall") {
+    // embed=1 is the viewer's picture and scrubber only; the full viewer is a button away.
+    return `<div class="rp-player rp-player--pitwall"><iframe src="${esc(`${viewerHref(video)}&embed=1`)}" title="${esc(`${title}, 3D`)}" allow="fullscreen; clipboard-write" allowfullscreen loading="lazy"></iframe></div>`;
+  }
   if (video.kind === "youtube") {
     const src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(video.id)}?rel=0&start=${Math.max(0, video.start)}`;
     return `<div class="rp-player"><iframe src="${esc(src)}" title="${esc(title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`;
@@ -397,15 +407,26 @@ function moreReplays(league, season, round) {
   </section>`;
 }
 
+// Under a 3D replay: what the full viewer adds to the embedded picture.
+function viewerCallout(video) {
+  return `<div class="rp-viewer">
+    <div class="rp-viewer__copy">
+      <p class="rp-viewer__title">Full race viewer</p>
+      <p class="rp-viewer__text">Follow any driver from the cockpit, from above or on the broadcast cameras, with their race lap by lap, every pass they made and lost, and their own highlights.</p>
+    </div>
+    <a class="btn" href="${esc(viewerHref(video))}">${PLAY_GLYPH}<span>Open viewer</span></a>
+  </div>`;
+}
+
 function playerView(league, season, round, video) {
-  const embedded = video.kind !== "link";
+  const embedded = video.kind !== "link", pitwall = video.kind === "pitwall";
   return `<section class="rp-stage band-dark">
       <div class="container">
-        ${stageHead(season, round, "Full race replay")}
+        ${stageHead(season, round, pitwall ? "3D race replay" : "Full race replay")}
         <div class="rp-watch">
           <div class="rp-watch__main">
             ${player(round, video)}
-            <p class="rp-open">${embedded ? "<span>Player not loading?</span>" : ""}${externalLink(video, `Open on ${hostName(video)}`)}</p>
+            ${pitwall ? viewerCallout(video) : `<p class="rp-open">${embedded ? "<span>Player not loading?</span>" : ""}${externalLink(video, `Open on ${hostName(video)}`)}</p>`}
             ${steps(season, round)}
           </div>
           <div class="rp-watch__side">${tower(league, round)}</div>

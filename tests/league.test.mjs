@@ -175,6 +175,12 @@ test("replay links: only http(s) survive, known hosts parse for embedding", () =
   assert.equal(parseVideo("https://youtu.be/dQw4w9WgXcQ?t=1m30s").start, 90);
   assert.equal(parseVideo("https://youtu.be/dQw4w9WgXcQ?t=1h2m3s").start, 3723);
   assert.equal(parseVideo("https://youtu.be/dQw4w9WgXcQ?t=junk").start, 0);
+  // F1 Pit Wall's 3D viewer on this site, as its export writes the link.
+  assert.deepEqual(parseVideo("https://f1.cetla.dev/replays/player/?race=2026-10-22-losail"),
+    { kind: "pitwall", id: "2026-10-22-losail", url: "https://f1.cetla.dev/replays/player/?race=2026-10-22-losail" });
+  assert.equal(parseVideo("http://localhost:8000/replays/player/index.html?race=s2-r1").kind, "pitwall");
+  assert.equal(parseVideo("https://f1.cetla.dev/replays/player/?race=../../x").kind, "link");
+  assert.equal(parseVideo("https://f1.cetla.dev/replays/player/").kind, "link");
   // Anything that isn't a clean video id falls back to a plain link.
   assert.equal(parseVideo("https://youtube.com/watch?v=<script>").kind, "link");
   assert.equal(parseVideo("not a url"), null);

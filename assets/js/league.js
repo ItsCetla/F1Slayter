@@ -104,6 +104,12 @@ export function parseVideo(value) {
     const vod = (url.pathname.match(/^\/videos\/(\d+)/) || [])[1];
     if (vod) return { kind: "twitch", id: vod, url: url.href };
   }
+  // A race in this site's own 3D replay viewer (replays/player/), the link F1 Pit Wall's
+  // "Export for website" writes. The page always plays it from this site's copy of the player.
+  const race = url.searchParams.get("race");
+  if (/\/replays\/player\/(?:index\.html)?$/.test(url.pathname) && race && /^[a-z0-9][a-z0-9-]{0,79}$/.test(race)) {
+    return { kind: "pitwall", id: race, url: url.href };
+  }
   return { kind: "link", host, url: url.href };
 }
 

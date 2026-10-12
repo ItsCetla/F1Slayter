@@ -126,10 +126,15 @@
   .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
   .stage canvas[hidden], .viewbar [hidden], .viewbar[hidden] { display: none; }
   #map3d { cursor: grab; touch-action: none; }
+  #bcast { pointer-events: none; }
   .viewbar { position: absolute; left: 12px; top: 12px; right: 12px; display: flex; gap: 8px; align-items: center; z-index: 4; flex-wrap: wrap; pointer-events: none; }
   .viewbar > * { pointer-events: auto; }
   .viewbar .seg { background: rgba(21, 21, 30, 0.82); }
   .viewbar .hint { font-size: 12px; color: var(--ink-2); background: rgba(21, 21, 30, 0.72); padding: 4px 9px; border-radius: 6px; pointer-events: none; }
+  .viewbar .looks { display: inline-flex; gap: 10px; align-items: center; background: rgba(21, 21, 30, 0.82); border: 1px solid var(--line); border-radius: 6px; padding: 3px 8px; }
+  .viewbar .looks label { display: inline-flex; align-items: center; gap: 5px; font: 700 11px/1.2 var(--face); text-transform: uppercase; letter-spacing: 0.3px; color: var(--ink-2); }
+  .viewbar .looks select { background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); border-radius: 5px; padding: 3px 5px; font: 600 12px var(--face); max-width: 200px; }
+  .viewbar .looks input[type=range] { width: 74px; accent-color: var(--red, #e10600); }
   .titlecard {
     position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); text-align: center; max-width: 86%;
     background: rgba(21, 21, 30, 0.9); border: 1px solid var(--line); border-top: 4px solid var(--red);
@@ -375,16 +380,25 @@
   <section class="stage" id="stage" aria-label="The replay">
     <canvas id="map"></canvas>
     <canvas id="map3d" hidden></canvas>
+    <canvas id="bcast" hidden></canvas>
     <div class="viewbar" id="viewbar">
       <div class="seg" id="viewSeg" role="group" aria-label="View" hidden>
-        <button type="button" data-view="2d" class="on" title="V">2D map</button><button type="button" data-view="3d" title="V">3D</button>
+        <button type="button" data-view="2d" class="on" title="V">2D map</button><button type="button" data-view="25d" title="V · the circuit as a model on a table: drag to turn it, wheel to come nearer">2.5D</button><button type="button" data-view="3d" title="V">3D</button>
       </div>
       <div class="seg" id="camBar" role="group" aria-label="Camera" hidden>
-        <button type="button" data-cam="auto" title="5 · cuts between all the cameras, as a broadcast does">Director</button><button type="button" data-cam="pod" title="1">TV pod</button><button type="button" data-cam="cockpit" title="6 · onboard, just over the driver's helmet">Onboard</button><button type="button" data-cam="chase" title="2">Chase</button><button type="button" data-cam="heli" title="7 · a slow circle high over the car">Overhead</button><button type="button" data-cam="orbit" title="3 · drag to look round the car, wheel to zoom">Orbit</button><button type="button" data-cam="tv" title="4 · the trackside cameras">Trackside</button>
+        <button type="button" data-cam="auto" title="5 · cuts between all the cameras, as a broadcast does">Director</button><button type="button" data-cam="story" title="7 · follows the commentary: each driver as the hosts name them, each thing they call as it happens, and the race itself when they are quiet. It chooses who to follow: to choose yourself, pick another camera">Commentary</button><button type="button" data-cam="pod" title="1">TV pod</button><button type="button" data-cam="chase" title="2">Chase</button><button type="button" data-cam="orbit" title="3 · drag to look round the car, wheel to zoom">Orbit</button><button type="button" data-cam="tv" title="4 · the trackside cameras">Trackside</button><button type="button" data-cam="drone" title="6 · a racing drone flown round the car: chases, orbits, a loop over it, a tornado">Drone</button><button type="button" data-cam="cockpit" title="8 · onboard, just over the driver's helmet">Onboard</button><button type="button" data-cam="heli" title="9 · a slow circle high over the car">Overhead</button>
       </div>
       <div class="seg" id="namesBar" hidden><button type="button" id="names3d" class="on" title="N · the three-letter tags over the cars">Names</button></div>
+      <div class="looks" id="looksBar" hidden>
+        <label title="What is up in the sky">Sky <select id="skyPick"></select></label>
+        <label title="What everyone is driving">Cars <select id="carsPick"></select></label>
+      </div>
+      <div class="looks" id="soundBar" hidden>
+        <label title="The cars' engines, from recordings of real laps. Heard at 1× speed; on this PC only.">Engines <select id="enginePick"></select></label>
+        <input type="range" id="engineVol" min="0" max="100" value="60" title="How loud the engines are" aria-label="How loud the engines are" hidden>
+      </div>
       <div class="seg" id="followBar"><button type="button" id="followCam" title="Keep the map zoomed in on the followed car">Follow car</button></div>
-      <span class="hint" id="camHint" hidden>drag to orbit the car · wheel to zoom · click a car to follow it</span>
+      <span class="hint" id="camHint" hidden>drag to orbit the car (drag up to bring the camera down to the road; keep going and it looks up at the sky) · wheel to zoom · click a car to follow it</span>
     </div>
     <div class="titlecard" id="titleCard" hidden><b id="tcBig"></b><span id="tcSmall"></span></div>
     <div class="standings" id="standings" hidden></div>
@@ -397,12 +411,13 @@
     <div class="stagenote" id="stageNote" hidden></div>
     <div class="exportbox" id="exportBox" hidden>
       <h3>EXPORT VIDEO</h3>
-      <div class="row"><span>What</span><div class="seg" id="exWhat"><button type="button" data-v="reel" class="on">Whole reel</button><button type="button" data-v="one">One highlight</button></div></div>
-      <div class="row"><span>Size</span><div class="seg" id="exSize"><button type="button" data-v="1080" class="on">1080p</button><button type="button" data-v="720">720p</button></div></div>
+      <div class="row"><span>What</span><div class="seg" id="exWhat"><button type="button" data-v="reel" class="on" title="the highlights, one after another: about a quarter of an hour for a race">Whole reel</button><button type="button" data-v="one">One highlight</button><button type="button" data-v="race" title="the whole race as a broadcast, from the formation lap to the flag: replays, and what the hosts have for the quiet stretches. Three quarters of an hour of film takes a quarter of an hour to make">Whole race</button></div></div>
+      <div class="row"><span>Size</span><div class="seg" id="exSize"><button type="button" data-v="720">720p</button><button type="button" data-v="1080" class="on">1080p</button><button type="button" data-v="1440" title="2560 x 1440: every pixel of a 1440p screen. Nearly twice the picture of 1080p, and about twice the file and the wait">1440p</button><button type="button" data-v="2160" title="3840 x 2160: four times the picture of 1080p, and about four times the file and the wait">4K</button></div></div>
       <div class="row"><span>Frames</span><div class="seg" id="exFps"><button type="button" data-v="30" class="on">30 a second</button><button type="button" data-v="60">60 a second</button></div></div>
-      <div class="row"><span>File</span><div class="seg" id="exQuality"><button type="button" data-v="web" class="on" title="about half the size: right for putting on a website">Smaller</button><button type="button" data-v="best" title="for keeping, or for a site that re-encodes what you upload (YouTube)">Sharpest</button></div></div>
+      <div class="row"><span>File</span><div class="seg" id="exQuality"><button type="button" data-v="web" class="on" title="well under half the size: right for putting on a website or sending to someone">Smaller</button><button type="button" data-v="best" title="for keeping, for a big screen, or for a site that re-encodes what you upload (YouTube)">Sharpest</button></div></div>
       <label class="toggle"><input type="checkbox" id="exTower" checked> Timing tower down the side</label>
       <label class="toggle"><input type="checkbox" id="exCaptions" checked> Captions (what the hosts say, in words)</label>
+      <label class="toggle" id="exEnginesRow" hidden><input type="checkbox" id="exEngines" checked> <span id="exEnginesText">Engine sounds</span></label>
       <p class="muted" id="exNote"></p>
       <div class="bar"><i id="exBar"></i></div>
       <div class="row"><button class="btn primary" id="exGo" type="button">Export</button><button class="btn" id="exShow" type="button" hidden>Show in folder</button><button class="btn" id="exClose" type="button">Close</button></div>
@@ -506,6 +521,7 @@
       </div>
       <div class="pane" id="paneTalk" hidden>
         <div class="picks" id="voicePicks"></div>
+        <p class="note"><label title="Watching the race at its own speed, the hosts say their lines as each moment comes by. The highlights reel is the same lines, back to back."><input type="checkbox" id="liveTalk" checked> The hosts talk through the race as you watch (at 1×)</label></p>
         <div class="log" id="log"><p class="muted">Lines appear here as they're spoken.</p></div>
       </div>
     </section>
@@ -614,6 +630,13 @@ let cam = null, followCam = false, reelToken = 0, activeSeg = null, voiceOn = tr
 let exporting = null, chosenSeg = null;      // a video being made; the highlight last played (the one "One highlight" exports)
 
 function frameAt(t) { return clamp((t - T0) / DT, 0, N - 1); }
+function formationAt(t) {               // before the lights: is the field out on its formation lap (most of it moving), and not sitting on the grid?
+  if (!D.session.race || t >= 0 || !CH.speed) return false;
+  const k = Math.round(frameAt(t));
+  let moving = 0, all = 0;
+  for (const c of CARS) { if (!active(c.i, t)) continue; all++; if (CH.speed[c.i][k] > 25) moving++; }
+  return all > 0 && moving * 2 > all;
+}
 function towerIndex(t) { return clamp(Math.floor((t - D.towerT0) / D.towerDt), 0, TW.pos[0].length - 1); }
 function active(i, t) { const k = towerIndex(t); return TW.pos[i][k] > 0 && (TW.status[i][k] >> 3) >= 2; }
 function posAt(i, t) {
@@ -690,11 +713,12 @@ function segment(id) {
   const follow = spec.focus !== undefined ? carNamed(spec.focus) : null;
   return {
     id, h, kind: spec.kind || (h ? h.kind : id),
-    from: spec.from ?? h.from, to: spec.to ?? h.to,
+    from: spec.from ?? h.from, to: spec.to ?? (h ? h.to : spec.from + 30),
+    fill: !!spec.fill, screen: spec.screen || null, slack: spec.slack,      // (something for a quiet moment: see liveBuild)
     lines: spec.lines || (h ? autoLines(h) : []),
     lower: spec.lower ?? (h ? autoLower(h) : null),
     card: spec.card || null,
-    focus: follow ?? (h ? (h.cars.includes(D.player) ? D.player : h.cars[0]) : D.player),
+    focus: follow ?? (h ? (h.cars.includes(D.player) ? D.player : h.cars[0]) : D.player), own: follow !== null,
     wide: !!spec.wide, hold: !!spec.hold, lap: spec.lap ?? (h ? h.lap : null),
     title: spec.title || spec.card || (h ? h.title : id),
   };
@@ -709,6 +733,7 @@ function reelFor(i) {
   return MINE[i];
 }
 const shownReel = () => (reelWho === "me" ? reelFor(focus) : REEL);
+const FILL = (D.fill || []).map(segment).filter(Boolean);       // what the hosts have for when nothing is happening
 
 // ------------------------------------------------------------------ voice
 let voices = [];
@@ -817,6 +842,23 @@ function showStandings(on) {
   el.hidden = false;
 }
 const wait = ms => new Promise(r => setTimeout(r, ms));
+/* Something asked of Pit Wall that changes something (an export). A browser that cannot get a request through says
+   "Failed to fetch" and nothing more, whatever the reason. Eric had one in the middle of a video export, 11 Oct
+   2026: Pit Wall was running, had taken the request before it and took the one after, and the same export ran clean
+   from another browser, so what it was is not known. So such a request is tried again, a few times over a few
+   seconds (every step of an export is safe to ask twice: see Exporter in pitwall.py), and if it still cannot be
+   got through, the error says which step it was and how much was being sent. */
+async function askPitwall(path, body, what, door = window) {      // (door: the window whose request it is to be: see filmDoor)
+  let last = null;
+  for (const pause of [0, 300, 1200, 3500]) {
+    if (pause) await wait(pause);
+    try { return await door.fetch(path, { method: "POST", headers: { "X-Pitwall": "1" }, body }); }
+    catch (e) { last = e; }
+  }
+  const size = body == null ? 0 : typeof body === "string" ? body.length : (body.size ?? body.byteLength ?? 0);
+  throw new Error(`The browser could not get through to Pit Wall ${what}${size > 1e5 ? ` (${(size / 1e6).toFixed(1)} MB)` : ""}: it tried four times and was told "${(last && last.message) || last}". `
+    + "If Pit Wall's window is still open, this is the browser's doing (an extension that blocks requests, or a page left open through a restart): reload the page and try again.");
+}
 
 // ------------------------------------------------------------------ playback
 function seek(t) { T = clamp(t, T0, TEND); }
@@ -964,12 +1006,38 @@ async function playSegment(seg, token) {
   $("lower").hidden = true;
   seg.played = true;
 }
+/* The reel as the broadcast has it, on the page: each stretch of the race that the hosts talk through, one after
+   another, played as the race is when it is watched (their lines by the race's clock, what was put off shown again),
+   with a card to open each: what the film of the reel is. Pause and play hold it and carry it on; choosing a moment,
+   a speed or a highlight ends it. */
+async function tourReel(token) {
+  let first = true;
+  for (const run of bcastRuns()) {
+    if (token !== reelToken) return;
+    const seg = run.items[0].seg, card = run.opens ? { secs: 0 } : bcastCard(seg);
+    if (!first && !run.opens) { bcastSweep(); await wait(BCAST.wipe * 500); if (token !== reelToken) return; }      // (the wipe: the picture goes to the next stretch under it)
+    first = false;
+    seek(run.opens ? run.opens.from : run.from); setSpeed(1);
+    if (card.secs) { setPlaying(false); await showCard(card.big, card.small, card.secs * 1000); }
+    if (token !== reelToken) return;
+    setPlaying(true);
+    while (token === reelToken && T < run.to + 0.3 && T < TEND - 0.2) await wait(60);
+    for (const q of run.items) q.seg.played = true;
+    markList();
+  }
+  if (token !== reelToken) return;
+  setPlaying(false);
+  showStandings(true);
+}
 async function playList(list, first = 0) {
   stopReel();
   const token = ++reelToken;
   $("cta").hidden = true;
   if (window.speechSynthesis) loadVoices();
   await voicesIn();
+  if (token !== reelToken) return;
+  liveBuild();
+  if (list === REEL && first === 0 && voiceOn && liveTalk && liveList.some(q => !q.fill)) return tourReel(token);      // (with voices for the hosts: as the broadcast has it)
   for (const seg of list.slice(first)) {
     if (token !== reelToken) return;
     await playSegment(seg, token);
@@ -987,6 +1055,883 @@ async function playOne(seg) {
   if (token !== reelToken) return;
   await playSegment(seg, token);
   if (token === reelToken) { setPlaying(false); activeSeg = null; markList(); }
+}
+
+// ------------------------------------------------------------------ the hosts, while the race is watched
+/* The highlights reel plays each moment by itself, back to back. Watching the race straight through at its own
+   speed, the same lines are spoken as their moments come by (Eric, 11 Oct 2026: "make the default player play
+   the voice lines when they should happen"). Every line gets a time on the race's clock: its segment's start
+   and where the director's plan puts it. The reel can show two things that happened at once one after the other;
+   here they are at once, so where one segment's talk would still be going when the next one's moment arrives:
+     - the hosts keep the floor until that moment, and what they had still to say after it is put off;
+     - of the new segment's lead-in, only the last lines that fit before its moment are said, back to back up to it;
+     - what was put off is said when the new segment is done, if there is room before the one after (they come
+       back to it, as commentators do); what does not fit is left to the reel.
+   A line is started when the race's clock reaches it (part of the way in, after a jump or a pause), so scrubbing,
+   pausing and the speed buttons all do what they should: at any speed but 1×, and in the reel, this is silent.
+
+   What is put off comes back as a REPLAY (Eric, 11 Oct 2026, having watched the reel show the start twice, once for
+   his jump start and then cut back to the lights for the crash at turn one: "i want commentator mode to be like the
+   real races where they commentate live like they have but if there are overlapping events, pick the lesser event
+   and do a replay later where theres gaps in coverage. always prioritize collisions over lesser events. those get
+   broadcast in real time"). So:
+     - a line is not cut in on: one that could not be finished by the next thing's moment is put off whole, with
+       what was to follow it;
+     - more than a few seconds of put-off talk waits for room: the first stretch between the things the hosts call
+       that is long enough for it, and has no collision between people in it (those are seen as they happen, by the
+       Commentary camera, whatever was waiting). There it is said over the thing it is about, shown again from just
+       before it happened (liveReplay): a window of the race's clock, with a wipe into it and out of it. The race
+       goes on underneath, and the timing tower with it;
+     - two things whose moments fall together: the collision is the one called as it happens (rank), and the other
+       is put off whole, to be shown from its beginning;
+     - a line marked "replay" in the script (the hosts' Impact Replays) is said over the last moment before it,
+       shown again at half speed.
+   liveWins is those windows. They are the Commentary camera's: under any other camera the same lines are said at
+   the same times over whatever the viewer has chosen to look at. */
+const BCAST = { wipe: 0.8,              // seconds a wipe takes: the picture changes half way through it
+                lead: 3,                // a replay begins this long before the moment it shows again
+                after: 1.2,             // and the race comes back this long after the last word said over it
+                rest: 1.5,              // seconds between the hosts finishing with something and a replay beginning
+                room: 2.5,              // seconds of the race itself between a replay and the next thing the hosts call
+                least: 6,               // put-off talk shorter than this is said when the hosts are free, with no replay
+                slip: 0.9,              // a lead-in may make the call of its moment this late, to be said in full
+                apart: 8,               // in the film of the reel: quiet longer than this between two things is cut out, and the next has a card
+                slack: 50,              // something for a quiet moment may come this much later than the script asks, to find room; later, it is left out
+                frame: 0.9,             // seconds a screen takes to come up before the hosts begin on it
+                crash: 8,               // nothing is shown over a collision worth this much (its score, and two for each person in it)
+                impact: [1.4, 0.5],     // an Impact Replay: seconds before the moment that it begins, and the speed it is shown at
+                rank: { contact: 5, retire: 5, safetycar: 5, moment: 4, start: 4, finish: 4, overtake: 3, pit: 2, stewards: 2, fastest: 1, pb: 1 } };
+let liveKey = null, liveList = [], liveWins = [], liveShown = null, liveTalk = true;
+const liveOn = new Map(), liveReady = new Map(), liveDone = new Set(), liveStrip = { seg: null, at: 0, on: null };
+function bcastCrash(a, b, also) {       // a collision with a person in it that something shown from a to b would cover, if there is one (also: or one person passing another)
+  return D.highlights.find(h => h.t > a - 1.5 && h.t < b + 1 && ((h.kind === "contact" && h.cars.some(human) && (h.score || 0) + 2 * h.cars.filter(human).length >= BCAST.crash)
+    || (also && h.kind === "overtake" && h.cars.length > 1 && h.cars.every(human)))) || null;
+}
+function liveReplay(w, at, limit) {     // put-off talk as a replay beginning at `at`, if it is over by `limit`: { win, items }, or null for no room
+  const seg = w.seg, pins = seg.lines.map(normLine).filter(L => L.at != null).map(L => L.at), before = pins.filter(p => p <= w.first + 0.5);
+  // shown from just before the last thing that had happened when this talk was to begin (a whole segment: from its start)
+  const moment = before.length ? Math.max(...before) : pins.length ? pins[0] : seg.h ? seg.h.t : seg.from + BCAST.lead;
+  const p0 = w.whole ? seg.from : Math.max(T0, seg.from - 1, moment - BCAST.lead);
+  const { plan, end } = planLines({ from: p0 }, w.lines.map(q => q.L), w.lines.map(q => q.end - q.start));
+  const shown = Math.max(end + BCAST.after, (w.whole && pins.length ? Math.max(...pins) : moment) + 2.5 - p0), half = BCAST.wipe / 2;
+  let from = at;
+  for (let n = 0; n < 6; n++) {
+    const hit = bcastCrash(from, from + shown + BCAST.wipe);
+    if (!hit) break;
+    from = Math.max(from, hit.t + 4);
+  }
+  if (from + shown + BCAST.wipe > limit) return null;
+  const win = { kind: "replay", seg, from, on: from + half, off: from + half + shown, to: from + shown + BCAST.wipe, p0, rate: 1 };
+  const items = plan.map(q => ({ L: q.L, clip: w.lines[q.n].clip, seg, start: win.on + q.start, end: win.on + q.end, pinned: false, late: true, win }));
+  win.cuts = liveCuts(win, items, moment);
+  return { win, items };
+}
+/* How a window's picture runs: cuts, each { t: the race's clock, p: the moment of the race shown from then, rate }.
+   It begins at win.p0. A line the script marks "replay" is said over a moment shown again at half speed, from just
+   before it (the moment the mark names, or else `moment`); marked lines one after another are each a showing of it
+   ("Run it again!"); and when the last of them is said, the race runs on from there at its own speed. */
+function liveCuts(win, lines, moment) {
+  const cuts = [{ t: win.on, p: win.p0, rate: win.rate }], [lead, slow] = BCAST.impact;
+  lines.forEach((q, k) => {
+    const what = typeof q.L.replay === "number" ? q.L.replay : q.L.replay ? moment : null;
+    if (what == null || what > q.start - 0.5) return;      // (nothing is shown again before it has happened)
+    cuts.push({ t: Math.max(win.on, q.start - 0.15), p: what - lead, rate: slow });
+    const then = q.end + 0.5, c = cuts[cuts.length - 1];
+    if (!(lines[k + 1] && lines[k + 1].L.replay) && then < win.off - 1) cuts.push({ t: then, p: c.p + (then - c.t) * c.rate, rate: 1 });
+  });
+  if (cuts.length > 1 && cuts[1].t - cuts[0].t < 1) { cuts[1].p -= (cuts[1].t - win.on) * cuts[1].rate; cuts[1].t = win.on; cuts.shift(); }      // (it opens on a marked line: on that moment, then)
+  return cuts;
+}
+function liveBuild() {
+  const key = ROLES.map(r => voicePick[r]).join("|") + "|" + Object.keys((D.voice || {}).clips || {}).length;
+  if (key === liveKey) return;
+  liveKey = key; liveList = []; liveWins = []; liveStop(); liveDone.clear();
+  const segs = REEL.map(seg => {
+    const lines = seg.lines.map(normLine), clips = lines.map((L, n) => clipFor(seg, n, L.who));
+    if (!lines.length || !clips.every(Boolean)) return null;                  // (a segment with no rendered voice is the reel's alone)
+    const items = planLines(seg, lines, clips.map(c => c.seconds)).plan.map(q => ({ L: q.L, clip: clips[q.n], seg, start: seg.from + q.start, end: seg.from + q.end, pinned: q.L.at != null }));
+    const pins = items.filter(q => q.pinned).map(q => q.L.at);
+    return { seg, items, span: pins.length ? [Math.min(...pins) - 1, Math.max(...pins) + 2] : null, rank: BCAST.rank[seg.kind] || 0 };
+  }).filter(Boolean).sort((a, b) => a.seg.from - b.seg.from);
+  const until = list => list.reduce((m, q) => (q.L.aside ? m : Math.max(m, q.end)), -1e9);
+  let floor = [], on = null;              // what the hosts are on: the last segment's lines, and anything put off that was said after it; and that segment
+  const waiting = [];                     // what has been put off, and is to come back as a replay: { seg, lines, first: when it was to begin, whole }
+  segs.forEach((S, k) => {
+    let mine = S.items, late = [];
+    const first = mine.find(q => q.pinned), moment = first ? first.start : S.seg.from + 1;
+    const next = segs[k + 1] ? segs[k + 1].seg.from : TEND - 2;
+    if (on && on.span && S.span && S.span[0] < on.span[1] && S.span[1] > on.span[0] && S.rank < on.rank) {
+      waiting.push({ seg: S.seg, lines: mine, first: S.seg.from, whole: true });      // its moment falls with a bigger one's: it is not called as it happens
+      mine = [];
+    } else if (until(floor) > S.seg.from + 0.3) {
+      const lead = mine.filter(q => !q.pinned && q.start < moment - 0.01), fits = [];
+      const opens = moment - 0.1 - lead.reduce((sum, q) => sum + q.end - q.start + 0.1, 0);      // when this thing's lead-in has to begin, to be said in full
+      const held = on && on.span ? on.span[1] : -1e9;      // (what the hosts say in their own thing's moment and straight after it is theirs to finish)
+      // put off: what would begin after this thing's moment; a line that could not be finished by it (a line is not
+      // cut in on); and talk, once their own thing's moment is past, that is in the way of this one's lead-in
+      const told = floor.filter(q => !q.L.aside).sort((a, b) => a.start - b.start);
+      let cut = told.findIndex(q => q.start >= moment - 0.3 || q.end > moment + 0.6 || (lead.length && q.start >= held && q.end > opens - 0.1));
+      // and from where they begin something: not between a line and the answer to it (an answer is a line the script
+      // gives a gap of its own, or has talking over the one before), unless what it answers is their call of a moment
+      while (cut > 0 && !told[cut].pinned && (told[cut].L.gap != null || told[cut].L.over != null) && !told[cut - 1].pinned && told[cut - 1].start >= held && !told[cut - 1].late) cut--;
+      late = cut < 0 ? [] : floor.filter(q => q.start >= told[cut].start - 0.001);
+      const kept = floor.filter(q => !late.includes(q));
+      liveList = liveList.filter(q => !late.includes(q));
+      late = late.filter(q => !q.late);                                          // (put off once, not twice)
+      // (a host can begin as another is finishing, but not while he is himself still speaking)
+      const room = q => Math.max(S.seg.from, until(kept) - 0.4, kept.reduce((m, it) => (it.L.who === q.L.who && !it.L.aside ? Math.max(m, it.end) : m), -1e9) + 0.1);
+      const short = lead.length ? lead.reduce((sum, q) => sum + q.end - q.start + 0.1, 0) - (moment - room(lead[0])) : 0;
+      if (short > 0 && short <= BCAST.slip) {
+        // the lead-in is a breath too long for the room there is: all of this thing's lines are laid out again from
+        // where the room begins. Each keeps its moment as the earliest it can be said, so the call of the first is
+        // that breath late, and it is made up by the next
+        const from = room(lead[0]) - 0.4, again = planLines({ from }, mine.map(q => q.L), mine.map(q => q.end - q.start)).plan;
+        mine = again.map(a => ({ ...mine[a.n], start: from + a.start, end: from + a.end }));
+      } else {
+        let at = moment - 0.1;
+        for (const q of lead.slice().reverse()) {
+          const long = q.end - q.start;
+          if (at - long < room(q) - 0.001) break;
+          at -= long; fits.unshift({ ...q, start: at, end: at + long }); at -= 0.1;
+        }
+        mine = [...fits, ...mine.filter(q => !lead.includes(q))];
+      }
+    }
+    liveList.push(...mine);
+    if (mine.length) { floor = mine; on = S; }
+    const said = [];
+    if (late.length && late.filter(q => !q.L.aside).reduce((s, q) => s + q.end - q.start, 0) < BCAST.least) {
+      const shift = until(mine) + 0.8 - late[0].start;      // a word or two: said when this is done (they come back to it, as commentators do), if there is room
+      for (const q of late) { if (q.end + shift > next - 0.5) break; said.push({ ...q, start: q.start + shift, end: q.end + shift, pinned: false, late: true }); }
+    } else if (late.length) waiting.push({ seg: late[0].seg, lines: late, first: late[0].start });
+    let at = until([...floor, ...said]) + BCAST.rest;
+    while (waiting.length && k < segs.length - 1) {      // what is waiting, in turn, while there is room before the next thing (nothing comes after the hosts have signed off)
+      const made = liveReplay(waiting[0], at, next - BCAST.room), w = waiting[0];
+      if (made) { liveWins.push(made.win); said.push(...made.items); at = made.win.to + BCAST.rest; }
+      else {                              // no room to show it again: but room, perhaps, to say it (they come back to it)
+        const shift = at - BCAST.rest + 0.8 - w.lines[0].start;
+        if (w.whole || w.lines[w.lines.length - 1].end + shift > next - 0.5) break;
+        said.push(...w.lines.map(q => ({ ...q, start: q.start + shift, end: q.end + shift, pinned: false, late: true })));
+        at = w.lines[w.lines.length - 1].end + shift + BCAST.rest;
+      }
+      waiting.shift();
+    }
+    liveList.push(...said);
+    floor = [...floor, ...said];
+  });
+  // an Impact Replay: the lines the script marks are said over the moment before them, shown again slowly
+  for (let k = 0; k < liveList.length; k++) {
+    const q = liveList[k];
+    if (!q.L.replay || q.win) continue;
+    let last = k;
+    while (liveList[last + 1] && liveList[last + 1].L.replay && liveList[last + 1].seg === q.seg && !liveList[last + 1].win) last++;
+    const these = liveList.slice(k, last + 1), pins = q.seg.lines.map(normLine).filter(L => L.at != null && L.at <= q.start).map(L => L.at);
+    const what = typeof q.L.replay === "number" ? q.L.replay : pins.length ? Math.max(...pins) : null;      // (the script can say which moment: "replay": 377.6)
+    k = last;
+    if (what === null || what > q.start - 0.5) continue;      // (nothing is shown again before it has happened)
+    const half = BCAST.wipe / 2, on2 = q.start - 0.15, off = Math.max(...these.map(it => it.end)) + 0.5;
+    const win = { kind: "replay", seg: q.seg, from: on2 - half, on: on2, off, to: off + half, p0: what - BCAST.impact[0], rate: BCAST.impact[1], impact: true };
+    if (liveWins.some(w => win.from < w.to + 1 && win.to > w.from - 1) || bcastCrash(win.from, win.to)) continue;
+    win.cuts = liveCuts(win, these, what);
+    liveWins.push(win);
+    for (const it of these) it.win = win;
+  }
+  /* What the hosts have for when nothing is happening (the script's "_fill". Eric, 11 Oct 2026: "when theres several
+     minutes of dead air, thats when the commentors have their funny 'brought to you by' segment ... also with the
+     dead air lets fill it with periodic 2d displays of the track stats and strategy (maybe even commenting on what
+     this particular track is difficult or what the racers need to watch out for) voiced by the commentators").
+     Each goes where it asks to be, or as soon after as there is room for it: clear of everything the hosts say of
+     the race, of everything shown again, and of anything between two people that ought to be seen as it happens.
+     With no such room inside its slack it is left out. It is a window like a replay's, with a screen in place of an
+     earlier moment (drawScreen); a sponsor's card is wiped into and out of, the others come up over the race. */
+  const busy = [...liveList.filter(q => !q.L.aside).map(q => [q.start, q.end]), ...liveWins.map(w => [w.from, w.to])], half = BCAST.wipe / 2;
+  for (const seg of FILL.slice().sort((a, b) => a.from - b.from)) {
+    const lines = seg.lines.map(normLine), clips = lines.map((L, n) => clipFor(seg, n, L.who));
+    if (!lines.length || !clips.every(Boolean)) continue;
+    const { plan, end } = planLines({ from: 0 }, lines, clips.map(c => c.seconds)), card = !!(seg.screen && seg.screen.kind === "sponsor");
+    const lead = card ? half : BCAST.frame, shown = lead + end + BCAST.after, long = shown + (card ? half : 0.4);
+    let from = seg.from, room = false;
+    for (let n = 0; n < 80 && from <= seg.from + (seg.slack ?? BCAST.slack); n++) {
+      const hit = busy.find(([a, b]) => a < from + long + BCAST.room && b > from - BCAST.room), seen = hit ? null : bcastCrash(from, from + long, true);
+      if (!hit && !seen) { room = true; break; }
+      from = hit ? hit[1] + BCAST.room + 0.01 : seen.t + 4;
+    }
+    if (!room) continue;
+    const win = { kind: "screen", seg, screen: seg.screen || { kind: "talk" }, card, from, on: from + lead, off: from + shown, to: from + long, cuts: [] };
+    liveWins.push(win); busy.push([win.from, win.to]);
+    for (const q of plan) liveList.push({ L: q.L, clip: clips[q.n], seg, start: win.on + q.start, end: win.on + q.end, pinned: false, fill: true, win });
+  }
+  liveList.sort((a, b) => a.start - b.start); liveWins.sort((a, b) => a.from - b.from);
+}
+function liveStop() {
+  for (const [, on] of liveOn) {
+    try { on.level.gain.setTargetAtTime(0, actx.currentTime, 0.02); on.src.stop(actx.currentTime + 0.12); } catch (e) { /* already finished */ }
+  }
+  liveOn.clear();
+}
+function liveStep() {                     // every frame
+  const on = liveTalk && voiceOn && playing && speed === 1 && !activeSeg && !audioSync && !exporting && D.voice;
+  if (!on) {
+    if (liveOn.size) liveStop();
+    if (liveShown) { liveShown = null; if (!activeSeg) hideCaption(300); }
+    if (liveStrip.on) { liveStrip.on = liveStrip.seg = null; if (!activeSeg) $("lower").hidden = true; }
+    return;
+  }
+  liveBuild();
+  if (!liveList.length) return;
+  const ctx = audioContext();
+  if (ctx.state !== "running") return;    // (the browser lets a page make sound once it has been clicked on)
+  let cur = null;
+  for (const q of liveList) {
+    const stop = q.cut ?? q.end;
+    if (T < q.start - 0.05) liveDone.delete(q);
+    if (T > q.start - 12 && T < stop && !liveReady.has(q.clip.src)) {            // made ready a few seconds ahead
+      liveReady.set(q.clip.src, null);
+      bufferFor(q.clip).then(b => liveReady.set(q.clip.src, b)).catch(() => {});
+    }
+    const sounding = liveOn.get(q);
+    if (T >= q.start && T < stop) {
+      const buffer = liveReady.get(q.clip.src);
+      if (!sounding && !liveDone.has(q) && buffer && T - q.start < buffer.duration - 0.15) {
+        const src = ctx.createBufferSource(), level = ctx.createGain();
+        src.buffer = buffer; level.gain.value = q.L.vol ?? 1;
+        src.connect(level); level.connect(masterBus(ctx));
+        src.start(0, Math.max(0, T - q.start));
+        src.onended = () => { liveDone.add(q); if ((liveOn.get(q) || {}).src === src) liveOn.delete(q); };
+        liveOn.set(q, { src, level });
+        if (T - q.start < 0.4) logLine(q.L.who, q.L.text);
+      }
+      if (!q.L.aside) cur = q;
+    } else if (sounding) {                // the clock has left it: a jump, or a line that is cut in on
+      try { sounding.level.gain.setTargetAtTime(0, ctx.currentTime, 0.03); sounding.src.stop(ctx.currentTime + 0.15); } catch (e) { /* already finished */ }
+      liveOn.delete(q);
+    }
+  }
+  if (cur !== liveShown) { liveShown = cur; if (cur) showCaption(cur.L.who, cur.L.text); else hideCaption(); }
+  // the strip that says what the hosts are on: up with the first line of a thing, down a moment after its last
+  if (cur) { liveStrip.seg = cur.seg; liveStrip.at = T; }
+  const strip = liveStrip.seg && liveStrip.seg.lower && T >= liveStrip.at - 0.5 && T - liveStrip.at < 2.5 ? liveStrip.seg : null;
+  if (strip !== liveStrip.on) { liveStrip.on = strip; if (strip) showLower(strip.lower, (KIND[strip.kind] || [0, C.ink])[1]); else $("lower").hidden = true; }
+}
+
+// ------------------------------------------------------------------ the camera that follows the commentary
+/* Eric, 11 Oct 2026: "a camera thats locked to whats happneing with commentary so each moment the commentators are
+   talking about are locked to that event or action"; and, having watched the first version (which went by each
+   segment's one car, and came home to the viewer's car between them): "the camera only seems to snap to me and
+   pepe ... i dont want people being able to click on a different driver i want the camera to cycle to whoever the
+   commentators are talking about". The Commentary camera (the 3D view's, key 7). What it is on, most pressing first:
+     A MOMENT. A line pinned to a moment of the race ("at") is the hosts reacting to something as it happens. For a
+       few seconds either side of it the camera is on that thing, and is there BEFORE it, as a director who knows
+       what is coming would be. Who is in it is whoever the hosts name: in that line, or in the line that set it
+       up, or in the lines that follow ("That's Puckett, into the back of the robot Albon!"); the segment's own car
+       with them if only one is named. Nobody named: the segment's car and whoever the builder found it in a
+       contact or an overtake with just then, or whoever is beside it. (A line can say outright: "see".)
+     A NAME. Otherwise, whoever the hosts last named: the camera goes to a driver as the name is said (where in
+       the line, by how far through it the name comes), and stays until the next name. Two names said together
+       are two cars in one picture, if they are near enough to be.
+     THE SEGMENT. Nobody named yet: the car the segment follows, or for one that follows nobody, the leader.
+     THE RACE. Nothing being said at all: whatever is happening that a person is in (the builder's highlights: a
+       contact, a pass, a stop, a fastest lap); and with nothing happening either, round the people in the race
+       in the order they are running, a quarter of a minute each.
+   The shot: two cars near each other in one picture ("duo": the 3D view's aim()); one car by the kind of thing it
+   is, or trackside and from behind by turns. It sets which car is followed, so the panel, the tower and the
+   engines go with it, and hands the 3D view the shot (__stage.story). The choice is the camera's alone: a click
+   on a driver does nothing while it is on (storyLocked). */
+const STORY = { lead: 1.5, tail: 1.2,   // seconds before the hosts start on a segment that the camera is on it, and after they stop
+                before: 3.5, after: 3,  // and either side of a moment
+                ahead: 0.35,            // how long before a name is said the camera is on its driver
+                quick: 1.4,             // two names said within this of each other are shown together, not one after the other
+                near: 30,               // metres: a car this near a moment's one car is in the picture with it
+                far: 70, named: 130,    // two cars further apart than this are not one picture; further for two the hosts both named
+                turn: 8,                // seconds between cuts while nothing is happening
+                stale: 14,              // seconds after a name (or a moment) that the camera stays with it, if nobody else is named
+                least: 4,               // nothing of the race is cut to with fewer seconds than this to run, or before the hosts' next cut
+                tour: 15,               // seconds on each person when going round them (0: stay on the last car instead)
+                quiet: ["contact", "overtake", "pit", "fastest", "pb", "moment", "lockup", "offtrack", "retire", "safetycar"] };      // what is shown of the race when nothing is being said ([] for nothing)
+let storyState = null, storyTalked = null, storyTalkOf = null, storyShown = null, storyNoted = 0;
+const storyEvent = new Map(), storyTour = new Map(), human = i => !!BY[i] && !BY[i].ai;
+// What a driver may be called in a line: the whole name; the words in a gamertag ("Rambo" in SirTasteTheRambo,
+// "PePe" in TN_PePe), and those a letter or two short ("Slayter"), which count only with a capital, as a name is
+// written; and whatever the script says in "_who" ("Sub", "our host").
+const storyWho = (() => {
+  const out = [], add = (said, i, loose) => { if (said.length >= 3 && BY[i]) out.push([said.toLowerCase(), i, loose]); };
+  for (const c of CARS) {
+    add(c.name, c.i, true);
+    for (const bit of new Set(c.name.split(/[^A-Za-z]+/).concat(c.name.replace(/([a-z])([A-Z])/g, "$1 $2").split(/[^A-Za-z]+/)))) {
+      if (bit.length < 4 || /^(the|sir|team|racing|live|king|lord|mister)$/i.test(bit)) continue;
+      add(bit, c.i, false);
+      for (let n = bit.length - 1; n >= Math.max(5, Math.ceil(bit.length * 0.75)); n--) add(bit.slice(0, n), c.i, false);
+    }
+  }
+  for (const [said, name] of Object.entries(D.who || {})) { const i = carNamed(name); if (i != null) add(said, i, said === said.toLowerCase()); }      // ("our host" however it is written; "Sub" only as a name)
+  return out;
+})();
+function storyNames(L) {                // who a line names, in the order it names them: [{ car, at: how far through the line (0 to 1) }]
+  if (L.names) return L.names;        // (kept on the line: "who" is already which host says it)
+  const text = L.text || "", low = text.toLowerCase(), found = [];
+  for (const [said, car, loose] of storyWho) {
+    for (let k = low.indexOf(said); k >= 0; k = low.indexOf(said, k + said.length)) {
+      if (/[a-z0-9]/.test(k ? low[k - 1] : " ") || /[a-z0-9]/.test(low[k + said.length] || " ")) continue;      // (part of a longer word)
+      if (!loose && text[k] === low[k]) continue;
+      found.push({ car, k, at: k / Math.max(1, text.length) });
+    }
+  }
+  found.sort((a, b) => a.k - b.k);
+  return (L.names = found.filter((f, n) => found.findIndex(g => g.car === f.car) === n));      // each driver once, where first named
+}
+function storyApart(a, b, t) {          // metres between two cars
+  const p = active(a, t) && posAt(a, t), q = active(b, t) && posAt(b, t);
+  return p && q ? Math.hypot(p[0] - q[0], p[1] - q[1]) : Infinity;
+}
+function storyPlan(seg) {               // a segment's lines where its own plan puts them on the race's clock (as the reel plays it)
+  const key = ROLES.map(r => voicePick[r]).join("|") + "|" + Object.keys((D.voice || {}).clips || {}).length;
+  if (seg.planned && seg.planKey === key) return seg.planned;
+  const lines = seg.lines.map(normLine), clips = lines.map((L, n) => clipFor(seg, n, L.who));
+  seg.planKey = key; seg.beats = null;
+  return (seg.planned = planLines(seg, lines, lines.map((L, n) => (clips[n] ? clips[n].seconds : 0.9 + L.text.length * 0.048))).plan
+    .map(q => ({ L: q.L, seg, start: seg.from + q.start, end: seg.from + q.end })));
+}
+function storyCast(seg, q, items) {     // who is in a moment: { cars: the one to follow, then who is with it; named: the hosts named them both }
+  const m = q ? q.L.at : seg.h.t, alive = i => active(i, m) && !!posAt(i, m), names = L => storyNames(L).map(w => w.car).filter(alive);
+  let cars = [];
+  const add = list => { for (const i of list) if (!cars.includes(i) && cars.length < 2) cars.push(i); };
+  if (q && q.L.see != null) add([].concat(q.L.see).map(carNamed).filter(i => i != null && alive(i)));
+  else if (q) {                         // the names in the line; or in the line that set it up; or in the lines that follow
+    const k = items.indexOf(q), before = [], after = [];
+    for (let j = k - 1; j >= 0 && items[j].end > m - 6; j--) before.push(items[j]);
+    for (let j = k + 1; j < items.length && items[j].start < m + 4.5; j++) after.push(items[j]);
+    add(names(q.L));
+    if (!cars.length) add(names((before.find(it => names(it.L).length) || { L: { names: [] } }).L));
+    if (!cars.length) add(names((after.find(it => names(it.L).length) || { L: { names: [] } }).L));
+    if (cars.length === 1 && seg.own && cars[0] !== seg.focus && alive(seg.focus)) cars.push(seg.focus);      // one name: it is with the segment's own car ("...has hit him as well")
+    if (cars.length === 1) for (const it of before) add(names(it.L));                                          // or with whoever the lines that set it up named (not what is said after: that has moved on)
+    if (seg.own && cars.includes(seg.focus)) cars = [seg.focus, ...cars.filter(i => i !== seg.focus)];
+  }
+  const named = cars.length > 1;
+  if (!cars.length && seg.h && seg.h.cars.length > 1) cars = [seg.focus, ...seg.h.cars.filter(i => i !== seg.focus)].filter(alive).slice(0, 2);
+  if (cars.length < 2) {                // nobody, or one: a contact or an overtake of the builder's going on just then, with that car in it
+    const one = cars.length ? cars[0] : seg.own || seg.h ? seg.focus : null;
+    let best = null, score = -1e9;
+    for (const h of D.highlights) {
+      if (h.cars.length < 2 || (h.kind !== "contact" && h.kind !== "overtake") || (one !== null && !h.cars.includes(one))) continue;
+      const off = m < h.t - 1.5 ? h.t - 1.5 - m : m > h.to - 2 ? m - (h.to - 2) : 0;
+      const s = -off * 4 - Math.abs(m - h.t) * 0.5 + (h.score || 0) * 0.2 + (h.kind === seg.kind ? 20 : 0);      // (a crash is told as a crash, whoever else went by just then)
+      if (off <= 2.5 && s > score) { score = s; best = h; }
+    }
+    if (best) cars = (one !== null ? [one, ...best.cars.filter(i => i !== one)] : best.cars.slice()).filter(alive);
+    else if (one !== null && !cars.length && alive(one)) cars = [one];
+    if (cars.length === 1) {            // still one: whoever is nearest, if anyone is near
+      let d0 = STORY.near, who = null;
+      for (const c of CARS) { const d = c.i === cars[0] ? Infinity : storyApart(cars[0], c.i, m); if (d < d0) { d0 = d; who = c.i; } }
+      if (who !== null) cars.push(who);
+    }
+  }
+  return { cars: cars.slice(0, 2), named };
+}
+function storyBeats(seg) {              // a segment's moments: when the camera is on each, and who is in it (worked out once for the voices chosen)
+  const items = storyPlan(seg);
+  if (seg.beats) return seg.beats;
+  const beats = [];
+  for (const q of items.filter(q => q.L.at != null).sort((a, b) => a.L.at - b.L.at)) {
+    const m = q.L.at, cast = storyCast(seg, q, items), last = beats[beats.length - 1];
+    if (!cast.cars.length) continue;
+    if (last && m - STORY.before < last.to) {
+      const same = last.cars[0] === cast.cars[0] && (cast.cars.length < 2 || last.cars[1] === cast.cars[1]);
+      if (same || m - last.m < 2.5) {   // the same thing still going on, or two things at once: one stretch of the camera (with the later's cars: it is usually the bigger thing)
+        if (!same && cast.cars.length > 1) { last.cars = cast.cars; last.named = cast.named; }
+        last.to = m + STORY.after; last.m = m;
+        continue;
+      }
+      last.to = m - STORY.before;       // (something else: the first is left for it)
+    }
+    beats.push({ m, from: m - STORY.before, to: m + STORY.after, cars: cast.cars, named: cast.named });
+  }
+  if (!beats.length && seg.h) {         // (a highlight nobody has written lines for: its own moment)
+    const cast = storyCast(seg, null, items);
+    if (cast.cars.length) beats.push({ m: seg.h.t, from: seg.h.t - STORY.before, to: seg.h.t + STORY.after, cars: cast.cars, named: false });
+  }
+  return (seg.beats = beats);
+}
+function storySaid(items) {             // every name in these lines, when it is said: [{ t, car, with, seg }] (worked out once for a list of lines)
+  if (items.said) return items.said;
+  const said = [];
+  for (const q of items) {
+    if (q.L.aside) continue;
+    const names = storyNames(q.L).map(w => ({ t: q.start + w.at * ((q.cut ?? q.end) - q.start), car: w.car, seg: q.seg }));
+    if (names.length === 2 && storyApart(names[0].car, names[1].car, names[0].t) < STORY.named) said.push({ ...names[0], with: names[1].car });      // two names in a line, and the two together on the road: one picture of both
+    else for (let n = 0; n < names.length; n++) {                                  // one, or a list: each in turn (two of a list said in one breath, together)
+      const a = names[n], b = names[n + 1];
+      if (b && b.t - a.t < STORY.quick) { said.push({ ...a, with: b.car }); n++; } else said.push(a);
+    }
+  }
+  return (items.said = said.sort((a, b) => a.t - b.t));
+}
+function storyTalk() {                  // watching the race: the hosts' lines on its clock, and the stretches they spend on each segment
+  liveBuild();
+  if (storyTalkOf === liveList) return storyTalked;
+  const list = [], open = new Map();
+  for (const q of liveList) {
+    if (q.L.aside || q.win) continue;   // (what is said over a replay is the replay's: storyReplay)
+    const w = open.get(q.seg), end = q.cut ?? q.end;
+    if (w && q.start - STORY.lead < w.to + 1.5) w.to = Math.max(w.to, end + STORY.tail);
+    else { const made = { seg: q.seg, from: q.start - STORY.lead, to: end + STORY.tail }; list.push(made); open.set(q.seg, made); }
+  }
+  let items = liveList.filter(q => !q.win);
+  if (!liveList.length) {               // (no voices made: the script's own stretches, and its lines where its own plan has them)
+    for (const seg of REEL) list.push({ seg, from: seg.from, to: seg.to });
+    items = REEL.flatMap(storyPlan).sort((a, b) => a.start - b.start);
+  }
+  storyTalkOf = liveList;
+  return (storyTalked = { list, items, segs: [...new Set(list.map(w => w.seg))] });
+}
+function storyQuiet(until) {            // nothing being said: the thing most worth seeing that is going on, as a segment of its own; or null
+  let best = null, top = 5, held = null;      // (it has to be worth five: a person in a light touch with a robot is not)
+  for (const h of D.highlights) {
+    if (T < h.from || T >= h.to || !STORY.quiet.includes(h.kind) || !h.cars.some(i => human(i) && active(i, T))) continue;
+    if (h !== storyShown && Math.min(h.to, until) - T < STORY.least) continue;
+    const worth = (h.score || 0) + 2 * h.cars.filter(human).length;
+    if (h === storyShown) held = worth;
+    if (worth >= top) { top = worth; best = h; }
+  }
+  if (held !== null && top < held + 4) best = storyShown;        // (it stays with what it is on, unless something a good deal bigger begins)
+  storyShown = best;
+  if (best) {
+    if (!storyEvent.has(best.id)) {
+      const seg = segment(best.id);
+      seg.focus = best.cars.find(human) ?? seg.focus; seg.own = true;
+      storyEvent.set(best.id, seg);
+    }
+    return storyEvent.get(best.id);
+  }
+  if (!STORY.tour) return null;         // nothing happening: round the people, as they are running
+  const k = towerIndex(T), people = CARS.filter(c => human(c.i) && active(c.i, T) && posAt(c.i, T)).sort((a, b) => TW.pos[a.i][k] - TW.pos[b.i][k]);
+  const slot = Math.floor(T / STORY.tour), from = slot * STORY.tour, to = from + STORY.tour, on = storyState && storyState.seg.id === "tour" + slot;
+  if (!people.length || (!on && Math.min(to, until) - T < STORY.least)) return null;
+  if (!storyTour.has(slot)) {
+    if (storyTour.size > 40) storyTour.clear();
+    storyTour.set(slot, { id: "tour" + slot, kind: "tour", from, to, lines: [], own: true, hold: false, focus: people[((slot % people.length) + people.length) % people.length].i });
+  }
+  return storyTour.get(slot);
+}
+function storyNow() {                   // what the camera should be on at this moment of the race, or null for nothing new
+  let seg = null, since = 0, until = Infinity, pool, items;
+  if (activeSeg) { seg = activeSeg; since = seg.from; pool = [seg]; items = storyPlan(seg); }
+  else {
+    const talk = storyTalk();
+    pool = talk.segs; items = talk.items;
+    for (const w of talk.list) {
+      if (T >= w.from && T < w.to && (!seg || w.from >= since)) { seg = w.seg; since = w.from; until = w.to; }
+      if (w.from > T) until = Math.min(until, w.from);
+    }
+  }
+  let beat = null;                      // a moment about to happen, or just happened, comes before anything being said
+  for (const s of pool) for (const b of storyBeats(s)) {
+    if (T >= b.from && T < b.to && (!beat || b.from > beat.from)) { beat = b; seg = s; }
+    if (b.from > T) until = Math.min(until, b.from);
+  }
+  if (!seg) {                           // nothing being said, nothing of theirs coming: the race itself
+    seg = storyQuiet(until);
+    if (!seg) return null;
+    since = seg.from; until = Math.min(until, seg.to);
+    for (const b of storyBeats(seg)) if (T >= b.from && T < b.to) beat = b;
+    items = [];
+  }
+  const alive = i => active(i, T) && !!posAt(i, T), said = storySaid(items);
+  let cars = beat ? beat.cars.filter(alive) : [], named = !!beat && beat.named && cars.length > 1, name = null, after = null, left = null, start = since;
+  if (!beat) {                          // whoever they last named, from a moment before the name is said; or whoever was in the last thing that happened, if that is later
+    for (const e of said) {
+      if (e.seg !== seg || e.t < since - 0.5) continue;
+      if (e.t - STORY.ahead > T) { until = Math.min(until, e.t - STORY.ahead); break; }
+      if (alive(e.car)) name = e;
+    }
+    for (const b of storyBeats(seg)) if (b.to <= T && b.to >= since - 0.5 && (!after || b.to > after.to)) after = b;
+    if (after && name && after.to <= name.t - STORY.ahead) after = null;
+    // (and not for ever: a while after the name with no other said, back to the segment's own car, unless a cut is coming anyway)
+    const from = after ? after : name, last = after ? after.to : name ? name.t - STORY.ahead : 0;
+    if (from && T - last > STORY.stale && ((storyState && storyState.left === from) || until - T >= STORY.least)) { left = from; after = name = null; start = last + STORY.stale; }
+    if (after && after.cars.some(alive)) { cars = after.cars.filter(alive); named = after.named && cars.length > 1; start = after.to; }
+    else if (name) {
+      after = null;
+      cars = [name.car, name.with].filter(i => i != null && alive(i)); named = cars.length > 1; start = name.t - STORY.ahead;
+      // (somebody named in a segment that is about a car: the two of them, if they are together)
+      if (cars.length === 1 && seg.own && cars[0] !== seg.focus && alive(seg.focus) && storyApart(cars[0], seg.focus, T) < STORY.far) cars.push(seg.focus);
+    } else after = null;
+  }
+  if (!cars.length) {                   // nobody named: the segment's own car, or the leader
+    const own = seg.own || seg.h ? seg.focus : (CARS.find(c => TW.pos[c.i][towerIndex(T)] === 1) || {}).i;
+    if (own == null || !alive(own)) return null;
+    cars = [own];
+  }
+  // (the same cars as a frame ago are the same shot going on, whichever line it is that names them now)
+  const key = `${seg.id}/${beat ? "at" + beat.m : "on"}/${cars.slice().sort((a, b) => a - b).join("+")}`, prev = storyState && storyState.key === key ? storyState : null, was = prev ? prev.shot : null;
+  const flip = prev ? prev.flip : !(storyState && storyState.flip);
+  if (!beat) start = prev ? prev.start : name || after || left ? start : T;      // (turns of shot are counted from the cut to this driver)
+  const pair = cars.length > 1 && storyApart(cars[0], cars[1], T) < STORY[named ? "named" : "far"] * (was === "duo" ? 1.25 : 1);
+  let shot;
+  if (seg.hold) shot = "heli";
+  else if (beat) {                      // a moment: two cars are one picture from the cut, or not at all (a pair that closes up later is not cut to)
+    shot = pair && (was === null || was === "duo") ? "duo" : { overtake: "chase", start: "chase", stewards: "chase", pit: "heli" }[seg.kind] || "tv";
+  } else {                              // nothing happening: by turns, counted from the name or the last thing that happened
+    let turn = Math.floor(Math.max(0, T - start) / STORY.turn);
+    if (turn > 0 && until - (start + turn * STORY.turn) < 3.5) turn--;      // (not a new shot that the next cut would take away at once)
+    shot = (pair ? (flip ? ["duo", "chase", "duo", "tv"] : ["duo", "tv", "duo", "chase"])      // (two being talked about: the pair, and the first of them between times)
+      : flip ? ["chase", "tv", "heli", "tv"] : ["tv", "chase", "tv", "heli"])[turn % 4];         // (each new driver opens on the other kind of shot from the last)
+  }
+  return { seg, beat, cars, shot, partner: shot === "duo" ? cars[1] : null, tight: !!(beat || name || after), key, start, flip, left };
+}
+function storyBehind(a, b, t) {         // of two cars together on the road, the one behind
+  const p = posAt(a, t), q = posAt(b, t), p2 = posAt(a, t + 0.3);
+  if (!p || !q || !p2) return a;
+  return (p2[0] - p[0]) * (q[0] - p[0]) + (p2[1] - p[1]) * (q[1] - p[1]) >= 0 ? a : b;
+}
+function storyReplay(show, p) {         // the camera on a moment being shown again (p: the moment of the race that is in the picture)
+  const win = show.win, seg = win.seg, alive = i => active(i, p) && !!posAt(i, p);
+  let beat = null;
+  for (const b of storyBeats(seg)) if (!beat || Math.abs(b.m - p) < Math.abs(beat.m - p)) beat = b;
+  let cars = beat ? beat.cars.filter(alive) : [];
+  if (!cars.length && alive(seg.focus)) cars = [seg.focus];
+  if (!cars.length) return null;
+  // from another place than it was called from: two cars from behind the one that follows; one car from above, or from behind
+  const pair = cars.length > 1 && storyApart(cars[0], cars[1], p) < STORY.named, was = { overtake: "chase", start: "chase", stewards: "chase", pit: "heli" }[seg.kind] || "tv";
+  if (pair && storyBehind(cars[0], cars[1], show.cut.p + 0.4) !== cars[0]) cars = [cars[1], cars[0]];      // (who is behind as this showing of it begins: the camera does not change sides when they do)
+  // a second showing of the same thing is from somewhere else again
+  const turns = pair ? ["chase", "duo", "tv"] : show.slow ? (was === "tv" ? ["chase", "tv", "heli"] : ["tv", "chase", "heli"]) : [{ chase: "heli", tv: "chase", heli: "tv" }[was], "tv", "chase"];
+  const shot = turns[show.n % turns.length];
+  return { seg, beat, cars, shot, partner: shot === "duo" ? cars[1] : null, tight: true, key: `again/${win.from}/${show.n}/${cars[0]}`, start: show.cut.t, flip: false, left: null, again: win };
+}
+function storyStep() {                  // every frame, before the picture is drawn
+  const mine = view3d && viewKind === "3d" && window.Stage3D && Stage3D.camera === "story";
+  storyState = !mine ? null : bcastShow && bcastShow.p != null ? storyReplay(bcastShow, T) : storyNow();
+  if (storyState && focus !== storyState.cars[0]) { focus = storyState.cars[0]; towerKey = ""; }
+}
+function storyLocked() {                // is it this camera's choice whose car is followed? (and if so, say so: somebody has just tried to choose)
+  if (!(view3d && viewKind === "3d" && window.Stage3D && Stage3D.camera === "story")) return false;
+  const note = $("stageNote"), text = "The Commentary camera follows whoever the hosts are talking about. To follow a driver yourself, pick another camera.";
+  note.textContent = text; note.hidden = false;
+  clearTimeout(storyNoted); storyNoted = setTimeout(() => { if (note.textContent === text) note.hidden = true; }, 3800);
+  return true;
+}
+
+// ------------------------------------------------------------------ the broadcast: what is shown again, and the wipe
+/* Watching the race with the Commentary camera and the hosts is a broadcast: what the hosts had to put off comes back
+   as a replay (liveBuild's windows), and going into one and coming out of it a wipe crosses the picture, as on
+   television (Eric sent a description of Formula 1's own: a full-screen graphic wiping across the frame, the mark,
+   glowing red and white fragments, a waveform, and a rush of sound; the mark here is the league's own). While a
+   replay is on, the picture, the car that is followed and the engines are of the moment being shown again; the
+   race's clock, the timing tower and the hosts go on. tick() does that by putting the clock back for those. */
+let bcastShow = null, bcastWas = null, bcastHand = null;      // (bcastHand: a wipe the page asks for itself, by its own clock: { at })
+function bcastSweep() {                 // a wipe now, with its sound: for going from one stretch of the reel to the next
+  bcastHand = { at: performance.now() };
+  if (actx && actx.state === "running") bcastWhoosh(actx, actx.currentTime, actx.destination);
+}
+function bcastOn() {                    // is this a broadcast: the Commentary camera, the hosts speaking, the race at its own speed
+  return !!(liveTalk && voiceOn && speed === 1 && !activeSeg && !audioSync && !exporting && D.voice
+            && view3d && viewKind === "3d" && window.Stage3D && Stage3D.camera === "story");
+}
+function bcastAt(t) {                   // what is on at a moment of the race's clock: null for the race itself, or
+  const half = BCAST.wipe / 2;          // { win, p: the moment of the race that is in the picture (null: now), wipe: how far through one (0 to 1; null: none) }
+  for (const w of liveWins) {
+    if (t < w.from || t >= w.to) continue;
+    if (w.kind === "screen") return { win: w, cut: null, n: -1, p: null, slow: false, screen: w.screen, since: t - w.from, left: w.to - t, up: !w.card || (t >= w.on && t < w.to - half),
+      wipe: !w.card ? null : t < w.from + BCAST.wipe ? (t - w.from) / BCAST.wipe : t >= w.to - BCAST.wipe ? (t - w.to + BCAST.wipe) / BCAST.wipe : null };
+    let cut = null, n = -1;
+    if (t >= w.on && t < w.off) w.cuts.forEach((c, k) => { if (c.t <= t) { cut = c; n = k; } });
+    return { win: w, cut, n, p: cut ? cut.p + (t - cut.t) * cut.rate : null, slow: !!cut && cut.rate < 1,
+             wipe: t < w.on + half ? (t - w.from) / BCAST.wipe : t >= w.off - half ? (t - w.off + half) / BCAST.wipe : null };
+  }
+  return null;
+}
+const bcastRand = (k, salt) => { const v = Math.sin(k * 127.1 + salt * 311.7) * 43758.5453; return v - Math.floor(v); };
+/* The wipe, for a picture W by H, p from 0 (not begun) to 1 (gone). A dark slab leaning forward comes across from the
+   left behind red and white bars and broken bits of them; from 0.42 to 0.58 it covers everything (the picture
+   changes at a half, under it), with the league's mark and a waveform on it; then its back edge follows it off. */
+function drawWipe(g, W, H, p) {
+  const u = H / 1080, lean = H * 0.4, run = W + lean + 0.2 * W, ease = x => x * x * (3 - 2 * x);
+  const front = -lean - 0.1 * W + run * ease(clamp(p / 0.42, 0, 1)), back = -lean - 0.1 * W + run * ease(clamp((p - 0.58) / 0.42, 0, 1));
+  const slab = (a, b, fill) => { g.fillStyle = fill; g.beginPath(); g.moveTo(a, H); g.lineTo(a + lean, 0); g.lineTo(b + lean, 0); g.lineTo(b, H); g.closePath(); g.fill(); };
+  g.save();
+  const dark = g.createLinearGradient(0, 0, W, H);
+  dark.addColorStop(0, "#15151e"); dark.addColorStop(1, "#08080c");
+  slab(back, front, dark);
+  for (const [edge, way] of [[front, 1], [back, -1]]) {      // the bars that run ahead of it, and after it
+    slab(edge + way * 10 * u, edge + way * 58 * u, "#e10600");
+    slab(edge + way * 78 * u, edge + way * 92 * u, "#f4f4f2");
+    slab(edge + way * 118 * u, edge + way * 126 * u, "rgba(225,6,0,0.8)");
+    const tick = Math.floor(p * 30);    // broken bits flying off the edge: where they are is drawn again a few times a wipe
+    for (let k = 0; k < 46; k++) {
+      const y = bcastRand(k, 1) * H, x = edge + lean * (1 - y / H) + way * (130 + bcastRand(k, 2 + tick % 3) * 420) * u;
+      if (bcastRand(k, 7 + tick) < 0.3) continue;
+      g.globalAlpha = 0.35 + 0.6 * bcastRand(k, 5);
+      g.fillStyle = k % 3 ? "#e10600" : "#f4f4f2";
+      g.fillRect(x, y, (16 + bcastRand(k, 3) * 110) * u, (3 + bcastRand(k, 4) * 9) * u);
+    }
+    g.globalAlpha = 1;
+  }
+  const cover = clamp((Math.min(front + lean / 2, W) - Math.max(back + lean / 2, 0)) / W, 0, 1), show = clamp((cover - 0.55) / 0.3, 0, 1);
+  if (show > 0) {                       // on the slab, and nowhere else: the league's mark, and a waveform through it
+    g.beginPath(); g.moveTo(back, H); g.lineTo(back + lean, 0); g.lineTo(front + lean, 0); g.lineTo(front, H); g.closePath(); g.clip();
+    g.globalAlpha = show;
+    const cx = W / 2 + (p - 0.5) * 120 * u, cy = H / 2, bars = 96, wide = Math.min(W * 0.86, 1640 * u);
+    g.shadowColor = "#e10600"; g.shadowBlur = 18 * u;
+    for (let k = 0; k < bars; k++) {
+      const far = Math.abs(k - bars / 2 + 0.5) / (bars / 2), tall = (10 + 300 * Math.pow(1 - far, 1.1) * (0.3 + 0.7 * bcastRand(k, 11 + Math.floor(p * 22)))) * u;
+      g.fillStyle = k % 5 === 2 ? "#f4f4f2" : "#e10600";
+      g.fillRect(cx - wide / 2 + k * wide / bars, cy - tall / 2, wide / bars * 0.42, tall);
+    }
+    g.shadowBlur = 0;
+    const words = (D.league || "Slayter League").toUpperCase();
+    g.font = `italic 900 ${86 * u}px ${FACE}`; g.textAlign = "center"; g.textBaseline = "middle";
+    const tw = g.measureText(words).width;
+    g.fillStyle = "rgba(8,8,12,0.9)"; g.fillRect(cx - tw / 2 - 40 * u, cy - 62 * u, tw + 80 * u, 124 * u);
+    g.fillStyle = "#e10600"; g.beginPath(); g.moveTo(cx - tw / 2 - 40 * u, cy + 62 * u); g.lineTo(cx - tw / 2 - 16 * u, cy - 62 * u); g.lineTo(cx - tw / 2 + 4 * u, cy - 62 * u); g.lineTo(cx - tw / 2 - 20 * u, cy + 62 * u); g.closePath(); g.fill();
+    g.fillStyle = "#f6f6f4"; g.fillText(words, cx + 10 * u, cy + 4 * u);
+  }
+  g.restore();
+}
+/* The screens the hosts talk over when nothing is happening. One that shows something of the race comes up over the
+   race itself, which goes soft behind it, and draws itself in: the circuit as a line of light run round from the
+   start line with its corners numbered as the line reaches them, the rows of a table one after another (the second
+   thing in Eric's description of the real broadcasts: "the background subtly blurs while wireframe graphics ...
+   construct themselves out of glowing lines"). A sponsor's card is the whole picture, cheap and loud, and is wiped
+   into and out of. `show` is bcastAt's answer; t is the race's clock (the tyres and the gaps are as they are then). */
+const screenEase = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+function screenStints(i, t) {           // what a car has run on up to now: [{ tyre, from: lap, to: lap }] (a new one when its tyres are suddenly younger)
+  const out = [];
+  let was = null;
+  for (let k = towerIndex(0), K = towerIndex(t); k <= K; k += 2) {
+    const tyre = TW.tyre[i][k], age = TW.age[i][k], lap = TW.lap[i][k];
+    if (!TW.pos[i][k] || !TYRES[tyre] || !lap) continue;
+    if (!was || tyre !== was.tyre || age < was.age) out.push(was = { tyre, from: lap, to: lap, age });
+    was.to = lap; was.age = age;
+  }
+  return out;
+}
+function screenTrack(g, u, box, sc, since) {
+  if (!OUT) return;
+  const wide = box.w * (sc.facts ? 0.6 : 1), pad = 50 * u, n = OUT.length, bin = D.outline.bin || 4;
+  const s = Math.min((wide - 2 * pad) / (bounds.maxX - bounds.minX || 1), (box.h - 2 * pad - (sc.note ? 30 * u : 0)) / (bounds.maxZ - bounds.minZ || 1));
+  const cx = box.x + wide / 2, cy = box.y + (box.h - (sc.note ? 30 * u : 0)) / 2, X = p => cx + (p[0] - (bounds.minX + bounds.maxX) / 2) * s, Y = p => cy + (p[1] - (bounds.minZ + bounds.maxZ) / 2) * s;
+  const line = (from, to, thick, colour, glow) => {
+    g.beginPath();
+    let pen = false;
+    for (let i = from; i <= to; i++) { const p = OUT[((i % n) + n) % n]; if (!p) { pen = false; continue; } if (pen) g.lineTo(X(p), Y(p)); else g.moveTo(X(p), Y(p)); pen = true; }
+    g.lineWidth = thick; g.strokeStyle = colour; g.lineCap = "round"; g.lineJoin = "round"; g.shadowColor = glow || "transparent"; g.shadowBlur = glow ? 24 * u : 0; g.stroke(); g.shadowBlur = 0;
+  };
+  const tip = Math.round(screenEase(since / 2.4) * n);
+  line(0, n, 10 * u, "rgba(255,255,255,0.07)");
+  if (tip > 1) { line(0, tip, 6.5 * u, "#ff3b30", "#e10600"); line(0, tip, 2 * u, "#fff4f2"); }
+  const lit = screenEase((since - 2.5) / 0.6);      // stretches of it the hosts point at (metres round the lap), once it is all there
+  if (lit > 0) for (const [a, b, colour] of sc.spans || []) {
+    g.globalAlpha *= lit; line(Math.round(a / bin), Math.round(b / bin) + (b < a ? n : 0), 12 * u, colour || "#ffffff", colour || "#ffffff"); g.globalAlpha /= lit;
+  }
+  const head = OUT[tip % n];
+  if (head && tip < n) { g.fillStyle = "#ffffff"; g.shadowColor = "#ff3b30"; g.shadowBlur = 30 * u; g.beginPath(); g.arc(X(head), Y(head), 7 * u, 0, Math.PI * 2); g.fill(); g.shadowBlur = 0; }
+  const first = OUT[0], next = OUT[2];
+  if (first && next) {                  // the line
+    const dx = X(next) - X(first), dy = Y(next) - Y(first), len = Math.hypot(dx, dy) || 1;
+    g.strokeStyle = "#f4f4f2"; g.lineWidth = 4 * u; g.beginPath(); g.moveTo(X(first) + dy / len * 16 * u, Y(first) - dx / len * 16 * u); g.lineTo(X(first) - dy / len * 16 * u, Y(first) + dx / len * 16 * u); g.stroke();
+  }
+  g.textAlign = "center"; g.textBaseline = "middle";
+  for (const [num, at, way] of (D.track3d && D.track3d.venue && D.track3d.venue.corners) || []) {      // each corner's number, outside it, as the line gets there
+    const i = Math.round(at / bin) % n, p = OUT[i], q = OUT[(i + 3) % n], r = OUT[(i - 3 + n) % n];
+    if (!p || !q || !r || i > tip) continue;
+    const dx = X(q) - X(r), dy = Y(q) - Y(r), len = Math.hypot(dx, dy) || 1, out = way === "R" ? 1 : -1, marked = (sc.mark || []).includes(num);
+    const x = X(p) + dy / len * out * 30 * u, y = Y(p) - dx / len * out * 30 * u;
+    if (marked) { const beat = (since * 0.9) % 1; g.strokeStyle = `rgba(255,59,48,${(1 - beat) * 0.9})`; g.lineWidth = 3 * u; g.beginPath(); g.arc(x, y, (18 + 16 * beat) * u, 0, Math.PI * 2); g.stroke(); }
+    g.fillStyle = marked ? "#e10600" : "rgba(30,30,40,0.95)"; g.beginPath(); g.arc(x, y, (marked ? 19 : 14) * u, 0, Math.PI * 2); g.fill();
+    g.fillStyle = marked ? "#ffffff" : "#c9ccd0"; g.font = `800 ${(marked ? 21 : 16) * u}px ${FACE}`; g.fillText(num, x, y + u);
+  }
+  if (sc.note) { g.fillStyle = "#9da3aa"; g.font = `italic 500 ${21 * u}px ${FACE}`; g.fillText(sc.note, cx, box.y + box.h - 14 * u); }
+  g.textAlign = "left";
+  (sc.facts || []).forEach(([label, value], k) => {
+    const on = screenEase((since - 0.7 - k * 0.32) / 0.4), x = box.x + wide + 10 * u, y = box.y + 44 * u + k * Math.min(104 * u, (box.h - 40 * u) / sc.facts.length);
+    if (on <= 0) return;
+    g.globalAlpha *= on;
+    g.fillStyle = "#e10600"; g.fillRect(x, y - 14 * u, 4 * u, 62 * u);
+    g.fillStyle = "#9da3aa"; g.font = `700 ${17 * u}px ${FACE}`; g.fillText(String(label).toUpperCase(), x + 18 * u, y);
+    let size = 34 * u;                  // (a long one a little smaller, to stay on the screen)
+    g.font = `800 ${size}px ${FACE}`;
+    while (g.measureText(String(value).toUpperCase()).width > box.x + box.w - x - 22 * u && size > 16 * u) { size *= 0.94; g.font = `800 ${size}px ${FACE}`; }
+    g.fillStyle = "#f6f6f4"; g.fillText(String(value).toUpperCase(), x + 18 * u, y + 34 * u);
+    g.globalAlpha /= on;
+  });
+}
+function screenPeople(t) { return towerRows(t).filter(r => !r.c.ai).slice(0, 9); }
+function screenTyres(g, u, box, sc, since, t) {
+  const rows = screenPeople(t), laps = D.session.totalLaps || Math.max(1, ...rows.map(r => r.lap)), now = Math.min(laps, leaderLap(t));
+  const high = Math.min(84 * u, (box.h - 44 * u) / Math.max(1, rows.length)), x0 = box.x + 330 * u, x1 = box.x + box.w - 170 * u, X = lap => x0 + (lap - 1) / laps * (x1 - x0);
+  g.textBaseline = "middle"; g.textAlign = "center"; g.font = `600 ${14 * u}px ${FACE}`;
+  for (let lap = 1; lap <= laps; lap += lap === 1 ? 4 : 5) { g.fillStyle = "#7d828a"; g.fillText(lap, X(lap) + (x1 - x0) / laps / 2, box.y + 10 * u); g.fillStyle = "rgba(255,255,255,0.06)"; g.fillRect(X(lap), box.y + 24 * u, u, rows.length * high + 6 * u); }
+  rows.forEach((r, k) => {
+    const on = screenEase((since - 0.2 - k * 0.13) / 0.4), grow = screenEase((since - 0.6 - k * 0.13) / 0.9), y = box.y + 30 * u + k * high, mid = y + high / 2 - 3 * u;
+    if (on <= 0) return;
+    g.globalAlpha *= on;
+    g.fillStyle = k % 2 ? "rgba(255,255,255,0.025)" : "rgba(255,255,255,0.05)"; g.fillRect(box.x, y, box.w, high - 6 * u);
+    g.fillStyle = "#f4f4f2"; g.font = `800 ${24 * u}px ${FACE}`; g.textAlign = "right"; g.fillText(r.pos, box.x + 46 * u, mid);
+    g.fillStyle = r.c.color; g.fillRect(box.x + 60 * u, y + 10 * u, 6 * u, high - 26 * u);
+    g.fillStyle = "#f4f4f2"; g.textAlign = "left"; g.font = `700 ${22 * u}px ${FACE}`; g.fillText(name(r.c.i).slice(0, 17), box.x + 80 * u, mid);
+    for (const st of screenStints(r.c.i, t)) {
+      const a = X(st.from), b = X(Math.min(laps + 1, st.to + 1)), w = Math.max(6 * u, (b - a) * grow - 3 * u), tc = TYRES[st.tyre];
+      g.fillStyle = tc[1]; g.beginPath(); g.roundRect(a, mid - 15 * u, w, 30 * u, 6 * u); g.fill();
+      if (w > 30 * u) { g.fillStyle = "#111318"; g.font = `800 ${17 * u}px ${FACE}`; g.fillText(tc[0], a + 9 * u, mid + u); }
+    }
+    const tc = TYRES[r.tyre];
+    g.textAlign = "right"; g.font = `700 ${19 * u}px ${FACE}`; g.fillStyle = r.pit ? "#fab219" : "#b9bcc0";
+    g.fillText(r.pit ? "IN THE PITS" : tc ? `${r.age} LAP${r.age === 1 ? "" : "S"} OLD` : "", box.x + box.w - 12 * u, mid);
+    g.globalAlpha /= on;
+  });
+  g.fillStyle = "rgba(255,255,255,0.5)"; g.fillRect(X(now + 1) - u, box.y + 24 * u, 2 * u, rows.length * high + 6 * u);
+}
+function screenLeague(g, u, box, sc, since, t) {
+  const rows = screenPeople(t), high = Math.min(84 * u, box.h / Math.max(1, rows.length)), far = Math.max(20, ...rows.map(r => r.gap / 100)), lead = leaderLap(t);
+  g.textBaseline = "middle";
+  rows.forEach((r, k) => {
+    const on = screenEase((since - 0.2 - k * 0.13) / 0.4), grow = screenEase((since - 0.5 - k * 0.13) / 0.8), y = box.y + k * high, mid = y + high / 2 - 3 * u, ahead = rows[k - 1];
+    if (on <= 0) return;
+    g.globalAlpha *= on;
+    g.fillStyle = k % 2 ? "rgba(255,255,255,0.025)" : "rgba(255,255,255,0.05)"; g.fillRect(box.x, y, box.w, high - 6 * u);
+    g.fillStyle = "#f4f4f2"; g.font = `800 ${26 * u}px ${FACE}`; g.textAlign = "right"; g.fillText(r.pos, box.x + 50 * u, mid);
+    g.fillStyle = r.c.color; g.fillRect(box.x + 64 * u, y + 10 * u, 6 * u, high - 26 * u);
+    g.fillStyle = "#f4f4f2"; g.textAlign = "left"; g.font = `700 ${24 * u}px ${FACE}`; g.fillText(name(r.c.i).slice(0, 18), box.x + 86 * u, mid);
+    const behind = r.pos > 1 && !r.gap;      // (the game gives no gap for a car in the pit lane, or one a lap behind)
+    const gap = r.pos === 1 ? "LEADER" : r.pit ? "IN THE PITS" : behind ? (lead - r.lap >= 1 ? "A LAP DOWN" : "") : "+" + (r.gap / 100).toFixed(1);
+    g.fillStyle = "rgba(225,6,0,0.75)"; g.fillRect(box.x + 400 * u, mid - 5 * u, Math.max(2 * u, (box.w - 920 * u) * Math.min(1, r.gap / 100 / far) * grow), 10 * u);
+    g.textAlign = "right"; g.fillStyle = "#f4f4f2"; g.font = `700 ${26 * u}px ${FACE}`; g.fillText(gap, box.x + box.w - 330 * u, mid);
+    g.fillStyle = "#9da3aa"; g.font = `600 ${18 * u}px ${FACE}`;
+    g.fillText(ahead && !behind && r.gap && (ahead.gap || ahead.pos === 1) ? `${((r.gap - ahead.gap) / 100).toFixed(1)} BEHIND ${code(ahead.c.i)}` : "", box.x + box.w - 120 * u, mid);
+    const tc = TYRES[r.tyre];
+    if (tc) { g.fillStyle = tc[1]; g.beginPath(); g.arc(box.x + box.w - 70 * u, mid, 11 * u, 0, Math.PI * 2); g.fill(); g.fillStyle = "#b9bcc0"; g.textAlign = "left"; g.fillText(r.age, box.x + box.w - 50 * u, mid); }
+    g.globalAlpha /= on;
+  });
+}
+function screenTable(g, u, box, sc, since) {      // rows the script gives: [what, how much, a word more]
+  const rows = sc.rows || [], high = Math.min(88 * u, box.h / Math.max(1, rows.length));
+  g.textBaseline = "middle";
+  rows.forEach((row, k) => {
+    const on = screenEase((since - 0.2 - k * 0.2) / 0.4), y = box.y + k * high, mid = y + high / 2 - 3 * u, car = carNamed(row[0]);
+    if (on <= 0) return;
+    g.globalAlpha *= on;
+    g.fillStyle = k % 2 ? "rgba(255,255,255,0.025)" : "rgba(255,255,255,0.05)"; g.fillRect(box.x, y, box.w, high - 6 * u);
+    g.fillStyle = car != null ? BY[car].color : "#e10600"; g.fillRect(box.x + 20 * u, y + 10 * u, 6 * u, high - 26 * u);
+    g.fillStyle = "#f4f4f2"; g.textAlign = "left"; g.font = `700 ${27 * u}px ${FACE}`; g.fillText(String(row[0]).toUpperCase(), box.x + 44 * u, mid);
+    g.textAlign = "right"; g.font = `800 ${32 * u}px ${FACE}`; g.fillText(row[1] ?? "", box.x + box.w * 0.68, mid);
+    g.fillStyle = "#9da3aa"; g.font = `600 ${20 * u}px ${FACE}`; g.fillText(String(row[2] ?? "").toUpperCase(), box.x + box.w - 24 * u, mid);
+    g.globalAlpha /= on;
+  });
+}
+function screenSponsor(g, W, H, u, sc) {        // somebody's advertisement, as a station nobody watches would make it
+  const [paper, ink, hot] = sc.colours || ["#f2c400", "#141414", "#c81414"];
+  g.fillStyle = paper; g.fillRect(0, 0, W, H);
+  for (const top of [0, H - 64 * u]) for (let x = -H; x < W + H; x += 96 * u) { g.fillStyle = ink; g.beginPath(); g.moveTo(x, top + 64 * u); g.lineTo(x + 48 * u, top + 64 * u); g.lineTo(x + 112 * u, top); g.lineTo(x + 64 * u, top); g.closePath(); g.fill(); }
+  g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = ink;
+  g.font = `700 ${34 * u}px ${FACE}`; g.fillText(String(sc.over || "This quiet spell is brought to you by").toUpperCase(), W / 2, H * 0.23);
+  const words = String(sc.name || "").toUpperCase();
+  let size = 176 * u;
+  g.font = `900 ${size}px ${FACE}`;
+  while (g.measureText(words).width > W * 0.84 && size > 40 * u) { size *= 0.95; g.font = `900 ${size}px ${FACE}`; }
+  g.fillStyle = hot; g.fillText(words, W / 2 + 7 * u, H * 0.42 + 7 * u); g.fillStyle = ink; g.fillText(words, W / 2, H * 0.42);
+  g.font = `italic 600 ${50 * u}px ${FACE}`;
+  fold(g, sc.line || "", W * 0.78).slice(0, 2).forEach((row, k) => g.fillText(row, W / 2, H * 0.6 + k * 64 * u));
+  if (sc.small) { g.font = `600 ${28 * u}px ${FACE}`; g.globalAlpha *= 0.78; g.fillText(sc.small, W / 2, H * 0.77); g.globalAlpha /= 0.78; }
+  if (sc.badge) {
+    g.save(); g.translate(W * 0.86, H * 0.23); g.rotate(-0.2);
+    g.fillStyle = hot; g.beginPath();
+    for (let k = 0; k < 28; k++) { const r = (k % 2 ? 112 : 146) * u, a = k / 28 * Math.PI * 2; g.lineTo(Math.cos(a) * r, Math.sin(a) * r); }
+    g.closePath(); g.fill();
+    g.fillStyle = "#ffffff"; g.font = `900 ${32 * u}px ${FACE}`;
+    fold(g, String(sc.badge).toUpperCase(), 190 * u).slice(0, 3).forEach((row, k, all) => g.fillText(row, 0, (k - (all.length - 1) / 2) * 36 * u));
+    g.restore();
+  }
+}
+function drawScreen(g, W, H, show, t, top = 0) {     // top: how much of the picture's head is taken (the page's camera buttons)
+  const sc = show.screen, u = Math.min(H / 800, W / 1400);      // (drawn to be read on a page's stage: a film's frame has room to spare)
+  if (sc.kind === "talk" || !show.up) return;
+  g.save();
+  if (sc.kind === "sponsor") { screenSponsor(g, W, H, u, sc); g.restore(); return; }
+  g.globalAlpha = screenEase(show.since / 0.5) * screenEase(show.left / 0.4);
+  g.fillStyle = "rgba(8,8,12,0.6)"; g.fillRect(0, 0, W, H);
+  const rows = sc.kind === "table" ? (sc.rows || []).length : sc.kind === "track" ? 0 : screenPeople(t).length;
+  const wants = sc.kind === "track" ? 700 : sc.kind === "table" ? 160 + rows * 88 : 190 + rows * 74, room = H - top - 120 * u;      // (the hosts' words are along the bottom)
+  const pw = Math.min(W - 48 * u, 1340 * u), ph = Math.min(room, wants * u), x = (W - pw) / 2, y = top + Math.max(8 * u, (room - ph) / 2.4);
+  g.fillStyle = "rgba(14,14,20,0.9)"; g.fillRect(x, y, pw, ph);
+  g.fillStyle = "#e10600"; g.fillRect(x, y, pw, 6 * u);
+  g.beginPath(); g.moveTo(x + 34 * u, y + 92 * u); g.lineTo(x + 54 * u, y + 34 * u); g.lineTo(x + 72 * u, y + 34 * u); g.lineTo(x + 52 * u, y + 92 * u); g.closePath(); g.fill();
+  g.textAlign = "left"; g.textBaseline = "middle";
+  g.fillStyle = "#9da3aa"; g.font = `700 ${17 * u}px ${FACE}`; g.fillText(`${(D.league || "Slayter League").toUpperCase()} · ${(D.session.track || "").toUpperCase()}`, x + 88 * u, y + 44 * u);
+  const lap = D.session.race ? Math.min(leaderLap(t), D.session.totalLaps || 999) : 0;
+  g.fillStyle = "#f6f6f4"; g.font = `800 ${40 * u}px ${FACE}`;
+  g.fillText(String(sc.title || sc.kind).toUpperCase().replace("{LAP}", t < 0 ? "BEFORE THE START" : `LAP ${lap}${D.session.totalLaps ? " OF " + D.session.totalLaps : ""}`), x + 88 * u, y + 78 * u);
+  const draw = { track: screenTrack, tyres: screenTyres, league: screenLeague, table: screenTable }[sc.kind] || screenTable;
+  draw(g, u, { x: x + 34 * u, y: y + 122 * u, w: pw - 68 * u, h: ph - 142 * u }, sc, show.since - BCAST.frame * 0.35, t);
+  g.restore();
+}
+function drawAgain(g, W, H, show, top) {        // the tag in the corner while something is being shown again
+  const win = show.win, u = H / 1080, words = win.impact ? "IMPACT REPLAY" : "REPLAY", lap = D.session.race && show.p >= 0 ? leaderLap(show.p) : 0;
+  const small = `${show.p < 0 ? "BEFORE THE START" : lap ? `LAP ${lap}` : "EARLIER"}${show.slow ? " · HALF SPEED" : ""}`;
+  g.save();
+  g.font = `italic 900 ${34 * u}px ${FACE}`; g.textAlign = "right"; g.textBaseline = "middle";
+  const tw = g.measureText(words).width, x = W - 44 * u, y = top + 30 * u;
+  g.fillStyle = "#e10600"; g.beginPath(); g.moveTo(x - tw - 44 * u, y + 28 * u); g.lineTo(x - tw - 26 * u, y - 28 * u); g.lineTo(x + 18 * u, y - 28 * u); g.lineTo(x, y + 28 * u); g.closePath(); g.fill();
+  g.fillStyle = "#ffffff"; g.fillText(words, x - 6 * u, y + 2 * u);
+  g.font = `700 ${17 * u}px ${FACE}`; g.fillStyle = "rgba(9,10,12,0.86)";
+  const sw = g.measureText(small).width;
+  g.fillRect(x - sw - 34 * u, y + 34 * u, sw + 28 * u, 30 * u);
+  g.fillStyle = "#f2f2f0"; g.fillText(small, x - 20 * u, y + 50 * u);
+  g.restore();
+}
+/* The sound of a wipe: air going by, rising and falling, and a low thump at the half-way, as the picture changes.
+   `skip` is how many seconds of it have already gone: a film's sound is made in stretches, and a wipe that takes the
+   film from one part to the next lies across two of them. */
+function bcastWhoosh(ctx, when, out, skip = 0) {
+  const long = BCAST.wipe + 0.25, peak = BCAST.wipe * 0.42, hit = BCAST.wipe / 2;
+  if (skip >= long) return;
+  // a setting on its way through its marks ([seconds in, value, "exp" for by ratio]), picked up `skip` seconds in
+  const run = (param, marks) => {
+    let k = 0;
+    while (k < marks.length - 1 && marks[k + 1][0] <= skip) k++;
+    const [ta, va] = marks[k], next = marks[k + 1];
+    if (skip <= ta || !next) param.setValueAtTime(va, when + Math.max(0, ta - skip));
+    else { const u = (skip - ta) / (next[0] - ta); param.setValueAtTime(next[2] ? va * Math.pow(next[1] / va, u) : va + (next[1] - va) * u, when); }
+    for (let j = k + 1; j < marks.length; j++) (marks[j][2] ? param.exponentialRampToValueAtTime : param.linearRampToValueAtTime).call(param, marks[j][1], when + Math.max(0, marks[j][0] - skip));
+  };
+  const n = Math.ceil(long * ctx.sampleRate), buffer = ctx.createBuffer(1, n, ctx.sampleRate), d = buffer.getChannelData(0);
+  let seed = 22222;
+  for (let j = 0; j < n; j++) { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; d[j] = seed / 2147483648 - 1; }
+  const air = ctx.createBufferSource(), band = ctx.createBiquadFilter(), level = ctx.createGain();
+  air.buffer = buffer; band.type = "bandpass"; band.Q.value = 1.3;
+  run(band.frequency, [[0, 240], [peak, 3400, "exp"], [long, 520, "exp"]]);
+  run(level.gain, [[0, 0], [peak, 0.2], [long, 0]]);
+  air.connect(band); band.connect(level); level.connect(out);
+  air.start(when, skip); air.stop(when + long - skip + 0.05);
+  if (skip < hit + 0.42) {
+    const low = ctx.createOscillator(), thump = ctx.createGain(), from = when + Math.max(0, hit - skip);
+    run(low.frequency, [[hit, 105], [hit + 0.32, 40, "exp"]]);
+    run(thump.gain, [[hit, 0.0001], [hit + 0.025, 0.22], [hit + 0.42, 0.001, "exp"]]);
+    low.connect(thump); thump.connect(out);
+    low.start(from); low.stop(when + hit + 0.45 - skip);
+  }
+}
+function bcastDraw(show) {              // every frame, after the picture: the wipe and the tag, over it, and the wipe's sound as the clock comes to one
+  const cv = $("bcast");
+  const soft = show && show.screen && !show.win.card && show.screen.kind !== "talk" ? 7 * screenEase(show.since / 0.5) * screenEase(show.left / 0.4) : 0, behind = $("map3d");
+  if ((behind.dataset.soft || "0") !== soft.toFixed(1)) { behind.dataset.soft = soft.toFixed(1); behind.style.filter = soft > 0.05 ? `blur(${soft.toFixed(1)}px)` : ""; }
+  const hand = bcastHand ? (performance.now() - bcastHand.at) / 1000 / BCAST.wipe : null;
+  if (hand !== null && hand >= 1) bcastHand = null;
+  if (!show && !bcastHand) { if (!cv.hidden) cv.hidden = true; bcastWas = T; return; }
+  const r = $("stage").getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1), W = Math.max(2, Math.round(r.width * dpr)), H = Math.max(2, Math.round(r.height * dpr));
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  cv.hidden = false;
+  const g = cv.getContext("2d");
+  g.clearRect(0, 0, W, H);
+  if (bcastHand) drawWipe(g, W, H, hand);
+  if (!show) { bcastWas = T; return; }
+  if (show.p != null) drawAgain(g, W, H, show, ($("viewbar").getBoundingClientRect().bottom - r.top + 6) * dpr);      // (under the camera buttons, however many rows of them there are)
+  if (show.screen) drawScreen(g, W, H, show, T, ($("viewbar").getBoundingClientRect().bottom - r.top + 4) * dpr);
+  if (show.wipe != null) drawWipe(g, W, H, show.wipe);
+  if (playing && bcastWas !== null && actx && actx.state === "running" && (!show.screen || show.win.card)) {
+    for (const edge of [show.win.from, show.win.off - BCAST.wipe / 2]) if (bcastWas < edge && T >= edge && T - bcastWas < 0.3) bcastWhoosh(actx, actx.currentTime, actx.destination);
+  }
+  bcastWas = T;
 }
 
 // ------------------------------------------------------------------ side list
@@ -1049,8 +1994,8 @@ function renderTower() {
 }
 $("towerNote").textContent = D.session.race ? "click a driver to follow them" : "best lap so far · click to follow";
 $("towerGapHead").textContent = D.session.race ? "Gap" : "Best";
-$("tower").addEventListener("click", e => { const tr = e.target.closest("tr[data-i]"); if (tr) { focus = +tr.dataset.i; towerKey = ""; } });
-$("tower").addEventListener("keydown", e => { if (e.key === "Enter" && e.target.matches("tr[data-i]")) { focus = +e.target.dataset.i; towerKey = ""; } });
+$("tower").addEventListener("click", e => { const tr = e.target.closest("tr[data-i]"); if (tr && !storyLocked()) { focus = +tr.dataset.i; towerKey = ""; } });
+$("tower").addEventListener("keydown", e => { if (e.key === "Enter" && e.target.matches("tr[data-i]") && !storyLocked()) { focus = +e.target.dataset.i; towerKey = ""; } });
 
 // ------------------------------------------------------------------ canvases
 function fit(cv) {
@@ -1649,9 +2594,11 @@ $("play").onclick = () => { if (activeSeg) stopReel(); setPlaying(!playing); $("
 $("reel").onclick = () => playReel(0);
 $("ctaReel").onclick = () => playReel(0);
 $("ctaRace").textContent = D.session.race ? "or watch the whole race" : "or watch the whole session";
-$("ctaRace").onclick = () => {          // from the top: a race from just before the lights come on
-  stopReel(); $("cta").hidden = true;
-  seek(D.session.race ? Math.max(T0, -12) : T0); setSpeed(1); setPlaying(true);
+$("ctaRace").onclick = () => {          // from the top: a race from just before the lights come on; or, with hosts to
+  stopReel(); $("cta").hidden = true;   // introduce it, from where they begin (the formation lap: that is where they say who is who)
+  liveBuild();
+  const opens = D.session.race && voiceOn && liveTalk && liveList.length ? liveList[0].seg.from : null;
+  seek(!D.session.race ? T0 : opens !== null && opens < -12 ? opens : Math.max(T0, -12)); setSpeed(1); setPlaying(true);
 };
 if (!REEL.length) { $("reel").hidden = true; $("ctaReel").hidden = true; }
 $("voice").onclick = () => {
@@ -1660,6 +2607,7 @@ $("voice").onclick = () => {
   if (!voiceOn && window.speechSynthesis) speechSynthesis.cancel();
   if (!voiceOn && currentClip) currentClip.pause();
   if (!voiceOn) for (const s of activeSources) { try { s.stop(); } catch (e) { /* done */ } }
+  if (!voiceOn) liveStop();
 };
 
 // voice pickers, one per host: every rendered voice for that host, designed voices first, plus the browser's own
@@ -1698,6 +2646,9 @@ async function voicesIn() {
   $("stageNote").hidden = true;
 }
 
+try { liveTalk = localStorage.getItem("pitwall.live") !== "off"; } catch (e) { /* storage off */ }
+$("liveTalk").checked = liveTalk;
+$("liveTalk").onchange = e => { liveTalk = e.target.checked; try { localStorage.setItem("pitwall.live", liveTalk ? "on" : "off"); } catch (err) { /* storage off */ } };
 $("followCam").onclick = () => { followCam = !followCam; $("followCam").classList.toggle("on", followCam); };
 $("full").onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {}); };
 if (!document.documentElement.requestFullscreen) $("full").hidden = true;
@@ -1745,7 +2696,7 @@ $("webClose").onclick = () => { $("webBox").hidden = true; };
 $("webGo").onclick = async () => {
   const sid = ASK.get("session"), tell = text => { $("webNote").textContent = text; };
   if (!sid || !/^http/.test(location.protocol)) return tell("Open this replay from Pit Wall's Replays tab to export: Pit Wall is what writes the files.");
-  const post = (step, body) => fetch(`/api/web/${step}`, { method: "POST", headers: { "X-Pitwall": "1" }, body });
+  const post = (step, body) => askPitwall(`/api/web/${step}`, body, step === "export" ? "to pack the race" : "to show the folder");
   $("webGo").disabled = true; $("webShow").hidden = true; $("webSee").hidden = true; $("webLine").hidden = true;
   tell("Packing the race. This takes about half a minute…");
   try {
@@ -1771,9 +2722,52 @@ $("subtitle").textContent = `${CARS.length} cars · ${D.session.length} m · ${[
 setSpeed(1);
 seek(REEL.length ? REEL[0].from : T0 + 60);
 if (ASK.has("car") && BY[+ASK.get("car")]) focus = +ASK.get("car");      // a shared link: this car, at this moment
-if (ASK.get("t") && isFinite(+ASK.get("t"))) { seek(+ASK.get("t")); $("cta").hidden = true; }
+if (ASK.get("t") && isFinite(+ASK.get("t")) && +ASK.get("t") <= TEND + 1) { seek(+ASK.get("t")); $("cta").hidden = true; }      // (a t far past the flag is not a moment: an old link's cache-buster)
 if (ASK.get("tab") === "laps") showTab("laps");
 $("mRpm").hidden = !CH.rpm;
+// ---- where you were. A browser unloads a tab that has sat in the background and loads the page again when you come
+// back to it (and the 3D view starts the page again when the browser takes its graphics away). So the moment, the
+// car and the camera are noted as you go, in this tab only, and a page that opens with no moment asked for in its
+// address picks up from there, not from the top. On Pit Wall the page itself is kept in the browser too (sw.js).
+const PLACE = "pitwall.place:" + (ASK.get("session") || ASK.get("race") || location.pathname);
+let placeCam = null;
+function notePlace() {
+  try { sessionStorage.setItem(PLACE, JSON.stringify({ t: +T.toFixed(1), car: focus, cam: window.Stage3D ? Stage3D.camera : null })); } catch (e) { /* storage off */ }
+}
+if (!ASK.get("t")) try {
+  const was = JSON.parse(sessionStorage.getItem(PLACE) || "null");
+  if (was && isFinite(was.t) && was.t >= T0 && was.t <= TEND) {
+    if (Math.abs(was.t - T) > 0.5) { seek(was.t); $("cta").hidden = true; }      // (if you had not moved from the top, it opens as it first did)
+    if (BY[was.car]) focus = was.car;
+    placeCam = was.cam;
+  }
+} catch (e) { /* storage off, or nothing noted */ }
+setInterval(notePlace, 4000);
+addEventListener("pagehide", notePlace);
+document.addEventListener("visibilitychange", () => { if (document.hidden) notePlace(); });
+function keepPages() {                   // the pages are kept in the browser (sw.js), so this tab comes back when the browser has unloaded it and Pit Wall is off
+  if (!("serviceWorker" in navigator)) return;
+  const tell = reg => reg.active && reg.active.postMessage({ keep: [location.href].concat(performance.getEntriesByType("resource").map(q => q.name)) });
+  navigator.serviceWorker.register("/sw.js").then(() => navigator.serviceWorker.ready).then(reg => {
+    tell(reg); setTimeout(() => tell(reg), 12000);      // and once more when the 3D view and its files have come
+  }).catch(() => { /* a browser that won't: nothing is lost but that */ });
+}
+if (!WEB && location.pathname === "/replay") setTimeout(keepPages, 1500);      // on Pit Wall only: a website's copy of this page has no sw.js
+// The browser takes a page's graphics away when the card is full or the tab has been out of sight a long time; a 3D
+// scene does not survive that. So the page is started again, once you are looking at it, and comes back where it was.
+document.addEventListener("stage3d-lost", () => {
+  notePlace();
+  const again = () => {
+    let before = 0;
+    try { before = +sessionStorage.getItem("pitwall.lost") || 0; sessionStorage.setItem("pitwall.lost", Date.now()); } catch (e) { /* storage off */ }
+    if (Date.now() - before > 30000) return location.reload();
+    setView(false);                      // twice in half a minute: the card is not giving it back, so the map, which needs none
+    $("stageNote").textContent = "The browser keeps taking the 3D picture away (the graphics card is busy). Showing the map: press V to try 3D again.";
+    $("stageNote").hidden = false; setTimeout(() => { $("stageNote").hidden = true; }, 9000);
+  };
+  if (!document.hidden) return setTimeout(again, 500);
+  document.addEventListener("visibilitychange", function back() { if (!document.hidden) { document.removeEventListener("visibilitychange", back); again(); } });
+});
 let towerAt = 0, slowFor = 0;
 function governor(dtSec) {              // a machine that can't keep up gets a lighter picture, not a slide show: bloom first, then shadows
   if (!view3d || !window.Stage3D || document.hidden) { slowFor = 0; return; }
@@ -1781,7 +2775,7 @@ function governor(dtSec) {              // a machine that can't keep up gets a l
   if (slowFor > 3 && Stage3D.quality > 0) { Stage3D.quality -= 1; slowFor = 0; }
 }
 function tick(now, manual) {
-  if (exporting) { last = now; if (!manual) requestAnimationFrame(tick); return; }     // the export is driving the picture
+  if (exporting) { last = now; if (engineVoices.size) engineHush(); if (!manual) requestAnimationFrame(tick); return; }     // the export is driving the picture
   const dtSec = Math.min(0.1, Math.max(0, (now - last) / 1000));
   last = now;
   if (audioSync && actx) {
@@ -1792,49 +2786,73 @@ function tick(now, manual) {
     if (T >= TEND) { T = TEND; setPlaying(false); }
   }
   put("clock", stamp(T));
-  put("clockLabel", !D.session.race ? "Session time" : T < 0 ? "To lights out"
+  put("clockLabel", !D.session.race ? "Session time" : T < 0 ? (formationAt(T) ? "Formation lap · to lights out" : "To lights out")
     : `Lap ${Math.min(leaderLap(T), D.session.totalLaps || 999)}${D.session.totalLaps ? " of " + D.session.totalLaps : ""} · race time`);
-  if (now - towerAt > 200) { renderTower(); carSlow(); renderControl(); renderReelList(); renderLaps(); towerAt = now; }
+  // a broadcast showing something again: the picture, whose car it is, its panel and what is heard are of that moment
+  // of the race (the clock is put back for them); the race's clock, the tower and the hosts go on
+  const live = T, show = bcastOn() ? (liveBuild(), bcastAt(T)) : null, again = show && show.p != null ? clamp(show.p, T0, TEND) : null;
+  bcastShow = show;
+  if (now - towerAt > 200) { renderTower(); renderControl(); renderReelList(); renderLaps(); if (again !== null) T = again; carSlow(); T = live; towerAt = now; }
+  if (again !== null) T = again;
+  storyStep();                          // (the Commentary camera says whose car it is, before anything is drawn of it)
   carFast();
+  T = live;
+  liveStep();
   governor(dtSec);
+  if (again !== null) T = again;
   if (view3d && window.Stage3D) { Stage3D.render(T, dtSec); if (building) { building = false; $("stageNote").hidden = true; } } else renderMap(dtSec);
-  renderTrace(); renderTimeline();
+  engineStep(dtSec);                    // (after the picture: the engines are heard from where its camera has just been put)
+  renderTrace();
+  T = live;
+  bcastDraw(show);
+  renderTimeline();
   if (!manual) requestAnimationFrame(tick);
 }
 
 // ------------------------------------------------------------------ the 3D view (replay3d.js)
 // It needs the track rebuilt in 3D and the cars' heights and attitudes, which older replays don't carry.
 let view3d = false, warm3d = false, building = false;
-window.__stage = { D, CH, CARS, N, frameAt, active, code, get focus() { return focus; }, setFocus(i) { focus = i; towerKey = ""; },
+window.__stage = { D, CH, CARS, N, frameAt, active, code, get focus() { return focus; }, setFocus(i) { if (storyLocked()) return false; focus = i; towerKey = ""; return true; },
                    get seg() { return activeSeg; },
+                   get story() { return storyState; },      // what the Commentary camera is on: { shot, partner, tight, key } (storyStep)
+                   ridesAt: WEB ? "rides/" : location.protocol === "file:" ? null : "/player/rides/",      // where the sculpted car skins are kept (rides\things.py): beside the player
+                   venueAt: WEB ? "venue/" : location.protocol === "file:" ? null : "/player/venue/",      // and the photographed surfaces of the circuits (venues\textures)
                    tyreColor: (i, t) => (TYRES[TW.tyre[i][towerIndex(t)]] || [])[1] || null };
-function setView(on) {
-  on = on && !!window.Stage3D;
-  if (on && !warm3d) {                  // the first 3D frame builds the whole circuit: say so, let that be drawn, then build
+// Three ways to see it: the flat map, the circuit as a model on a table ("2.5D": replay3d_toy.js), and the 3D view.
+// The model is the 3D view's own circuit under another camera and another light, so it is built the same once.
+let viewKind = "2d", camBefore = null;
+function setView(kind) {
+  kind = kind === true ? "3d" : !kind || !window.Stage3D || !["25d", "3d"].includes(kind) ? "2d" : kind;
+  if (kind !== "2d" && !warm3d) {       // the first 3D frame builds the whole circuit: say so, let that be drawn, then build
     warm3d = building = true;
     $("stageNote").textContent = "Building the circuit…"; $("stageNote").hidden = false;
-    setTimeout(() => setView(true), 60);
+    setTimeout(() => setView(kind), 60);
     return;
   }
-  view3d = on;
-  $("map").hidden = view3d; $("map3d").hidden = !view3d; $("camBar").hidden = !view3d; $("camHint").hidden = !view3d; $("namesBar").hidden = !view3d;
-  $("followBar").hidden = view3d;
-  for (const b of $("viewbar").querySelectorAll("[data-view]")) b.classList.toggle("on", (b.dataset.view === "3d") === view3d);
-  try { localStorage.setItem("pitwall.view", view3d ? "3d" : "2d"); } catch (e) { /* storage off */ }
+  if (kind === "25d" && Stage3D.camera !== "iso") { camBefore = Stage3D.camera; Stage3D.setCamera("iso"); }
+  if (kind === "3d" && Stage3D.camera === "iso") Stage3D.setCamera(camBefore || "auto");
+  view3d = kind !== "2d"; viewKind = kind;
+  $("map").hidden = view3d; $("map3d").hidden = !view3d; $("camBar").hidden = kind !== "3d"; $("camHint").hidden = !view3d; $("namesBar").hidden = !view3d;
+  $("camHint").textContent = kind === "25d" ? "drag to turn the model · wheel to come nearer or take in the whole circuit · click a car to follow it" : camHint3d;
+  $("followBar").hidden = view3d; $("looksBar").hidden = !view3d; $("skyPick").parentElement.hidden = kind === "25d";
+  for (const b of $("viewbar").querySelectorAll("[data-view]")) b.classList.toggle("on", b.dataset.view === kind);
+  try { localStorage.setItem("pitwall.view", kind); } catch (e) { /* storage off */ }
 }
-const CAMS = ["pod", "chase", "orbit", "tv", "auto", "cockpit", "heli"];      // in key order, 1 to 7
+const CAMS = ["pod", "chase", "orbit", "tv", "auto", "drone", "story", "cockpit", "heli"];      // in key order, 1 to 9
+const camHint3d = $("camHint").textContent;
 function markCamera() { for (const b of $("camBar").children) b.classList.toggle("on", window.Stage3D && b.dataset.cam === Stage3D.camera); }
 if (D.track3d && D.track3d.version >= 3 && CH.y) {
   $("viewbar").addEventListener("click", e => {
     const b = e.target.closest("button");
     if (!b) return;
-    if (b.dataset.view) setView(b.dataset.view === "3d");
+    if (b.dataset.view) setView(b.dataset.view);
     else if (b.dataset.cam && window.Stage3D) Stage3D.setCamera(b.dataset.cam);
     else if (b.id === "names3d" && window.Stage3D) { Stage3D.labels = !Stage3D.labels; b.classList.toggle("on", Stage3D.labels); }
   });
   document.addEventListener("stage3d-camera", markCamera);
   document.addEventListener("stage3d-ready", () => {
     $("viewSeg").hidden = false;
+    if (placeCam && placeCam !== "iso" && placeCam !== Stage3D.camera) Stage3D.setCamera(placeCam);      // the camera you had (see "where you were")
     if (CAMS.includes(ASK.get("cam"))) Stage3D.setCamera(ASK.get("cam"));
     markCamera();
     let saved = null;
@@ -1842,21 +2860,317 @@ if (D.track3d && D.track3d.version >= 3 && CH.y) {
     // 3D is what opens, unless this viewer chose the map last time, the link asks for one of them, or it is a phone
     const phone = matchMedia("(pointer: coarse)").matches && Math.min(innerWidth, innerHeight) < 600;
     if (phone) Stage3D.quality = 1;
-    if (ASK.get("view") ? ASK.get("view") === "3d" : saved ? saved === "3d" : !phone) setView(true);
+    setView(ASK.get("view") || saved || (phone ? "2d" : "3d"));
   });
   window.addEventListener("keydown", e => {
     if (e.target.matches("input, select, textarea") || !window.Stage3D) return;
-    if (e.key.toLowerCase() === "v") setView(!view3d);
+    if (e.key.toLowerCase() === "v") setView({ "2d": "25d", "25d": "3d", "3d": "2d" }[viewKind]);
     else if (view3d && e.key.toLowerCase() === "n") $("names3d").click();
-    else if (view3d && "1234567".includes(e.key)) Stage3D.setCamera(CAMS[+e.key - 1]);
+    else if (viewKind === "3d" && "123456789".includes(e.key)) Stage3D.setCamera(CAMS[+e.key - 1]);
   });
 }
+// ---- what is in the sky and what everyone is driving (3D only): two menus, remembered, and kept in the page's address
+function looksMenu() {
+  const fill = (id, list, now) => { $(id).innerHTML = list.map(([v, label]) => `<option value="${v}">${esc(label)}</option>`).join(""); $(id).value = now; };
+  const saved = k => { try { return localStorage.getItem("pitwall." + k); } catch (e) { return null; } };
+  Stage3D.setSky(ASK.get("sky") || saved("sky") || "night"); Stage3D.setCars(ASK.get("cars") || saved("cars") || "f1");
+  fill("skyPick", Stage3D.skies, Stage3D.skyName); fill("carsPick", Stage3D.garage, Stage3D.carsName);
+  const keep = (k, v, plain) => {
+    try { localStorage.setItem("pitwall." + k, v); } catch (e) { /* storage off */ }
+    const u = new URL(location.href);                                // in the address too, so a shared link shows the same thing
+    if (v === plain) u.searchParams.delete(k); else u.searchParams.set(k, v);
+    try { history.replaceState(null, "", u); } catch (e) { /* a page opened straight from a file */ }
+  };
+  $("skyPick").onchange = e => { Stage3D.setSky(e.target.value); keep("sky", Stage3D.skyName, "night"); e.target.blur(); };
+  $("carsPick").onchange = e => { Stage3D.setCars(e.target.value); keep("cars", Stage3D.carsName, "f1"); e.target.blur(); };
+}
+document.addEventListener("stage3d-ready", looksMenu);
+// ------------------------------------------------------------------ the cars' engines (on this PC only)
+/* Eric, 11 Oct 2026: "maybe we add another drop down for audio ... 4 different engine sounds". An engine is two rows
+   of short sounds cut from recordings of real laps (sounds\engine_bank.py): each sound is the engine held at one
+   pitch, running round on itself with no join; one row is the engine pulling, the other the driver off the
+   throttle. Here the few cars nearest whoever is listening get a voice each. A voice plays the two sounds either
+   side of its car's revs, tuned to them and faded from one to the other as the revs move, from the pulling row or
+   the other by the driver's foot. It is as loud as the car is near, duller the further off, comes from the side the
+   car is on, and is bent by the car's speed toward the listener or away (a car going by a trackside camera drops in
+   pitch, as it does on television). The listener is the camera in the 3D view, unless the camera is on the car or
+   just behind it: then, and on the map and on the model, it rides with the car being followed. Loudness falls away
+   fast with distance, so that on board it is that car you hear and the ones round it only when they are alongside;
+   and so that a camera thirty metres from the road is not left with a murmur, the whole is turned up when nothing
+   is near, as whoever mixes a broadcast rides a trackside microphone (up to "mic" times, eased, and set at once
+   when the camera cuts). The hosts are talked under, never over.
+   The recordings are Formula 1's own broadcasts, so the sounds are served by Pit Wall on this PC and by nothing
+   else: a page anywhere else never asks for them, and with none to be had there is no menu. They play at the race's
+   own speed only: paused, held, or at any other speed, the engines are silent. */
+// (level and duck were set by measuring, there being no ears here: on board with nobody speaking the engines come out
+// about as loud as the hosts' speech does, and under a host about 11 dB below it)
+const ENGINE = { level: 0.45,         // how loud, with the slider in the middle (the slider goes from nothing to about twice this)
+                 duck: 0.28,          // and how much of that is left while a host is speaking
+                 voices: 6,           // how many cars are heard at once: the nearest
+                 near: 10, far: 260,  // metres: a car this near is at half its loudness; beyond this it is not heard
+                 mic: 6,              // the most the whole is turned up when the nearest car is a long way off
+                 shift: 11900,        // the revs the game's cars change up at: whatever engine is chosen is at ITS shift point then
+                 sound: 343,          // metres a second
+                 // in a film (Export video), of that level: in a pause of the hosts' (one of more than `pause` seconds:
+                 // shorter ones are talked through), and while a host speaks. Set by measuring the league race's film,
+                 // the hosts alone against the engines alone: see filmSound
+                 film: { clear: 0.7, under: 0.22, pause: 1.2 } };
+const enginesAt = /^http/.test(location.protocol) && /^(127\.0\.0\.1|localhost|\[::1\])$/.test(location.hostname)
+  ? (WEB ? "sounds/local/" : "/player/sounds/local/") : null;
+let engineBank = null, engineBus = null, engineWas = null, engineCost = 0;
+const engineBanks = new Map(), engineVoices = new Map(), engineHeard = engineHearing();
+function engineLoad(name) {             // an engine's two rows of sounds, fetched once: its index, and one WAV file that is cut up here
+  if (!engineBanks.has(name)) engineBanks.set(name, (async () => {
+    const [index, wav] = await Promise.all([fetch(enginesAt + name + ".json").then(r => r.json()), fetch(enginesAt + name + ".wav").then(r => r.arrayBuffer())]);
+    const view = new DataView(wav);
+    let at = 12;                        // (a WAV file is a head of twelve bytes, then named pieces: the sound is the piece called "data")
+    while (at + 8 < view.byteLength && view.getUint32(at) !== 0x64617461) at += 8 + view.getUint32(at + 4, true) + (view.getUint32(at + 4, true) & 1);
+    const pcm = new Int16Array(wav.slice(at + 8, at + 8 + (Math.min(view.getUint32(at + 4, true), view.byteLength - at - 8) & ~1)));
+    const row = list => list.map(q => {  // each sound in a buffer of its own, at the rate it was made at: the browser then runs it round exactly
+      const buffer = new AudioBuffer({ length: q.to - q.from, sampleRate: index.rate }), out = buffer.getChannelData(0);
+      for (let n = 0; n < out.length; n++) out[n] = pcm[q.from + n] / 32768;
+      return { hz: q.hz, buffer };
+    });
+    return { name, top: index.top, rate: index.rate, power: row(index.power), coast: row(index.coast) };
+  })());
+  return engineBanks.get(name);
+}
+function engineMix(row, hz) {           // which sounds of a row an engine at this pitch is made of, and how much of each
+  const n = row.length - 1;
+  if (n < 0) return [];
+  if (hz <= row[0].hz) return [[0, 1]];
+  if (hz >= row[n].hz) return [[n, 1]];
+  let k = 0;
+  while (row[k + 1].hz < hz) k++;
+  const u = Math.log(hz / row[k].hz) / Math.log(row[k + 1].hz / row[k].hz);
+  return [[k, Math.cos(u * Math.PI / 2)], [k + 1, Math.sin(u * Math.PI / 2)]];
+}
+function engineDrop(v, secs) {          // a voice faded out and let go
+  const now = v.out.context.currentTime;
+  v.out.gain.cancelScheduledValues(now); v.out.gain.setTargetAtTime(0, now, secs / 4);
+  for (const [, s] of v.on) { try { s.src.stop(now + secs + 0.05); } catch (e) { /* already stopped */ } }
+  setTimeout(() => { try { v.pan.disconnect(); } catch (e) { /* gone with its page */ } }, (secs + 0.3) * 1000);
+}
+function engineHush() {
+  for (const [, v] of engineVoices) engineDrop(v, 0.12);
+  engineVoices.clear();
+}
+function engineEar() {                  // where the listening is done from, and which way is its right
+  const cam = view3d && window.Stage3D && Stage3D.ear ? Stage3D.ear() : null;
+  if (cam && viewKind === "3d" && Stage3D.shot !== "pod" && Stage3D.shot !== "chase") return cam;
+  const p = posAt(focus, T);
+  if (!p) return cam;
+  return { x: p[0], y: CH.y ? CH.y[focus][Math.round(frameAt(T))] / 10 : 0, z: p[1], rx: cam ? cam.rx : 0, rz: cam ? cam.rz : 0 };
+}
+// A voice goes on sounding until it is told otherwise, and it is told every frame. A page that has stopped drawing
+// (its tab is behind another, the browser is busy) would leave every engine droning on one note: so they stop.
+let engineSeen = 0;
+setInterval(() => { if (engineVoices.size && performance.now() - engineSeen > 400) engineHush(); }, 250);
+function engineHearing() {              // what is carried from one frame to the next: where the listener was and how fast it is going, the microphone's gain, how each car heard is bent
+  return { was: null, vel: { x: 0, y: 0, z: 0, fresh: 0 }, mic: 1, on: new Map() };
+}
+// Who is heard at this moment of the race, and how: { cut, mic, voices: [{ i, d, level, side, tone, hz, bend, mix }] },
+// or null with nobody to listen. `moved` is the race time since the last asking, S what engineHearing() made. The
+// page plays what this says (engineStep); a film's sound is mixed from it, a frame at a time (engineFilm).
+function engineHear(moved, S, bank) {
+  const ear = engineEar(), was = S.was, vel = S.vel;
+  if (!ear) { S.was = null; S.on.clear(); return null; }
+  // the listener's own speed, for the bending. A camera that cuts to somewhere else has no speed for a frame: the
+  // bend each voice had is kept through the cut, and the speed is taken afresh from the two frames after it
+  const cut = !was || Math.hypot(ear.x - was.x, ear.y - was.y, ear.z - was.z) > 12 + 130 * moved;
+  if (cut) vel.fresh = 2;
+  else {
+    const k = vel.fresh ? 1 : Math.min(1, moved / 0.12);
+    vel.x += ((ear.x - was.x) / moved - vel.x) * k; vel.y += ((ear.y - was.y) / moved - vel.y) * k; vel.z += ((ear.z - was.z) / moved - vel.z) * k;
+    if (vel.fresh) vel.fresh--;
+  }
+  const f = frameAt(T), k = Math.min(N - 2, Math.floor(f)), a = f - k, heard = [];
+  for (const c of CARS) {
+    const i = c.i, x0 = CH.x[i][k], z0 = CH.z[i][k], x1 = CH.x[i][k + 1], z1 = CH.z[i][k + 1];
+    if (!active(i, T) || (!x0 && !z0) || Math.abs(x1 - x0) + Math.abs(z1 - z0) > 600) continue;      // (out of it, or being put back on the grid)
+    const dx = (x0 + (x1 - x0) * a) / 10 - ear.x, dy = (CH.y ? CH.y[i][k] / 10 : ear.y) - ear.y, dz = (z0 + (z1 - z0) * a) / 10 - ear.z, d = Math.hypot(dx, dy, dz);
+    if (d < ENGINE.far) heard.push({ i, d, dx, dy, dz, vx: (x1 - x0) / 10 / DT, vz: (z1 - z0) / 10 / DT, rank: d * (S.on.has(i) ? 0.8 : 1) });
+  }
+  heard.sort((p, q) => p.rank - q.rank);                         // the nearest few (one that is already heard keeps its place a little longer)
+  heard.length = Math.min(heard.length, ENGINE.voices);
+  for (const h of heard) h.level = 1 / (1 + Math.pow(h.d / ENGINE.near, 1.5)) * clamp((ENGINE.far - h.d) / (ENGINE.far * 0.2), 0, 1);
+  // the microphone's gain: up when the loudest thing in it is faint, quickly down again when something comes close
+  const mic = clamp(0.9 / Math.max(1e-3, ...heard.map(h => h.level)), 1, ENGINE.mic);
+  S.mic = cut ? mic : S.mic + (mic - S.mic) * Math.min(1, moved / (mic < S.mic ? 0.25 : 1.2));
+  const voices = [], on = new Map();
+  for (const h of heard) {
+    const i = h.i;
+    // its revs: between two samples of them, except across a gear change, which is a step and not a slide
+    const u = CH.gear[i][k] !== CH.gear[i][k + 1] ? (a < 0.5 ? 0 : 1) : a;
+    const rpm = (CH.rpm[i][k] * (1 - u) + CH.rpm[i][k + 1] * u) * 64, foot = (CH.throttle[i][k] * (1 - a) + CH.throttle[i][k + 1] * a) / 100;
+    const hz = bank.top * Math.max(rpm, 1500) / ENGINE.shift;
+    let bend = S.on.get(i) ?? 1;
+    if (!cut && !vel.fresh) {           // bent by its speed away from the listener, and the listener's toward it
+      const s = h.d > 0.5 ? 1 / h.d : 0, away = (h.vx * h.dx + h.vz * h.dz) * s, toward = (vel.x * h.dx + vel.y * h.dy + vel.z * h.dz) * s;
+      bend = clamp((ENGINE.sound + toward) / (ENGINE.sound + away), 0.6, 1.6);
+    }
+    // pulling or not, by the driver's foot; and of each row, the two sounds either side of the revs
+    const pull = bank.coast.length ? clamp((foot - 0.03) / 0.22, 0, 1) : 1, mix = [];
+    if (pull > 0.01) for (const [n, w] of engineMix(bank.power, hz)) mix.push(["p" + n, bank.power[n], w * Math.sqrt(pull) * (0.45 + 0.55 * foot)]);
+    if (pull < 0.99) for (const [n, w] of engineMix(bank.coast, hz)) mix.push(["c" + n, bank.coast[n], w * Math.sqrt(1 - pull) * 0.5]);
+    on.set(i, bend);
+    voices.push({ i, d: h.d, level: rpm < 1000 ? 0 : h.level, side: clamp((h.dx * ear.rx + h.dz * ear.rz) / Math.max(h.d, 6), -1, 1) * 0.85, tone: 18000 / (1 + h.d / 70), hz, bend, mix });
+  }
+  S.on = on; S.was = ear;
+  return { cut, mic: S.mic, voices };
+}
+function engineChain(ctx) {             // what every voice goes into: the microphone's gain -> one limiter (six cars off the line are loud) -> the level -> a ceiling
+  const mic = ctx.createGain(), limit = ctx.createDynamicsCompressor(), level = ctx.createGain(), half = ctx.createGain(), ceiling = ctx.createWaveShaper();
+  limit.threshold.value = -12; limit.knee.value = 8; limit.ratio.value = 6; limit.attack.value = 0.004; limit.release.value = 0.18;
+  level.gain.value = 0; half.gain.value = 0.5;
+  // the ceiling: untouched up to six tenths of full, rounded off above that, and never over (the limiter lets a
+  // sharp moment through, and the slider can ask for more than there is room for). Its curve covers -2 to 2.
+  const curve = new Float32Array(2049);
+  for (let n = 0; n < curve.length; n++) { const x = (n / 1024 - 1) * 2, m = Math.abs(x); curve[n] = m < 0.6 ? x : Math.sign(x) * (0.6 + 0.38 * Math.tanh((m - 0.6) / 0.38)); }
+  ceiling.curve = curve; ceiling.oversample = "2x";
+  mic.connect(limit); limit.connect(level); level.connect(half); half.connect(ceiling); ceiling.connect(ctx.destination);
+  return { in: mic, limit, level, out: ceiling, context: ctx };
+}
+function engineStep(dtSec) {            // every frame
+  const bank = engineBank, moved = engineWas !== null ? T - engineWas : 0, began = performance.now();
+  engineSeen = began;
+  // (the clock has to be moving at the race's own speed: that is not so when paused, held on a still, scrubbed, or at 2x)
+  const going = bank && playing && speed === 1 && !exporting && dtSec > 0 && moved > dtSec * 0.4 && moved < dtSec * 2.5 + 0.02;
+  const ctx = going ? audioContext() : null;
+  engineWas = T;
+  if (!ctx || ctx.state !== "running") {                         // (the browser lets a page make sound once it has been clicked on)
+    if (engineVoices.size) engineHush();
+    engineHeard.was = null; engineHeard.on.clear();
+    return;
+  }
+  if (!engineBus || engineBus.context !== ctx) engineBus = engineChain(ctx);
+  const now = ctx.currentTime, slider = Math.pow(+$("engineVol").value / 60, 1.5);
+  const talking = voiceOn && (liveOn.size > 0 || activeSources.length > 0 || !!(currentClip && !currentClip.paused) || !!(window.speechSynthesis && speechSynthesis.speaking));
+  const heard = engineHear(moved, engineHeard, bank);
+  if (!heard) return;
+  const cut = heard.cut;
+  engineBus.in.gain.setTargetAtTime(heard.mic, now, cut ? 0.02 : 0.05);
+  engineBus.level.gain.setTargetAtTime(ENGINE.level * slider * (talking ? ENGINE.duck : 1), now, talking ? 0.08 : 0.3);
+  for (const [i, v] of engineVoices) if (!heard.voices.some(h => h.i === i)) { engineDrop(v, 0.15); engineVoices.delete(i); }
+  for (const h of heard.voices) {
+    let v = engineVoices.get(h.i);
+    const fresh = !v;
+    if (fresh) {                        // its sounds -> duller with distance -> its loudness -> its side -> the limiter
+      v = { filter: ctx.createBiquadFilter(), out: ctx.createGain(), pan: ctx.createStereoPanner(), on: new Map(), bend: 1, hz: 0, level: 0 };
+      v.filter.type = "lowpass"; v.filter.Q.value = 0.5; v.out.gain.value = 0;
+      v.filter.connect(v.out); v.out.connect(v.pan); v.pan.connect(engineBus.in);
+      engineVoices.set(h.i, v);
+    }
+    if (fresh) { v.pan.pan.value = h.side; v.filter.frequency.value = h.tone; }
+    else { v.pan.pan.setTargetAtTime(h.side, now, cut ? 0.015 : 0.06); v.filter.frequency.setTargetAtTime(h.tone, now, cut ? 0.015 : 0.1); }
+    v.out.gain.setTargetAtTime(h.level, now, cut ? 0.015 : 0.06);
+    v.hz = h.hz; v.level = h.level; v.d = h.d; v.bend = h.bend;
+    for (const [key, s] of v.on) if (!h.mix.some(q => q[0] === key)) {
+      s.gain.gain.setTargetAtTime(0, now, 0.02);
+      try { s.src.stop(now + 0.15); } catch (e) { /* already stopped */ }
+      v.on.delete(key);
+    }
+    for (const [key, loop, gain] of h.mix) {
+      const rate = clamp(h.hz / loop.hz, 0.4, 1.5) * h.bend;
+      let s = v.on.get(key);
+      if (!s) {                         // a sound joins in from wherever in itself: no two cars are then the same recording in step
+        s = { src: ctx.createBufferSource(), gain: ctx.createGain() };
+        s.src.buffer = loop.buffer; s.src.loop = true; s.src.playbackRate.value = rate; s.gain.gain.value = 0;
+        s.src.connect(s.gain); s.gain.connect(v.filter);
+        s.src.start(0, Math.random() * loop.buffer.duration);
+        v.on.set(key, s);
+      } else s.src.playbackRate.setTargetAtTime(rate, now, 0.025);
+      s.gain.gain.setTargetAtTime(gain, now, 0.03);
+    }
+  }
+  engineCost += (performance.now() - began - engineCost) * 0.05;
+}
+/* The engines of a film. As each frame is filmed, engineHear's answer for it is kept (exportVideo); this turns the
+   frames n0 to n1 of that record into sound, sample by sample, as the page would have played it: each car's loops
+   tuned and faded between one frame's answer and the next, the same filter for distance, its loudness, its side,
+   the microphone's gain. What comes back is what goes into the limiter: { left, right }, or null for silence.
+   Coming in after a title card it rises over a quarter of a second. Where a loop is joined is by a number drawn
+   from the frame it joins at, so the same film is the same sound every time it is made. A long film's sound is
+   made a stretch at a time: `state` ({} to begin with) carries where every loop has got to from one stretch to the
+   next, so that nothing is heard at the joins. */
+function engineFilm(film, n0, n1, rate, state = {}) {
+  const spf = Math.round(rate / film.fps), len = (n1 - n0) * spf, left = new Float32Array(len), right = new Float32Array(len), one = new Float32Array(spf);
+  const ratio = film.bank.rate / rate, places = state.places || (state.places = new Map()), filters = state.filters || (state.filters = new Map()), rise = 0.25 * film.fps;
+  let any = false, open = state.open || 0, seed = 0;
+  for (let n = n0; n < n1; n++) {
+    const A = film.track[n] || null, B = film.track[n + 1] || null, at = (n - n0) * spf;
+    if (!A && !B) { open = 0; places.clear(); filters.clear(); continue; }
+    const m0 = (A || B).mic * Math.min(1, open / rise), m1 = (B || A).mic * Math.min(1, (open + 1) / rise);
+    open++;
+    const cars = new Map();
+    if (A) for (const v of A.voices) cars.set(v.i, [v, null]);
+    if (B) for (const v of B.voices) { const had = cars.get(v.i); if (had) had[1] = v; else cars.set(v.i, [null, v]); }
+    for (const [i, [a, b]] of cars) {
+      one.fill(0);
+      const sounds = new Map();         // each loop of this car's in this frame or the next: [the loop, how much of it at each end, how fast at each end]
+      if (a) for (const [key, loop, gain] of a.mix) { const r = clamp(a.hz / loop.hz, 0.4, 1.5) * a.bend; sounds.set(key, [loop, gain, 0, r, r]); }
+      if (b) for (const [key, loop, gain] of b.mix) { const r = clamp(b.hz / loop.hz, 0.4, 1.5) * b.bend, had = sounds.get(key); if (had) { had[2] = gain; had[4] = r; } else sounds.set(key, [loop, 0, gain, r, r]); }
+      for (const [key, [loop, g0, g1, r0, r1]] of sounds) {
+        const data = loop.buffer.getChannelData(0), size = data.length, id = i + key;
+        let p = places.get(id);
+        if (p === undefined) { seed = (Math.imul(n * 7919 + i * 104729 + key.charCodeAt(0) * 31 + (+key.slice(1)), 2654435761) >>> 0) / 4294967296; p = seed * size; }
+        for (let s = 0; s < spf; s++) {
+          const u = s / spf, k = p | 0, x = data[k];
+          one[s] += (x + (data[k + 1 < size ? k + 1 : 0] - x) * (p - k)) * (g0 + (g1 - g0) * u);
+          p += (r0 + (r1 - r0) * u) * ratio;
+          if (p >= size) p -= size;
+        }
+        places.set(id, p);
+      }
+      // duller with distance (the filter the page's own voices have), as loud as it is near, from its side
+      const va = a || b, vb = b || a, fc = Math.min(0.45 * rate, (va.tone + vb.tone) / 2), w = 2 * Math.PI * fc / rate, al = Math.sin(w) / (2 * 1.0593), cs = Math.cos(w), norm = 1 + al;
+      const b0 = (1 - cs) / 2 / norm, b1 = (1 - cs) / norm, a1 = -2 * cs / norm, a2 = (1 - al) / norm, z = filters.get(i) || [0, 0, 0, 0];
+      const l0 = (a ? a.level : 0) * m0, l1 = (b ? b.level : 0) * m1, p0 = (va.side + 1) * Math.PI / 4, p1 = (vb.side + 1) * Math.PI / 4;
+      const gl0 = Math.cos(p0) * l0, gl1 = Math.cos(p1) * l1, gr0 = Math.sin(p0) * l0, gr1 = Math.sin(p1) * l1;
+      let x1 = z[0], x2 = z[1], y1 = z[2], y2 = z[3];
+      for (let s = 0; s < spf; s++) {
+        const u = s / spf, x = one[s], y = b0 * x + b1 * x1 + b0 * x2 - a1 * y1 - a2 * y2;
+        x2 = x1; x1 = x; y2 = y1; y1 = y;
+        left[at + s] += y * (gl0 + (gl1 - gl0) * u); right[at + s] += y * (gr0 + (gr1 - gr0) * u);
+      }
+      z[0] = x1; z[1] = x2; z[2] = y1; z[3] = y2;
+      filters.set(i, z);
+      any = true;
+    }
+    if (n % 60 === 0) for (const id of [...places.keys()]) if (!cars.has(parseInt(id, 10))) places.delete(id);      // (a car no longer heard: its places are forgotten)
+  }
+  state.open = open;
+  return any ? { left, right } : null;
+}
+async function engineMenu() {           // the menu: Off, and whatever engines Pit Wall has on this PC
+  if (!enginesAt) return;
+  let list = null;
+  try { const r = await fetch(enginesAt + "index.json"); if (r.ok) list = await r.json(); } catch (e) { /* none to be had */ }
+  if (!list || !Object.keys(list).length) return;
+  const pick = $("enginePick"), vol = $("engineVol"), saved = k => { try { return localStorage.getItem("pitwall." + k); } catch (e) { return null; } };
+  pick.innerHTML = `<option value="off">Off</option>` + Object.entries(list).map(([k, v]) => `<option value="${esc(k)}">${esc(v.label)}</option>`).join("");
+  if (saved("engineVol") !== null && isFinite(+saved("engineVol"))) vol.value = saved("engineVol");
+  const choose = async name => {
+    name = list[name] ? name : "off";
+    pick.value = name; vol.hidden = name === "off";
+    engineBank = null;
+    if (name === "off") return;
+    try { const bank = await engineLoad(name); if (pick.value === name) engineBank = bank; }
+    catch (e) { engineBanks.delete(name); pick.value = "off"; vol.hidden = true; }
+  };
+  pick.onchange = e => { choose(e.target.value); try { localStorage.setItem("pitwall.engine", e.target.value); } catch (err) { /* storage off */ } e.target.blur(); };
+  vol.onchange = () => { try { localStorage.setItem("pitwall.engineVol", vol.value); } catch (err) { /* storage off */ } };
+  $("soundBar").hidden = false;
+  choose(ASK.get("engine") || saved("engine") || "off");
+}
+engineMenu();
 // ------------------------------------------------------------------ export: the reel as a video file
-/* Makes the highlight reel into an MP4, off the clock: every frame is drawn in turn (the 3D picture, then the
-   graphics over it), the browser encodes them as H.264, and the commentary is mixed exactly as planLines lays it
-   out, so sound and picture cannot drift. Pit Wall, which must be the one serving this page, writes the pieces
-   down and has ffmpeg join them: the file lands in the session's folder. Nothing here waits on a timer, so it
-   runs as fast as the graphics card draws (and still runs with the tab in the background). */
+/* Makes the highlight reel (or the whole race) into an MP4, off the clock: every frame is drawn in turn (the 3D
+   picture, then the graphics over it) and sent as it is, and the commentary is mixed exactly as planLines lays it
+   out, so sound and picture cannot drift. Pit Wall, which must be the one serving this page, has ffmpeg encode
+   the frames as they come and put the sound with them: the file lands in the session's folder. Nothing here
+   waits on a timer, so it runs as fast as the graphics card draws and Pit Wall's encoder takes (and still runs
+   with the tab in the background). */
 const LEAD = 0.15;                    // the breath between a title card and the first word, as in live playback
 const breathe = (() => {              // let the page and the encoder catch up, without a timer (timers crawl in a background tab)
   const ch = new MessageChannel();
@@ -1864,6 +3178,167 @@ const breathe = (() => {              // let the page and the encoder catch up, 
   ch.port1.onmessage = () => { const w = wake; wake = null; if (w) w(); };
   return () => new Promise(r => { wake = r; ch.port2.postMessage(0); });
 })();
+/* A film's frames go to Pit Wall as they are, to be encoded there (why the browser's own encoders were given up
+   is told at Exporter in pitwall.py). "As they are" means the form every encoder takes a picture in: the
+   brightness of each pixel, then the two colour values of each two-by-two of them (NV12; BT.709, 16 to 235): three
+   bytes for two pixels where the canvas holds eight. The graphics card does the sum. The frame goes to it as a
+   texture, a shader writes those bytes four to a pixel into a strip a quarter as wide and half as tall again,
+   bottom row first so that the strip reads back top row first, and the strip is read back in one go.
+   None of this is done by the page itself. Reading a frame back means waiting for the graphics card to finish
+   it, and then three megabytes a frame have to be copied and sent: done by the page, that was a third of an
+   export's time (62 frames a second at 1080p, against 100 and more this way; 12 Oct 2026). So the page hands each frame over
+   as the picture it was drawn on, which never leaves the graphics card, and goes straight on to draw the next;
+   a worker (filmWorker, whose text filmHand makes into one) does the waiting, the copying and the sending. */
+function filmPress(W, H) {
+  const gl = new OffscreenCanvas(1, 1).getContext("webgl2", { antialias: false, depth: false, stencil: false, premultipliedAlpha: false, powerPreference: "high-performance" });
+  if (!gl) throw new Error("The browser would not give the export a second WebGL picture to work in. Close other tabs that draw in 3D and try again.");
+  const shader = (type, text) => {
+    const sh = gl.createShader(type);
+    gl.shaderSource(sh, text); gl.compileShader(sh);
+    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error("The export's shader would not compile: " + gl.getShaderInfoLog(sh));
+    return sh;
+  };
+  const prog = gl.createProgram();
+  gl.attachShader(prog, shader(gl.VERTEX_SHADER, `#version 300 es
+    void main() { gl_Position = vec4(gl_VertexID == 1 ? 3.0 : -1.0, gl_VertexID == 2 ? 3.0 : -1.0, 0.0, 1.0); }`));
+  gl.attachShader(prog, shader(gl.FRAGMENT_SHADER, `#version 300 es
+    precision highp float; precision highp int;
+    uniform sampler2D src; uniform int H;
+    out vec4 o;
+    const vec3 K = vec3(0.2126, 0.7152, 0.0722);
+    float luma(int x, int y) { return (16.0 + 219.0 * dot(texelFetch(src, ivec2(x, y), 0).rgb, K)) / 255.0; }
+    float chroma(int x, int y) {      // x: which byte of the row (blue-difference, red-difference, and so on); y: which row of the half-height plane
+      ivec2 q = ivec2(x - (x & 1), y * 2);
+      vec3 c = (texelFetch(src, q, 0).rgb + texelFetch(src, q + ivec2(1, 0), 0).rgb + texelFetch(src, q + ivec2(0, 1), 0).rgb + texelFetch(src, q + ivec2(1, 1), 0).rgb) * 0.25;
+      float l = dot(c, K);
+      return (128.0 + 224.0 * ((x & 1) == 0 ? (c.b - l) / 1.8556 : (c.r - l) / 1.5748)) / 255.0;
+    }
+    void main() {
+      ivec2 p = ivec2(gl_FragCoord.xy);
+      int x = p.x * 4, y = p.y - H;
+      o = y < 0 ? vec4(luma(x, p.y), luma(x + 1, p.y), luma(x + 2, p.y), luma(x + 3, p.y)) : vec4(chroma(x, y), chroma(x + 1, y), chroma(x + 2, y), chroma(x + 3, y));
+    }`));
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error("The export's shader would not link: " + gl.getProgramInfoLog(prog));
+  gl.useProgram(prog);
+  const strip = gl.createTexture(), frame = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, strip);
+  gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, W / 4, H * 3 / 2);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, gl.createFramebuffer());
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, strip, 0);
+  if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw new Error("The graphics card would not make the export's strip.");
+  gl.bindTexture(gl.TEXTURE_2D, frame);
+  gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, W, H);
+  for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
+  gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  gl.uniform1i(gl.getUniformLocation(prog, "src"), 0); gl.uniform1i(gl.getUniformLocation(prog, "H"), H);
+  gl.viewport(0, 0, W / 4, H * 3 / 2); gl.disable(gl.BLEND); gl.disable(gl.DITHER);
+  return {
+    bytes: W * H * 3 / 2,
+    take(picture, into, at) {         // a frame (an ImageBitmap, or a canvas): its bytes are written into `into` from `at` on
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, picture);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      gl.readPixels(0, 0, W / 4, H * 3 / 2, gl.RGBA, gl.UNSIGNED_BYTE, into, at);
+    },
+  };
+}
+function filmWorker() {               // (the text of this function IS the worker: of the page it has filmPress, which goes with it, and nothing else)
+  let press = null, piece = null, per = 1, held = 0, pieces = 0, where = "", sending = Promise.resolve(), failed = null, queue = Promise.resolve(), ballast = null;
+  const spent = { take: 0, send: 0 }, clock = () => performance.now(), pause = ms => new Promise(r => setTimeout(r, ms));
+  const post = async (blob, n) => {     // (as askPitwall does it: a request that does not get through is tried again; a piece that arrives twice is written once)
+    let last = null;
+    for (const ms of [0, 300, 1200, 3500]) {
+      if (ms) await pause(ms);
+      let r = null;
+      try { r = await fetch(`${where}&n=${n}`, { method: "POST", headers: { "X-Pitwall": "1" }, body: blob }); } catch (e) { last = e; continue; }
+      if (!r.ok) throw new Error(r.status === 404 ? "Pit Wall needs restarting before it can export (close its window, run run.bat again)." : `Pit Wall answered ${r.status} to a piece of the picture.`);
+      const got = await r.json();
+      if (!got.ok) throw new Error(got.error);
+      return;
+    }
+    throw new Error(`The browser could not get through to Pit Wall with a piece of the picture (${(blob.size / 1e6).toFixed(1)} MB): it tried four times and was told "${(last && last.message) || last}". `
+      + "If Pit Wall's window is still open, this is the browser's doing (an extension that blocks requests, or a page left open through a restart): reload the page and try again.");
+  };
+  // A piece of the picture goes when it is full, and one is on its way at a time: Pit Wall takes a piece only as fast
+  // as its encoder does, so the filming keeps to the encoder's pace, and no more than two pieces are ever held here.
+  // A piece is sent as a Blob, which is a copy the browser keeps until this worker's garbage collector has let go of
+  // it, and the collector runs by how much memory script has asked for. One buffer filled over and over asks for
+  // none, so nothing was ever let go: seven gigabytes sent left the browser holding two and writing six to the disk.
+  // So each piece also asks for a buffer of its own size, which is never written to and is dropped at the next:
+  // with that the browser never held more than 0.7 GB, and nothing went to the disk (both measured 12 Oct 2026;
+  // and see filmDoor, without which none of this helps).
+  const send = async () => {
+    if (!held) return;
+    const blob = new Blob([piece.subarray(0, held * press.bytes)]), n = pieces++;
+    ballast = new ArrayBuffer(blob.size);
+    held = 0;
+    await sending;
+    sending = post(blob, n).catch(e => { failed = failed || e; });
+  };
+  const on = {
+    start(m) {                        // (a piece is about 24 MB of whole frames: seven of them at 1080p, two at 4K)
+      press = filmPress(m.W, m.H); where = m.where;
+      per = Math.max(1, Math.round(24e6 / press.bytes)); piece = new Uint8Array(per * press.bytes);
+    },
+    async frame(m) {
+      let at = clock();
+      try { if (!failed) press.take(m.picture, piece, held++ * press.bytes); } finally { m.picture.close(); }
+      spent.take += clock() - at; at = clock();
+      if (held === per) await send();
+      spent.send += clock() - at;
+      postMessage(failed ? { error: failed.message } : { took: 1 });
+    },
+    async end() { await send(); await sending; ballast = null; postMessage(failed ? { error: failed.message } : { done: true, pieces, spent }); },
+  };
+  onmessage = e => { queue = queue.then(() => on[e.data.op](e.data)).catch(err => { failed = failed || err; postMessage({ error: String((err && err.message) || err) }); }); };
+}
+/* Where an export's requests are made from: a frame of Pit Wall's own that nothing is in charge of.
+   This page is kept in the browser by a service worker (sw.js, so that a pinned tab comes back when Pit Wall is
+   off), and a service worker with a fetch listener is in charge of every request its pages and their workers
+   make, whether or not it does anything with them. For a request with a body that is not free: the browser held
+   every piece an export had sent, long after it had arrived, and no collecting of garbage by the sender let them
+   go. Seven gigabytes sent left six waiting on the disk; telling the service worker to route /api/ straight to
+   the network changed nothing; with no service worker, or one that has no fetch listener, nothing was held
+   (measured 12 Oct 2026). So Pit Wall serves a blank page at /export/frame under a second service worker of its
+   own, /export/sw.js, which has no fetch listener and is there only so that the first has no say over that page.
+   The export's worker is made by that frame, and the export's other requests go through it. Where a browser
+   will not have it, the page itself is used, as before: the export works, and the browser holds on to more. */
+let filmWay = null;
+async function filmDoor() {
+  if (filmWay) return filmWay;
+  filmWay = window;
+  try {
+    await navigator.serviceWorker.register("/export/sw.js", { scope: "/export/" });
+    const frame = Object.assign(document.createElement("iframe"), { hidden: true, src: "/export/frame" });
+    await new Promise((ok, no) => { frame.onload = ok; frame.onerror = no; setTimeout(no, 8000); document.body.append(frame); });
+    const boss = frame.contentWindow.navigator.serviceWorker.controller;
+    if (!boss || boss.scriptURL.endsWith("/export/sw.js")) filmWay = frame.contentWindow; else frame.remove();
+  } catch (e) { /* a browser with no service workers, or a Pit Wall from before this: the page itself */ }
+  return filmWay;
+}
+function filmHand(W, H, where, door) {      // the worker, and the page's end of it
+  const text = URL.createObjectURL(new Blob([`${filmPress}\n(${filmWorker})();`], { type: "text/javascript" })), worker = new door.Worker(text);
+  let out = 0, back = 0, error = null, done = null, wake = null;
+  const stir = () => { const w = wake; wake = null; if (w) w(); }, moved = () => new Promise(r => { wake = r; });
+  worker.onmessage = e => { const m = e.data; if (m.took) back += m.took; if (m.error) error = error || new Error(m.error); if (m.done) done = m; stir(); };
+  worker.onerror = e => { error = error || new Error("The part of the export that sends the picture stopped: " + (e.message || "it gave no reason")); stir(); };
+  worker.postMessage({ op: "start", W, H, where });
+  return {
+    get error() { return error; },
+    async frame(picture) {            // (no more than six are on their way at once: each is a whole picture held on the graphics card)
+      worker.postMessage({ op: "frame", picture }, [picture]);
+      out++;
+      while (out - back > 6 && !error) await moved();
+    },
+    async end() {                     // every frame given has been sent, and Pit Wall has them
+      worker.postMessage({ op: "end" });
+      while (!done && !error) await moved();
+      if (error) throw error;
+      return done;
+    },
+    close() { worker.terminate(); URL.revokeObjectURL(text); },
+  };
+}
 async function showPlan(segs, tail) {         // the whole show on one clock: each highlight's card, its lines, how long it runs
   const parts = [];
   let at = 0, silent = 0;
@@ -1881,29 +3356,218 @@ async function showPlan(segs, tail) {         // the whole show on one clock: ea
   }
   return { parts, total: at + tail, silent };
 }
-async function mixShow(show) {                // every line where the plan puts it, through the same limiter as live playback: a WAV
-  const rate = 48000, off = new OfflineAudioContext(1, Math.ceil(show.total * rate), rate);
-  const bus = off.createDynamicsCompressor();
+/* The whole reel as the broadcast has it (Eric, 11 Oct 2026, of the reel showing the start twice, once for his jump
+   start and once for the crash at turn one: "like the real races"). The hosts' lines are where watching the race
+   puts them (liveBuild), and the quiet is taken out: each stretch of the race's clock that they talk through, or
+   show something again in, is a part of the film with a card to open it. A replay the broadcast kept for a quiet
+   moment follows straight on from the part before it: the wipe is the join (the race's clock skips on under it, at
+   the half-way of the wipe, when nothing of the race can be seen). Gives what showPlan gives; each part has `live`,
+   its `spans` of the race's clock ({ a, b, off: seconds into the part's sound, join: the window that follows }) and
+   `sweeps`, when its wipes begin. */
+function bcastRuns() {                  // the reel's lines where the broadcast has them, in stretches with no long quiet in them: [{ from, to, items, opens: the window it begins with }]
+  liveBuild();
+  const runs = [];
+  for (const q of liveList) {
+    if (q.fill) continue;               // (what the hosts have for a quiet moment is the broadcast's, not the reel's)
+    const from = q.win ? Math.min(q.start, q.win.from) : q.start, to = Math.max(q.end, q.win ? q.win.to : -1e9, q.late ? -1e9 : q.seg.to);
+    let run = runs[runs.length - 1];
+    if (!run || from - run.to > BCAST.apart) runs.push(run = { from: q.win ? from : q.late ? from - 0.4 : Math.min(from - 0.4, q.seg.from), to, items: [], opens: q.win && q.win.from <= from ? q.win : null });
+    run.items.push(q); run.to = Math.max(run.to, to);
+  }
+  return runs;
+}
+function bcastCard(seg) {               // the card a stretch opens with: its first thing's
+  const kind = KIND[seg.kind], label = seg.card || (kind ? `${seg.lap ? `LAP ${seg.lap} · ` : ""}${kind[0].toUpperCase()}` : "");
+  return seg.id === "intro" ? { big: seg.card || D.title, small: `${D.session.track} · ${CARS.length} cars`, secs: 2.2 }
+    : label ? { big: label, small: seg.title === label ? "" : seg.title, secs: 1.3 } : { secs: 0 };
+}
+async function showBroadcast(tail) {
+  const half = BCAST.wipe / 2, runs = bcastRuns(), parts = [];
+  let at = 0;
+  for (const run of runs) {
+    let part = parts[parts.length - 1];
+    if (run.opens && part) {            // it follows straight on: the first half of its wipe is over the end of what came before
+      const before = part.spans[part.spans.length - 1];
+      before.b += half; before.join = run.opens;
+      part.sweeps.push(before.off + before.b - before.a - half);
+      part.spans.push({ a: run.opens.on, b: run.to + 0.3, off: before.off + before.b - before.a });
+    } else {
+      const seg = run.items[0].seg;
+      parts.push(part = { seg, kind: KIND[seg.kind], card: bcastCard(seg), live: true, plan: [], sweeps: [], spans: [{ a: run.from, b: run.to + 0.3, off: 0 }] });
+    }
+    const span = part.spans[part.spans.length - 1];
+    for (const q of run.items) part.plan.push({ L: q.L, seg: q.seg, clip: q.clip, start: span.off + q.start - span.a, end: span.off + q.end - span.a });
+    part.ends = null;
+    for (const w of new Set(run.items.map(q => q.win).filter(Boolean))) {
+      if (w !== run.opens || span.a <= w.from) part.sweeps.push(span.off + w.from - span.a);
+      part.sweeps.push(span.off + w.off - half - span.a);
+      if (!part.ends || w.to > part.ends.to) part.ends = w;
+    }
+  }
+  /* From one part to the next the same wipe (Eric, of the film: "the camera cuts need to have the transition
+     animation regardless"): it comes over the end of a part, the film goes to the next under it, and it clears off
+     the next part's card. A part that ends in something shown again ends under that window's own wipe, half way. */
+  parts.forEach((part, k) => {
+    const next = parts[k + 1], last = part.spans[part.spans.length - 1];
+    if (!next) return;
+    if (part.ends && last.b - part.ends.to < 1.5) last.b = part.ends.off;
+    else { last.b += 0.5; part.sweeps.push(last.off + last.b - last.a - half); part.out = true; }
+    next.in = true; next.sweeps.push(-(half + next.card.secs + LEAD));      // (the rest of that wipe's sound is the next part's)
+  });
+  for (const part of parts) {
+    const last = part.spans[part.spans.length - 1];
+    part.talk = last.off + last.b - last.a; part.len = part.card.secs + LEAD + part.talk; part.at = at; at += part.len;
+    for (const item of part.plan) item.buf = await bufferFor(item.clip).catch(() => null);
+  }
+  return { parts, total: at + tail, silent: parts.reduce((n, part) => n + part.plan.filter(item => !item.buf).length, 0), live: true };
+}
+/* The whole race as the broadcast has it (Eric, 11 Oct 2026: "can you add whole full length race to the export
+   options"): one part, from where the hosts begin (the formation lap) to the last thing they say after the flag,
+   with everything the broadcast has in it: what is shown again, and what the hosts have for the quiet, screens and
+   sponsors and all. With no voices for the hosts it is the race, from just before the lights to the end of the
+   recording. */
+async function showRace(tail) {
+  liveBuild();
+  const half = BCAST.wipe / 2, first = liveList[0], until = liveList.reduce((m, q) => Math.max(m, q.end, q.win ? q.win.to : -1e9), -1e9);
+  const a = Math.max(T0, first ? Math.min(first.start - 0.4, first.seg.from) : D.session.race ? -12 : T0), b = first ? Math.min(TEND, until + 0.6) : TEND;
+  const seg = first ? first.seg : { id: "race", kind: "race", focus: D.player, lower: null, from: a, to: b, lines: [] };
+  const part = { seg, kind: KIND[seg.kind], card: { big: (first && seg.card) || D.title, small: `${D.session.track} · ${CARS.length} cars`, secs: 2.2 }, live: true, whole: true,
+                 plan: [], sweeps: [], spans: [{ a, b, off: 0 }], at: 0, talk: b - a };
+  for (const q of liveList) part.plan.push({ L: q.L, seg: q.seg, clip: q.clip, start: q.start - a, end: q.end - a });
+  for (const w of liveWins) {             // (a screen of the race comes up without a wipe: a sponsor's card and a replay have one each way)
+    if (w.kind === "screen" && !w.card) continue;
+    part.sweeps.push(w.from - a, w.off - half - a);
+  }
+  part.len = part.card.secs + LEAD + part.talk;
+  for (const item of part.plan) item.buf = await bufferFor(item.clip).catch(() => null);
+  return { parts: [part], total: part.len + tail, silent: part.plan.filter(item => !item.buf).length, live: true };
+}
+/* A film's sound (Eric, 11 Oct 2026, of the engines: "can we get those sounds in too, make sure its mixed so its not
+   overpowering the commentary"). In stereo: the hosts through the limiter live playback has; the wipes' own sound;
+   and, when the film has engines, those of its frames (engineFilm) through the same limiter and ceiling as the
+   page's own (engineChain), at ENGINE.film's levels: well under the hosts from a moment before a host speaks until
+   a moment after, and up, to a little under the page's own level, only in a real pause: lines less than
+   ENGINE.film.pause apart are one stretch of talk, and a first line that comes that soon after the picture starts
+   is talk from the start (a swell of engine in every breath the hosts take is the mix pumping).
+   Measured on the league race's reel with the V8 (the hosts' speech is at -20 dB): while a host speaks the engines
+   are 16 dB under the speech at the middle of their range (14 to 15 in the highlights with racing in them, 17 to 20
+   on the grid, in the pits and after the flag), a tenth of the time less than 14 under, and at the very loudest 12;
+   the other three engines come out within a decibel of it; the whole never reaches full scale. The Engines slider
+   moves all of it, as it does on the page: all the way up is 7 dB more.
+   It is made a stretch at a time (filmStretches: about three quarters of a minute, cut on a frame and never while
+   a wipe is sounding), each as soon as its frames have been filmed, and sent to Pit Wall as it is made: a whole
+   race is three quarters of an hour, too much to make or hold in one piece. Each stretch is made with a second of
+   what came before it, which is thrown away: by then the limiters are as they would have been had the film been
+   made in one, so there is nothing to hear at a join. */
+const FILM = { rate: 48000, long: 45, roll: 1 };
+function filmStretches(show, fps) {           // where a film's sound is cut, in samples of the film: [{ part, s0, s1 }]
+  const rate = FILM.rate, spf = Math.round(rate / fps), out = [];
+  for (const part of show.parts) {
+    const begin = Math.round(part.at * rate), end = Math.round((part.at + part.len) * rate);
+    const sweeps = (part.sweeps || []).map(w => (part.at + part.card.secs + LEAD + w) * rate);
+    let s0 = begin;
+    while (s0 < end) {
+      let s1 = Math.ceil((s0 + FILM.long * rate) / spf) * spf;
+      for (let n = 0; n < 12 && sweeps.some(w => s1 > w - 0.1 * rate && s1 < w + (BCAST.wipe + 0.45) * rate); n++) s1 += spf * Math.ceil(fps / 2);
+      if (end - s1 < 8 * rate) s1 = end;        // (no scrap left at the end)
+      out.push({ part, s0, s1 }); s0 = s1;
+    }
+  }
+  return out;
+}
+function filmDuck(part) {                     // how loud a part's engines are let be, over its length: the hosts' talk in stretches, and what follows from it
+  if (part.duck) return part.duck;
+  const moving = part.at + part.card.secs + LEAD, talk = [];
+  for (const item of part.plan.slice().sort((x, y) => x.start - y.start)) {
+    const buf = item.buf || (part.bufs && part.bufs[item.n]);
+    if (!buf) continue;
+    const start = moving + item.start, last = talk[talk.length - 1];
+    if (last && start - last[1] < ENGINE.film.pause) last[1] = Math.max(last[1], start + buf.duration); else talk.push([start, start + buf.duration]);
+  }
+  const turns = [];                           // [when (seconds of the film), 1 for under the hosts or 0 for clear of them, how quickly]
+  for (const [a, b] of talk) turns.push([Math.max(part.at, a - 0.25), 1, 0.07], [b + 0.25, 0, 0.4]);
+  return (part.duck = { first: talk.length && talk[0][0] - moving < ENGINE.film.pause ? 1 : 0, turns });
+}
+async function filmStretch(show, film, st, only) {      // one stretch of it: 16-bit samples, the two sides in turn. `only` ("hosts" or "engines") leaves the other out, for measuring
+  const rate = FILM.rate, part = st.part, begin = Math.round(part.at * rate), w0 = Math.max(begin, st.s0 - FILM.roll * rate), len = st.s1 - w0, skip = st.s0 - w0;
+  const off = new OfflineAudioContext(2, len, rate), bus = off.createDynamicsCompressor(), moving = part.at + part.card.secs + LEAD, t0 = w0 / rate, t1 = st.s1 / rate;
   bus.threshold.value = -9; bus.knee.value = 6; bus.ratio.value = 8; bus.attack.value = 0.003; bus.release.value = 0.12;
   bus.connect(off.destination);
-  for (const part of show.parts) for (const item of part.plan) {
-    if (!part.bufs[item.n]) continue;
+  if (only !== "engines") for (const item of part.plan) {
+    const buf = item.buf || (part.bufs && part.bufs[item.n]), start = moving + item.start;
+    if (!buf || start + buf.duration <= t0 || start >= t1) continue;
     const src = off.createBufferSource(), level = off.createGain();
-    src.buffer = part.bufs[item.n]; level.gain.value = item.L.vol ?? 1;
+    src.buffer = buf; level.gain.value = item.L.vol ?? 1;
     src.connect(level); level.connect(bus);
-    src.start(part.at + part.card.secs + LEAD + item.start);
+    src.start(Math.max(0, start - t0), Math.max(0, t0 - start));
   }
-  const pcm = (await off.startRendering()).getChannelData(0), out = new DataView(new ArrayBuffer(44 + pcm.length * 2));
-  const tag = (at, str) => { for (let i = 0; i < 4; i++) out.setUint8(at + i, str.charCodeAt(i)); };
-  tag(0, "RIFF"); out.setUint32(4, 36 + pcm.length * 2, true); tag(8, "WAVE"); tag(12, "fmt "); out.setUint32(16, 16, true);
-  out.setUint16(20, 1, true); out.setUint16(22, 1, true); out.setUint32(24, rate, true); out.setUint32(28, rate * 2, true);
-  out.setUint16(32, 2, true); out.setUint16(34, 16, true); tag(36, "data"); out.setUint32(40, pcm.length * 2, true);
-  for (let i = 0; i < pcm.length; i++) out.setInt16(44 + i * 2, Math.round(clamp(pcm[i], -1, 1) * 32767), true);
-  return new Blob([out.buffer], { type: "audio/wav" });
+  if (!only) for (const when of part.sweeps || []) {
+    const start = moving + when;
+    if (start + BCAST.wipe + 0.25 > t0 && start < t1) bcastWhoosh(off, Math.max(0, start - t0), off.destination, Math.max(0, t0 - start));
+  }
+  if (film && only !== "hosts") {
+    const spf = Math.round(rate / film.fps), n0 = Math.ceil(st.s0 / spf), n1 = Math.ceil(st.s1 / spf), E = film.sound || (film.sound = {});
+    if (E.part !== part) { E.part = part; E.state = {}; E.tail = null; }        // (a new part begins from nothing)
+    const made = n1 > n0 ? engineFilm(film, n0, n1, rate, E.state) : null;
+    const left = new Float32Array(len), right = new Float32Array(len);
+    if (E.tail && E.tail.end === st.s0 && skip) {                              // the second before this stretch, as it was made
+      const keep = Math.min(skip, E.tail.left.length);
+      left.set(E.tail.left.subarray(E.tail.left.length - keep), skip - keep); right.set(E.tail.right.subarray(E.tail.right.length - keep), skip - keep);
+    }
+    if (made) { const at = n0 * spf - w0, most = Math.min(made.left.length, len - at); left.set(made.left.subarray(0, most), at); right.set(made.right.subarray(0, most), at); }
+    const roll = Math.min(len, FILM.roll * rate);
+    E.tail = { left: left.slice(len - roll), right: right.slice(len - roll), end: st.s1 };
+    const chain = engineChain(off), buffer = off.createBuffer(2, len, rate), src = off.createBufferSource(), duck = filmDuck(part);
+    buffer.copyToChannel(left, 0); buffer.copyToChannel(right, 1);
+    src.buffer = buffer; src.connect(chain.in);
+    // the level: where the talk before this stretch has left it, then on from there
+    const levels = [ENGINE.level * film.slider * ENGINE.film.clear, ENGINE.level * film.slider * ENGINE.film.under];
+    let value = levels[duck.first], aim = duck.first, quick = 0.07, was = part.at;
+    for (const [when, to, tau] of duck.turns) {
+      if (when > t0) break;
+      value = levels[aim] + (value - levels[aim]) * Math.exp(-(when - was) / quick); aim = to; quick = tau; was = when;
+    }
+    value = levels[aim] + (value - levels[aim]) * Math.exp(-(t0 - was) / quick);
+    chain.level.gain.setValueAtTime(value, 0); chain.level.gain.setTargetAtTime(levels[aim], 0, quick);
+    for (const [when, to, tau] of duck.turns) if (when > t0 && when < t1) chain.level.gain.setTargetAtTime(levels[to], when - t0, tau);
+    src.start(0);
+  }
+  const got = await off.startRendering(), L = got.getChannelData(0), R = got.getChannelData(1), pcm = new Int16Array((len - skip) * 2);
+  for (let k = skip; k < len; k++) { pcm[(k - skip) * 2] = Math.round(clamp(L[k], -1, 1) * 32767); pcm[(k - skip) * 2 + 1] = Math.round(clamp(R[k], -1, 1) * 32767); }
+  return pcm;
+}
+async function filmSound(show, film, only) {  // the whole of it in one piece, for measuring: { pcm, rate } (needs every frame's record: a film being made lets go of them as it goes)
+  const rate = FILM.rate, pcm = new Int16Array(Math.ceil(show.total * rate) * 2);
+  if (film) film.sound = null;
+  for (const st of filmStretches(show, film ? film.fps : 30)) { pcm.set(await filmStretch(show, film, st, only), st.s0 * 2); await breathe(); }
+  return { pcm, rate };
+}
+function showLive(show, part, tau) {          // the same, of a part of the broadcast: the moment of the race's clock, what is shown again at it, whose lines are being said
+  const lastPart = show.parts[show.parts.length - 1], local = tau - part.at, since = local - part.card.secs - LEAD, at = clamp(since, 0, part.talk), half = BCAST.wipe / 2;
+  let span = part.spans[part.spans.length - 1], line = null, seg = part.seg;
+  for (const sp of part.spans) if (at < sp.off + sp.b - sp.a) { span = sp; break; }
+  const t = clamp(span.a + clamp(at - span.off, 0, span.b - span.a), T0, TEND);
+  let again = bcastAt(t);
+  if (again && again.screen && !part.whole) again = null;      // (what the hosts have for the quiet is in the whole race only)
+  if (!again && span.join && t >= span.b - half) again = { win: span.join, cut: null, n: -1, p: null, slow: false, wipe: (t - span.b + half) / BCAST.wipe };
+  // the wipe from this part of the film to the next, over the end of this one; and off the beginning of that one
+  if (part.out && local >= part.len - half) again = { win: null, cut: null, n: -1, p: null, slow: false, wipe: (local - part.len + half) / BCAST.wipe };
+  else if (part.in && local < half && !(again && again.wipe != null)) again = { win: null, cut: null, n: -1, p: null, slow: false, wipe: 0.5 + local / BCAST.wipe };
+  let said = -1e9;                       // (when the last line begun was over: the strip that says what the hosts are on comes down a moment after it)
+  if (since >= 0) for (const item of part.plan) {
+    if (item.L.aside || since < item.start - 0.03) continue;
+    if (item.seg !== seg) said = -1e9;
+    seg = item.seg; said = Math.max(said, item.end);
+    if (since < item.end + 0.7) line = item.L;
+  }
+  const strip = since >= 0 && since <= part.talk && (!part.whole || since < said + 2.5) && !(again && again.screen && again.up);
+  return { part, seg, line, t, again, kind: KIND[seg.kind], card: local < part.card.secs ? part.card : null, lower: strip ? seg.lower : null,
+           result: seg.id === "outro" || tau >= lastPart.at + lastPart.len };
 }
 function showState(show, tau) {               // what is on screen `tau` seconds into the show
   const lastPart = show.parts[show.parts.length - 1];
   const part = show.parts.find(q => tau < q.at + q.len) || lastPart, seg = part.seg;
+  if (part.live) return showLive(show, part, tau);
   const local = tau - part.at, since = local - part.card.secs - LEAD;          // seconds since this highlight's sound began
   let line = null;
   if (since >= 0) for (const item of part.plan) if (!item.L.aside && since >= item.start - 0.03 && since < item.end + 0.7) line = item.L;
@@ -1932,7 +3596,7 @@ function drawTower(g, u, t) {                 // the running order down the left
   const x = 36 * u, w = 236 * u, rh = 33 * u, y0 = 98 * u, top = Math.min(...rows.map(r => r.best || Infinity));
   slab(g, x, y0 - 46 * u, w, 40 * u, 5 * u, "rgba(9,10,12,0.9)");
   g.fillStyle = "#f2f2f0"; g.font = `700 ${19 * u}px ${FACE}`; g.textBaseline = "middle"; g.textAlign = "left";
-  g.fillText(race ? (t < 0 ? "ON THE GRID" : `LAP ${Math.min(rows[0].lap, D.session.totalLaps || 999)}${D.session.totalLaps ? " / " + D.session.totalLaps : ""}`)
+  g.fillText(race ? (t < 0 ? (formationAt(t) ? "FORMATION LAP" : "ON THE GRID") : `LAP ${Math.min(rows[0].lap, D.session.totalLaps || 999)}${D.session.totalLaps ? " / " + D.session.totalLaps : ""}`)
                   : (D.session.type || "").toUpperCase(), x + 12 * u, y0 - 25 * u);
   rows.forEach((r, n) => {
     const y = y0 + n * rh, mine = r.c.i === focus;
@@ -1999,14 +3663,25 @@ function drawResult(g, u, W) {                // the result, as the live page's 
   });
 }
 function drawFrame(g, W, H, st, want) {
-  const u = H / 1080;
+  const u = H / 1080, up = st.again && st.again.screen && st.again.up && st.again.screen.kind !== "talk" ? st.again : null;
+  // (a screen of the race has the race soft behind it, and the whole picture: the tower makes way for it)
+  const soft = up && !up.win.card ? screenEase(up.since / 0.5) * screenEase(up.left / 0.4) : 0;
+  if (soft > 0.02) g.filter = `blur(${(10 * soft * u).toFixed(1)}px)`;
   g.drawImage($("map3d"), 0, 0, W, H);
-  if (want.tower) drawTower(g, u, st.t);
-  let bottom = H - 46 * u;
-  if (want.captions && st.line) bottom = drawCaption(g, u, W, H, st.line.who, st.line.text) - 10 * u;
-  if (st.lower) drawLower(g, u, H, st.lower, (st.part.kind || [0, C.ink])[1], bottom + 10 * u);
+  g.filter = "none";
+  if (want.tower && soft < 0.98 && !(up && up.win.card)) { g.globalAlpha = 1 - soft; drawTower(g, u, st.t); g.globalAlpha = 1; }
+  if (st.again && st.again.p != null) drawAgain(g, W, H, st.again, 44 * u);
+  if (st.again && st.again.screen) drawScreen(g, W, H, st.again, st.t, 30 * u);
+  // (a wipe goes over the picture, the tower and the strip that says what is on; what the hosts say stays readable)
+  const wipe = st.again && st.again.wipe != null ? st.again.wipe : null, caption = want.captions && st.line;
+  if (caption) { g.font = `500 ${30 * u}px ${FACE}`; }
+  const bottom = caption ? H - 46 * u - (40 + fold(g, st.line.text, W - 652 * u).slice(0, 3).length * 40) * u - 10 * u : H - 46 * u;
+  if (st.lower) drawLower(g, u, H, st.lower, (st.kind || st.part.kind || [0, C.ink])[1], bottom + 10 * u);
+  if (st.card && wipe !== null) drawCard(g, u, W, H, st.card);      // (a part's card is under the wipe that brings it)
+  if (wipe !== null) drawWipe(g, W, H, wipe);
+  if (caption) drawCaption(g, u, W, H, st.line.who, st.line.text);
   if (st.result) drawResult(g, u, W);
-  if (st.card) drawCard(g, u, W, H, st.card);
+  if (st.card && wipe === null) drawCard(g, u, W, H, st.card);
 }
 // ---- the export itself
 const exNote = text => { $("exNote").textContent = text; };
@@ -2014,68 +3689,106 @@ const exPick = id => $(id).querySelector(".on").dataset.v;
 async function exportVideo(pick) {         // pick: a highlight's id, to export that one whatever was played last
   const sid = new URLSearchParams(location.search).get("session");
   if (!sid || !/^http/.test(location.protocol)) return exNote("Open this replay from Pit Wall's Replays tab to export: Pit Wall is what writes the file.");
-  if (!window.Stage3D || typeof VideoEncoder === "undefined") return exNote(window.Stage3D ? "This browser can't encode video. Use Chrome or Edge." : "This replay has no 3D view to film: build it again from a session with a track model.");
-  const H = +exPick("exSize"), W = Math.round(H * 16 / 18) * 2, fps = +exPick("exFps"), whole = exPick("exWhat") === "reel";
+  if (!window.Stage3D) return exNote("This replay has no 3D view to film: build it again from a session with a track model.");
+  const H = +exPick("exSize"), W = Math.round(H * 16 / 18) * 2, fps = +exPick("exFps"), what = exPick("exWhat"), whole = what === "reel";
   const want = { tower: $("exTower").checked, captions: $("exCaptions").checked };
-  const segs = whole ? REEL : [REEL.find(q => q.id === pick) || chosenSeg || REEL[0]];
-  if (!segs.length || !segs[0]) return exNote("There are no highlights to export.");
-  const level = H > 720 ? (fps > 30 ? "2a" : "28") : fps > 30 ? "20" : "1f";
-  const small = exPick("exQuality") === "web";         // megabits a second: 8 at 1080p (4.5 for the smaller file), 4 at 720p (2.5), half as much again at 60 frames
-  const settings = { width: W, height: H, framerate: fps, bitrate: (H > 720 ? (small ? 4.5e6 : 8e6) : small ? 2.5e6 : 4e6) * (fps > 30 ? 1.5 : 1), avc: { format: "annexb" }, latencyMode: "quality" };
-  let codec = null;
-  for (const c of ["avc1.6400" + level, "avc1.4d00" + level, "avc1.4200" + level]) if ((await VideoEncoder.isConfigSupported({ ...settings, codec: c })).supported) { codec = c; break; }
-  if (!codec) return exNote("This browser can't encode H.264 video at that size. Try 720p, or Chrome or Edge.");
-  const post = (step, body, q = "") => fetch(`/api/export/${step}${q}`, { method: "POST", headers: { "X-Pitwall": "1" }, body })
+  const segs = what === "one" ? [REEL.find(q => q.id === pick) || chosenSeg || REEL[0]] : REEL;
+  if (what !== "race" && (!segs.length || !segs[0])) return exNote("There are no highlights to export.");
+  const small = exPick("exQuality") === "web";         // (how good each is, and so how big, is Pit Wall's to say: Exporter.LOOK)
+  const steps = { start: "to begin the export", video: "with a piece of the picture", audio: "with the sound", finish: "to have the file put together", cancel: "to call the export off", reveal: "to show the file" };
+  let door = window;                    // (where the export's requests are made from: filmDoor, asked below)
+  const post = (step, body, q = "") => askPitwall(`/api/export/${step}${q}`, body, steps[step] || step, door)
     .then(r => { if (!r.ok) throw new Error(r.status === 404 ? "Pit Wall needs restarting before it can export (close its window, run run.bat again)." : `Pit Wall answered ${r.status}.`); return r.json(); });
   stopReel(); setPlaying(false);
   $("exGo").disabled = true; $("exShow").hidden = true; $("exClose").textContent = "Cancel"; $("exBar").style.width = "0";
-  const kept = { T, focus };
-  let id = null;
+  const kept = { T, focus, look: Stage3D.quality };
+  let id = null, hand = null;
   exporting = { cancel: false };
   try {
     exNote("Getting the voices ready…");
-    const show = await showPlan(segs, whole ? 4 : 0.8);
+    door = await filmDoor();
+    liveBuild();                        // (the whole reel is the broadcast, if the hosts have voices: one highlight is that highlight as it was written)
+    const show = what === "race" ? await showRace(4) : whole && liveList.length ? await showBroadcast(4) : await showPlan(segs, whole ? 4 : 0.8);
+    if (window.__filmParts) {           // (for a test: only these parts of it)
+      let at = 0;
+      show.parts = show.parts.filter((part, k) => window.__filmParts.includes(k));
+      for (const part of show.parts) { part.at = at; at += part.len; }
+      show.total = at + 0.8;
+    }
+    if (window.__filmSpan && show.parts[0].whole) {      // (and of the whole race: only this stretch of its clock)
+      const part = show.parts[0], [a, b] = window.__filmSpan, span = part.spans[0], cut = a - span.a;
+      span.a = a; span.b = b; part.talk = b - a; part.len = part.card.secs + LEAD + part.talk;
+      part.plan = part.plan.filter(item => item.start - cut < part.talk && item.end - cut > 0).map(item => ({ ...item, start: item.start - cut, end: item.end - cut }));
+      part.sweeps = part.sweeps.map(w => w - cut).filter(w => w >= 0 && w < part.talk);
+      show.total = part.len + 0.8;
+    }
     const tidy = str => String(str).replace(/[^A-Za-z0-9]+/g, " ").trim();
-    const begun = await post("start", JSON.stringify({ session: sid, fps, name: `${tidy(D.title)}${whole ? " highlights" : " " + tidy(segs[0].title)} ${H}p${fps}${small ? "" : " sharp"}` }));
+    const token = Math.random().toString(36).slice(2) + Date.now().toString(36);      // (so a start that has to be asked twice is one export, not two)
+    const begun = await post("start", JSON.stringify({ session: sid, fps, token, raw: { h: H, quality: small ? "web" : "best", seconds: show.total },
+                                                       name: `${tidy(D.title)}${what === "race" ? " whole race" : whole ? " highlights" : " " + tidy(segs[0].title)} ${H}p${fps}${small ? "" : " sharp"}` }));
     if (!begun.ok) throw new Error(begun.error);
     id = begun.id;
-    const q = `?id=${id}`, sound = mixShow(show);           // the sound mixes while the picture renders
-    let failed = null, sending = Promise.resolve(), batch = [], held = 0;
-    const send = () => {
-      if (!batch.length) return;
-      const blob = new Blob(batch); batch = []; held = 0;
-      sending = sending.then(() => post("video", blob, q)).then(r => { if (!r.ok) throw new Error(r.error); }).catch(e => { failed = failed || e; });
+    if (!begun.raw) throw new Error("Pit Wall needs restarting before it can export from this page (close its window, run run.bat again): the one that is running is older than the page.");
+    // the engines, if one is chosen and wanted: what is heard at each frame is kept as it is filmed, for the sound
+    const film = $("exEngines").checked && engineBank ? { bank: engineBank, fps, track: [], hearing: engineHearing(), was: null, slider: Math.pow(+$("engineVol").value / 60, 1.5) } : null;
+    const q = `?id=${id}`, stretches = filmStretches(show, fps), spf = Math.round(FILM.rate / fps);
+    hand = filmHand(W, H, `${location.origin}/api/export/video${q}`, door);
+    let failed = null, hearing = Promise.resolve(), mixed = 0, gone = 0;
+    // the sound: each stretch of it is made as soon as its frames have been filmed, and sent (see filmStretch)
+    const sound = async filmed => {
+      while (mixed < stretches.length && (filmed === null || Math.ceil(stretches[mixed].s1 / spf) < filmed)) {
+        const st = stretches[mixed], k = mixed++, pcm = await filmStretch(show, film, st);
+        hearing = hearing.then(() => post("audio", new Blob([pcm.buffer]), `${q}&n=${k}&rate=${FILM.rate}&sides=2`)).then(r => { if (!r.ok) throw new Error(r.error); }).catch(e => { failed = failed || e; });
+        if (film && !window.__keepFilm) for (const upTo = Math.ceil(st.s1 / spf); gone < upTo; gone++) film.track[gone] = undefined;      // (those frames' record is done with: all but the last, which the next stretch begins from)
+      }
     };
-    const encoder = new VideoEncoder({
-      output: chunk => { const bytes = new Uint8Array(chunk.byteLength); chunk.copyTo(bytes); batch.push(bytes); held += bytes.length; if (held > 2e6) send(); },
-      error: e => { failed = failed || e; } });
-    encoder.configure({ ...settings, codec });
-    const sheet = Object.assign(document.createElement("canvas"), { width: W, height: H }), g = sheet.getContext("2d");
+    // (each frame is drawn on a picture of its own, which is then handed over whole: nothing is copied)
+    const sheet = new OffscreenCanvas(W, H), g = sheet.getContext("2d", { alpha: false });
+    const spent = { draw: 0, hand: 0, sound: 0 }, clock = () => performance.now();       // (milliseconds: where the export's time went, for a test to read)
     Stage3D.fixed = [W, H];
+    Stage3D.quality = 2;                // (a film is made with everything on, whatever a busy moment made of the picture being watched: it is off the clock)
     const frames = Math.ceil(show.total * fps), began = performance.now();
     for (let n = 0; n < frames; n++) {
       if (exporting.cancel) throw new Error("Cancelled.");
-      if (failed) throw failed;
-      const st = showState(show, n / fps);
-      activeSeg = st.seg; focus = st.seg.focus; T = st.t;
+      if (failed || hand.error) throw failed || hand.error;
+      const st = showState(show, n / fps), from = clock();
+      // (a video made with the Commentary camera chosen is filmed by it: of the broadcast, as it films the race being
+      // watched; and something shown again is filmed as of that moment of the race, with the tower still the race's)
+      activeSeg = st.part.live && Stage3D.camera === "story" ? null : st.seg; focus = st.seg.focus; T = st.t;
+      bcastShow = st.again || null;
+      if (bcastShow && bcastShow.p != null) T = clamp(bcastShow.p, T0, TEND);
+      storyStep();
       Stage3D.render(T, 1 / fps);
+      if (film) {                       // (heard only while the race is moving: not under a title card, not on a held picture)
+        const moved = film.was === null ? 0 : T - film.was;
+        film.was = T;
+        if (moved > 0.4 / fps && moved < 2.5 / fps) film.track.push(engineHear(moved, film.hearing, film.bank));
+        else { film.hearing.was = null; film.hearing.on.clear(); film.track.push(null); }
+      }
+      T = st.t;
       drawFrame(g, W, H, st, want);
-      const frame = new VideoFrame(sheet, { timestamp: Math.round(n * 1e6 / fps), duration: Math.round(1e6 / fps) });
-      encoder.encode(frame, { keyFrame: n % (fps * 2) === 0 });
-      frame.close();
+      if (window.__filmFrame) window.__filmFrame(sheet, n);        // (for a test: the frame as it goes)
+      spent.draw += clock() - from;
+      { const at = clock(); await hand.frame(sheet.transferToImageBitmap()); spent.hand += clock() - at; }
+      if (n % fps === 0) { const at = clock(); await sound(n + 1); spent.sound += clock() - at; }
       if (n % 6 === 0) {
         const left = (performance.now() - began) / (n + 1) * (frames - n) / 1000;
         $("exBar").style.width = (n / frames * 100).toFixed(1) + "%";
         exNote(`Filming: ${Math.round(n / fps)} of ${Math.round(show.total)} seconds of video · about ${left > 90 ? Math.round(left / 60) + " min" : Math.round(left) + " s"} to go`);
         await breathe();
       }
-      while (encoder.encodeQueueSize > 6) await breathe();
     }
-    await encoder.flush(); encoder.close(); send(); await sending;
+    const sent = await hand.end();
     if (failed) throw failed;
-    exNote("Adding the sound…");
-    const heard = await post("audio", await sound, q);
-    if (!heard.ok) throw new Error(heard.error);
+    window.__filmSpent = { ...spent, worker: sent.spent, all: clock() - began, frames };
+    exNote("Finishing the sound…");
+    await sound(null);
+    const quiet = Math.ceil(show.total * FILM.rate) - (stretches.length ? stretches[stretches.length - 1].s1 : 0);      // (and nothing under the last card, so that the sound is as long as the picture)
+    if (quiet > 0) { const k = mixed++; hearing = hearing.then(() => post("audio", new Blob([new Int16Array(quiet * 2).buffer]), `${q}&n=${k}&rate=${FILM.rate}&sides=2`)).then(r => { if (!r.ok) throw new Error(r.error); }).catch(e => { failed = failed || e; }); }
+    await hearing;
+    if (failed) throw failed;
+    if (window.__keepFilm) window.__film = { show, film };         // (for a test to measure the mix)
+    exNote("Putting the file together…");
     const done = await post("finish", null, q);
     id = null;
     if (!done.ok) throw new Error(done.error);
@@ -2087,7 +3800,8 @@ async function exportVideo(pick) {         // pick: a highlight's id, to export 
     if (id) post("cancel", null, `?id=${id}`).catch(() => {});
     exNote(e.message || String(e));
   } finally {
-    Stage3D.fixed = null; exporting = null; activeSeg = null;
+    if (hand) hand.close();
+    Stage3D.fixed = null; Stage3D.quality = kept.look; exporting = null; activeSeg = null; bcastShow = null;
     T = kept.T; focus = kept.focus; towerKey = "";
     $("exGo").disabled = false; $("exClose").textContent = "Close"; markList();
   }
@@ -2095,7 +3809,9 @@ async function exportVideo(pick) {         // pick: a highlight's id, to export 
 $("export").onclick = () => {
   const box = $("exportBox");
   box.hidden = !box.hidden; $("webBox").hidden = true;
-  if (!box.hidden && !exporting) exNote(`The reel is ${REEL.length} highlights. "One highlight" is the one you played last${chosenSeg ? `: ${chosenSeg.title}` : " (or the first)"}. The file goes in this session's folder.`);
+  $("exEnginesRow").hidden = !engineBank;       // (the engines go in the film if one is chosen in the Engines menu; the slider there is how loud)
+  if (engineBank) $("exEnginesText").textContent = `Engine sounds (${$("enginePick").selectedOptions[0].textContent}), kept under the hosts`;
+  if (!box.hidden && !exporting) exNote(`The reel is ${REEL.length} highlights. "One highlight" is the one you played last${chosenSeg ? `: ${chosenSeg.title}` : " (or the first)"}. "Whole race" is all ${Math.round((TEND - T0) / 60)} minutes of it as a broadcast. The file goes in this session's folder.`);
 };
 $("exportBox").addEventListener("click", e => {
   const b = e.target.closest(".seg button");
@@ -2108,8 +3824,14 @@ $("exClose").onclick = () => { if (exporting) exporting.cancel = true; else $("e
 window.__replay = { get T() { return T; }, get cam() { return cam; }, get focus() { return focus; }, get view3d() { return view3d; }, seek, segment, REEL, FEED,
                     FIGHTS, fightsOf, lapRows, renderLaps, shownReel, setReelWho, goTo,
                     data: { CH, TW, ST, GAP },
-                    tick: now => tick(now, true), setView, exportVideo, showPlan, showState, showTab, stepEvent,
+                    tick: now => tick(now, true), setView, exportVideo, showPlan, showBroadcast, showRace, showState, showTab, stepEvent,
                     follow: i => { focus = i; towerKey = ""; }, play: on => setPlaying(on),
+                    live: () => { liveBuild(); return { list: liveList, sounding: [...liveOn.keys()], shown: liveShown }; },      // the hosts' lines on the race's clock (for looking at)
+                    bcast: () => { liveBuild(); return { BCAST, FILL, wins: liveWins, show: bcastShow, on: bcastOn(), at: bcastAt, drawWipe, drawAgain, drawScreen, whoosh: bcastWhoosh }; },      // and what the broadcast shows again, and when
+                    story: () => ({ STORY, now: storyState, talk: storyTalk(), said: storySaid(storyTalk().items), beats: REEL.map(seg => [seg, storyBeats(seg)]), beatsOf: storyBeats, step: storyStep, seg: activeSeg, who: storyWho }),      // the Commentary camera's reckoning
+                    engine: () => ({ ENGINE, bank: engineBank, bus: engineBus, voices: engineVoices, vel: engineHeard.vel, cost: engineCost, mic: engineHeard.mic }),      // and the engines being heard
+                    filmSound, filmStretches, filmStretch, engineFilm, FILM,      // (a film's sound, whole or one half of it: for measuring the mix)
+                    filmPress, filmHand, filmDoor, drawFrame,     // (and its picture: a frame as the bytes Pit Wall's encoder is sent)
                     renderAll: () => { renderTower(); carFast(); carSlow(); renderControl(); renderReelList(); renderLaps(); if (view3d && window.Stage3D) Stage3D.render(T, 0.016); else renderMap(0.016); renderTrace(); renderTimeline(); } };
 requestAnimationFrame(tick);
 }
@@ -2204,7 +3926,7 @@ async function boot() {
     const voice = race.voiceBytes ? download(`races/${encodeURIComponent(race.id)}/voice.bin`).then(inflate).then(b => JSON.parse(new TextDecoder().decode(b))).catch(() => null) : null;
     start(D, { voice });
     page("veil").hidden = true;
-    if (D.track3d) import("./replay3d.js?v=a7b63157").catch(e => console.warn("The 3D view could not be loaded, so the map is all there is:", e));
+    if (D.track3d) import("./replay3d.js?v=57d61695").catch(e => console.warn("The 3D view could not be loaded, so the map is all there is:", e));
   } catch (e) {
     veilSay("That didn't open", e.message || String(e), null);
     console.error(e);

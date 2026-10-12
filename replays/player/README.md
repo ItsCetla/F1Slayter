@@ -11,6 +11,7 @@ Plain files, no build step and no server code. This folder goes at `replays/play
 | `races/index.json` | the list of races, which the player reads to know what there is |
 | `races/<id>/replay.bin` | a race (a few MB) |
 | `races/<id>/voice.bin` | its commentary voices, fetched after the race itself; a race without this file is silent |
+| `rides/` | the sculpted car skins (the Cars menu): each is fetched when it is picked; without this folder the skins are drawn from plain shapes |
 
 - `replays/player/` opens the only race there is, or lists them when there are several (`?list` always lists).
 - `replays/player/?race=<id>` opens one race. Add `&embed=1` for a copy with only the picture and the scrubber,

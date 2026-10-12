@@ -1,0 +1,7 @@
+Photographed surfaces, all CC0 (public domain dedication), made smaller by venues/make_textures.py:
+
+asphalt_d.jpg, asphalt_n.jpg, asphalt_arm.jpg: Asphalt Track by Dimitrios Savva, Poly Haven, CC0: https://polyhaven.com/a/asphalt_track
+paint_d.jpg, paint_n.jpg, paint_arm.jpg: Painted Concrete 02 by Rob Tuytel, Poly Haven, CC0: https://polyhaven.com/a/painted_concrete_02
+concrete_d.jpg, concrete_n.jpg, concrete_arm.jpg: Concrete Slab Wall 02 by Amal Kumar, Poly Haven, CC0: https://polyhaven.com/a/concrete_slab_wall_02
+gravel_d.jpg, gravel_n.jpg, gravel_arm.jpg: Gravel 037 by ambientCG, CC0: https://ambientcg.com/view?id=Gravel037
+fence.png: Fence 003 by ambientCG, CC0: https://ambientcg.com/view?id=Fence003

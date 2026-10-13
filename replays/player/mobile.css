@@ -1,0 +1,115 @@
+/* The replay viewer on a phone (mobile.js turns it on: a touch screen under 760 px wide, or a phone on its side).
+   Desktop never gets body.m, so nothing here touches it; the embed on a round's page keeps its own layout. */
+
+body.m:not(.embed) { display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; gap: 0; }
+body.m:not(.embed) main { display: contents; }
+
+/* ---- top bar: back, the race, share */
+body.m:not(.embed) header.top { order: 0; flex: none; flex-wrap: nowrap; gap: 6px; padding: 6px 8px; min-height: 48px; }
+body.m:not(.embed) .brand, body.m:not(.embed) #subtitle, body.m:not(.embed) #voice, body.m:not(.embed) #reel,
+body.m:not(.embed) #export, body.m:not(.embed) #webExport, body.m:not(.embed) #popout, body.m:not(.embed) #full,
+body.m:not(.embed) .spacer, body.m:not(.embed) #backText, body.m:not(.embed) #shareText { display: none; }
+body.m:not(.embed) .back { min-width: 40px; min-height: 40px; justify-content: center; padding: 0; }
+body.m:not(.embed) .hitem { flex: 1; min-width: 0; }
+body.m:not(.embed) .hitem b { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.m:not(.embed) #share { min-width: 40px; min-height: 40px; padding: 0; }
+
+/* ---- the picture, and nothing over it but what the race puts there */
+body.m:not(.embed) .stage { order: 1; flex: none; width: 100%; aspect-ratio: 4 / 3; max-height: 46vh; max-height: 46dvh;
+  border-radius: 0; border-left: 0; border-right: 0; }
+body.m:not(.embed) .viewbar { display: none; }
+#mCam { display: none; }
+body.m:not(.embed) #mCam {
+  display: inline-flex; align-items: center; gap: 6px; position: absolute; top: 8px; right: 8px; z-index: 5;
+  height: 36px; padding: 0 12px; border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(21, 21, 30, 0.78); color: #fff; font: 700 12px/1 var(--face); letter-spacing: 0.04em; text-transform: uppercase;
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+body.m:not(.embed) #mCam svg { width: 16px; height: 16px; flex: none; }
+body.m:not(.embed) .caption { left: 8px; right: 8px; bottom: 8px; font-size: 13px; padding: 7px 10px; }
+body.m:not(.embed) .ctas { gap: 8px; }
+body.m:not(.embed) .ctas .btn { font-size: 13px; }
+
+/* ---- controls: play, where we are, speed, and the scrubber */
+body.m:not(.embed) footer.deck { order: 2; flex: none; padding: 6px 10px 2px; gap: 2px; grid-template-columns: minmax(0, 1fr); }
+body.m:not(.embed) .legend, body.m:not(.embed) #speeds { display: none; }
+body.m:not(.embed) .transport { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; }
+body.m:not(.embed) .transport .btn { min-height: 40px; }
+body.m:not(.embed) #prevEv, body.m:not(.embed) #nextEv { min-width: 40px; padding: 0; }
+body.m:not(.embed) #play { min-width: 96px; }
+body.m:not(.embed) .clockbox { flex: 1; min-width: 0; }
+body.m:not(.embed) .clockbox b { font-size: 20px; }
+body.m:not(.embed) .clockbox span { font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+#mSpeed { display: none; }
+body.m:not(.embed) #mSpeed { display: inline-flex; align-items: center; justify-content: center; min-width: 48px; min-height: 40px; }
+
+/* ---- who is being followed */
+#mStrip, #mTabs, #mSheet { display: none; }
+body.m:not(.embed) #mStrip {
+  order: 3; flex: none; display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 12px; border: 0;
+  border-top: 1px solid var(--line); background: var(--surface); color: var(--ink); text-align: left; font-family: var(--face); cursor: pointer;
+}
+#mStrip .bar { width: 4px; height: 32px; border-radius: 2px; background: var(--muted); flex: none; }
+#mStrip .pos { font-size: 22px; font-weight: 900; min-width: 40px; }
+#mStrip .nm { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+#mStrip .nm b { font-size: 15px; font-weight: 900; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#mStrip .nm small { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#mStrip .ty { width: 28px; height: 28px; border-radius: 50%; border: 3px solid currentColor; display: grid; place-items: center; font-size: 12px; font-weight: 900; flex: none; }
+#mStrip .go { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; flex: none; }
+
+/* ---- three tabs, and the one that is open fills the rest of the screen */
+body.m:not(.embed) #mTabs { order: 4; flex: none; display: flex; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--page); }
+#mTabs button { flex: 1; min-height: 44px; background: transparent; border: 0; border-bottom: 3px solid transparent; color: var(--muted);
+  font: 900 12px/1 var(--face); text-transform: uppercase; letter-spacing: 0.08em; cursor: pointer; }
+#mTabs button.on { color: #fff; border-bottom-color: var(--red); }
+body.m:not(.embed) .tower-card, body.m:not(.embed) .side { order: 5; flex: 1 1 0; min-height: 0; max-height: none; margin: 0; overflow: auto;
+  -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+body.m:not(.embed) .tower-card { border-radius: 0; border-left: 0; border-right: 0; border-top: 0; padding: 0 8px 12px; }
+body.m:not(.embed) .side { display: flex; flex-direction: column; gap: 0; }
+body.m[data-mtab="order"]:not(.embed) .side,
+body.m[data-mtab="driver"]:not(.embed) .tower-card,
+body.m[data-mtab="moments"]:not(.embed) .tower-card,
+body.m[data-mtab="moments"]:not(.embed) .carcard { display: none; }
+
+/* Order: the timing tower, made for a thumb */
+body.m:not(.embed) .tower-card h2 { display: none; }
+body.m:not(.embed) .tower td, body.m:not(.embed) .tower th { padding: 10px 6px; }
+body.m:not(.embed) .tower td { font-size: 15px; }
+body.m:not(.embed) .tower th:nth-child(5), body.m:not(.embed) .tower td.age { display: none; }
+
+/* Driver: speed, gear and the race so far, then every lap */
+body.m:not(.embed) .carcard { flex: none; max-height: none; overflow: visible; border-radius: 0; border-left: 0; border-right: 0; border-top: 0; }
+body.m:not(.embed) .carcard .who, body.m:not(.embed) #cDetail, body.m:not(.embed) #cPrivate, body.m:not(.embed) .carcard > h3,
+body.m:not(.embed) .carcard .tracewrap, body.m:not(.embed) .carcard > .lapsT { display: none; }
+body.m:not(.embed) .carcard .dash { margin-top: 0; }
+body.m:not(.embed) .carcard .facts { margin-top: 10px; }
+body.m:not(.embed) .logcard { flex: none; min-height: 0; max-height: none; overflow: visible; border-radius: 0; border-left: 0; border-right: 0; }
+body.m:not(.embed) .logcard .tabs { display: none; }
+body.m:not(.embed) .logcard .pane { overflow: visible; }
+body.m:not(.embed) #hlList li { padding: 10px 6px; }
+body.m:not(.embed) .lapsFull td, body.m:not(.embed) .lapsFull th { padding: 10px 5px; }
+
+/* ---- the sheet: everything about how the race is shown */
+body.m:not(.embed) #mSheet[open] { display: block; }
+#mSheet { position: fixed; inset: 0; z-index: 50; }
+#mSheet .scrim { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.55); }
+#mSheet .panel { position: absolute; left: 0; right: 0; bottom: 0; max-height: 78vh; max-height: 78dvh; overflow: auto;
+  padding: 8px 16px calc(16px + env(safe-area-inset-bottom)); background: var(--surface); border-top: 1px solid var(--line);
+  border-radius: 16px 16px 0 0; box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.5); }
+#mSheet .grab { width: 40px; height: 4px; border-radius: 2px; background: var(--line); margin: 4px auto 10px; }
+#mSheet h3 { margin: 14px 0 8px; font-size: 11px; font-weight: 900; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+#mSheet .opts { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+#mSheet .opts button, #mSheet .row button { min-height: 44px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--surface-2); color: var(--ink); font: 700 13px/1.1 var(--face); cursor: pointer; }
+#mSheet .opts button.on, #mSheet .row button.on { background: #fff; color: var(--page); border-color: #fff; }
+#mSheet .row { display: flex; gap: 8px; flex-wrap: wrap; }
+#mSheet label.pick { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; font-size: 14px; font-weight: 700; }
+#mSheet select { min-height: 40px; max-width: 60%; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 600 14px var(--face); padding: 0 8px; }
+#mSheet .done { width: 100%; margin-top: 16px; min-height: 48px; }
+
+/* ---- a phone on its side: the race, full screen, and the controls under it */
+body.m.land:not(.embed) header.top, body.m.land:not(.embed) #mStrip, body.m.land:not(.embed) #mTabs,
+body.m.land:not(.embed) .tower-card, body.m.land:not(.embed) .side { display: none; }
+body.m.land:not(.embed) .stage { flex: 1 1 0; min-height: 0; aspect-ratio: auto; max-height: none; }
+body.m.land:not(.embed) footer.deck { padding: 2px 10px 0; }
+body.m.land:not(.embed) .transport .btn { min-height: 34px; }

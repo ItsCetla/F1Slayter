@@ -4,9 +4,9 @@ name: Check league data
 
 on:
   push:
-    paths: ["data/**", "assets/js/league.js", "tests/**"]
+    paths: ["data/**", "assets/js/league.js", "tests/**", "replays/player/**", "tools/**"]
   pull_request:
-    paths: ["data/**", "assets/js/league.js", "tests/**"]
+    paths: ["data/**", "assets/js/league.js", "tests/**", "replays/player/**", "tools/**"]
 
 jobs:
   test:
@@ -16,4 +16,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node --test tests/league.test.mjs
+      - run: node --test tests/league.test.mjs tests/player.test.mjs

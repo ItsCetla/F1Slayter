@@ -77,6 +77,10 @@ driver's race lap by lap with their passes and highlights.
    {"round": 1, "...": "...", "replay": "https://f1.cetla.dev/replays/player/?race=<id>", "results": [...]}
    ```
 
+After copying a new player in, put the phone layout back into it (it is this site's own, in
+`replays/player/mobile.css` and `mobile.js`): `node tools/add-mobile-player.mjs`. The tests fail
+until it is.
+
 With `"site"` in Pit Wall's `web.json` set to a clone of this repo, steps 2 and 3 happen by
 themselves. The round's replay page then shows the 3D picture with its scrubber and an
 **Open viewer** button for the full viewer. A round has one `replay` link, so a 3D replay takes the
@@ -143,7 +147,7 @@ Every push that touches `data/` also runs the data tests on GitHub (Actions tab,
 data"). To run them yourself with Node installed:
 
 ```bash
-node --test tests/league.test.mjs
+node --test tests/league.test.mjs tests/player.test.mjs
 ```
 
 ## Running locally
@@ -170,7 +174,8 @@ assets/css/f1.css          design system
 assets/css/pages/*.css     page-specific styles
 assets/tracks/             circuit maps
 replays/player/            F1 Pit Wall's 3D race viewer and its races (copied in from Pit Wall's export)
-tests/                     node --test unit tests for the data model
+tools/add-mobile-player.mjs  puts the phone layout (replays/player/mobile.css, mobile.js) into a newly copied viewer
+tests/                     node --test unit tests: the data model, and the viewer keeping its phone layout
 pages/, analytics.html     redirects from the old site's URLs
 ```
 

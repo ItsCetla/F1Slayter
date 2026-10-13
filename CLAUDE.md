@@ -34,6 +34,6 @@ it is an official F1 site.
 ## Commands
 
 ```bash
-node --test tests/league.test.mjs     # data model tests
+node --test tests/league.test.mjs tests/player.test.mjs     # data model, and the viewer keeps its phone layout
 python3 -m http.server 8000           # serve locally, then open http://localhost:8000/
 ```

@@ -1550,10 +1550,19 @@ function init() {
   if (look) api.debug.look = look.split(",").map(Number);
   ready = true;
 }
+// f1.cetla.dev: how many device pixels each CSS pixel of the picture gets (put here by tools/add-mobile-player.mjs).
+// A desktop as the player has it. A phone keeps its sharpness whatever effects are off: up to 2 (1.5 when struggling),
+// and never past a budget of about 1.4 million pixels, so a big picture on its side does not swamp the phone.
+const PHONE_SCREEN = matchMedia("(pointer: coarse)").matches && Math.min(screen.width, screen.height) < 600;
+function sharpness(w, h) {
+  const dpr = window.devicePixelRatio || 1;
+  if (!PHONE_SCREEN) return quality > 1 ? Math.min(dpr, 2) : 1;
+  return Math.max(1, Math.min(dpr, quality > 0 ? 2 : 1.5, Math.sqrt(1.4e6 / Math.max(1, w * h))));
+}
 function resize() {                   // the size of its place on the page, or the size it has been told to film at
   const set = api.fixed, r = canvas.getBoundingClientRect();
   const w = set ? set[0] : Math.max(2, Math.floor(r.width)), h = set ? set[1] : Math.max(2, Math.floor(r.height));
-  const pr = set ? 1 : quality > 1 ? Math.min(window.devicePixelRatio || 1, 2) : 1;
+  const pr = set ? 1 : sharpness(w, h);
   if (renderer.getPixelRatio() !== pr || canvas.width !== Math.floor(w * pr) || canvas.height !== Math.floor(h * pr)) {
     renderer.setPixelRatio(pr); renderer.setSize(w, h, false); composer.setPixelRatio(pr); composer.setSize(w, h);
     camera.aspect = w / h; camera.updateProjectionMatrix();
@@ -1660,7 +1669,7 @@ const api = window.Stage3D = {
   get quality() { return quality; },
   set quality(q) {
     quality = clamp(q | 0, 0, 2);
-    if (ready) { bloom.enabled = quality > 1 && !TOY.on; renderer.shadowMap.enabled = quality > 0; sun.castShadow = quality > 0; renderer.setPixelRatio(quality > 1 ? Math.min(window.devicePixelRatio || 1, 2) : 1); }
+    if (ready) { bloom.enabled = quality > 1 && !TOY.on; renderer.shadowMap.enabled = quality > 0; sun.castShadow = quality > 0; resize(); }
   },
   debug: { look: null, K, WALL, bend, lane, STATIONS, MASTS, groundAt, ground, verge, stand, pose, damageAt, wreck, LOOKS, TEAM_OF, get scene() { return scene; }, get renderer() { return renderer; }, get masts() { return mastSet; }, get cars() { return cars; }, get view() { return camera; } },
 };

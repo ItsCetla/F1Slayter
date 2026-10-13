@@ -418,6 +418,7 @@
       <label class="toggle"><input type="checkbox" id="exTower" checked> Timing tower down the side</label>
       <label class="toggle"><input type="checkbox" id="exCaptions" checked> Captions (what the hosts say, in words)</label>
       <label class="toggle" id="exEnginesRow" hidden><input type="checkbox" id="exEngines" checked> <span id="exEnginesText">Engine sounds</span></label>
+      <label class="toggle" id="exEnhanceRow" hidden><input type="checkbox" id="exEnhance"> <span id="exEnhanceText">Enhance</span></label>
       <p class="muted" id="exNote"></p>
       <div class="bar"><i id="exBar"></i></div>
       <div class="row"><button class="btn primary" id="exGo" type="button">Export</button><button class="btn" id="exShow" type="button" hidden>Show in folder</button><button class="btn" id="exClose" type="button">Close</button></div>
@@ -3189,7 +3190,11 @@ const breathe = (() => {              // let the page and the encoder catch up, 
    export's time (62 frames a second at 1080p, against 100 and more this way; 12 Oct 2026). So the page hands each frame over
    as the picture it was drawn on, which never leaves the graphics card, and goes straight on to draw the next;
    a worker (filmWorker, whose text filmHand makes into one) does the waiting, the copying and the sending. */
-function filmPress(W, H) {
+function filmPress(W, H, layers = 1) {
+  // layers 3 is for a film whose picture goes through an enhancer (Exporter.enhancer in pitwall.py): the strip is
+  // then three pictures tall. The 3D picture; under it the colour of what goes over the picture (tower, captions,
+  // cards), not darkened by how see-through it is and carried a pixel past its own edge, so that halving the
+  // colour's detail does not grey its rim; and under that how see-through it is, as a brightness.
   const gl = new OffscreenCanvas(1, 1).getContext("webgl2", { antialias: false, depth: false, stencil: false, premultipliedAlpha: false, powerPreference: "high-performance" });
   if (!gl) throw new Error("The browser would not give the export a second WebGL picture to work in. Close other tabs that draw in 3D and try again.");
   const shader = (type, text) => {
@@ -3203,42 +3208,59 @@ function filmPress(W, H) {
     void main() { gl_Position = vec4(gl_VertexID == 1 ? 3.0 : -1.0, gl_VertexID == 2 ? 3.0 : -1.0, 0.0, 1.0); }`));
   gl.attachShader(prog, shader(gl.FRAGMENT_SHADER, `#version 300 es
     precision highp float; precision highp int;
-    uniform sampler2D src; uniform int H;
+    uniform sampler2D src; uniform sampler2D ink; uniform int W; uniform int H; uniform int L;
     out vec4 o;
     const vec3 K = vec3(0.2126, 0.7152, 0.0722);
-    float luma(int x, int y) { return (16.0 + 219.0 * dot(texelFetch(src, ivec2(x, y), 0).rgb, K)) / 255.0; }
-    float chroma(int x, int y) {      // x: which byte of the row (blue-difference, red-difference, and so on); y: which row of the half-height plane
-      ivec2 q = ivec2(x - (x & 1), y * 2);
-      vec3 c = (texelFetch(src, q, 0).rgb + texelFetch(src, q + ivec2(1, 0), 0).rgb + texelFetch(src, q + ivec2(0, 1), 0).rgb + texelFetch(src, q + ivec2(1, 1), 0).rgb) * 0.25;
+    vec3 picture(int x, int y) { return texelFetch(src, ivec2(x, y), 0).rgb; }
+    vec4 over(int x, int y) { return texelFetch(ink, ivec2(clamp(x, 0, W - 1), clamp(y, 0, H - 1)), 0); }      // (as the browser keeps it: its colour already darkened by how see-through it is)
+    vec3 straight(int x, int y) {
+      vec4 t = over(x, y);
+      if (t.a > 0.004) return min(t.rgb / t.a, 1.0);
+      t = over(x - 1, y) + over(x + 1, y) + over(x, y - 1) + over(x, y + 1);
+      return t.a > 0.004 ? min(t.rgb / t.a, 1.0) : vec3(0.0);
+    }
+    vec3 colour(int k, int x, int y) { return k == 0 ? picture(x, y) : straight(x, y); }
+    float luma(int x, int y) {        // y: a row of the strip's upper part, L pictures tall
+      int k = y / H, r = y - k * H;
+      return (16.0 + 219.0 * (k == 2 ? over(x, r).a : dot(colour(k, x, r), K))) / 255.0;
+    }
+    float chroma(int x, int y) {      // x: which byte of the row (blue-difference, red-difference, and so on); y: a row of the half-height part under it
+      int k = y / (H / 2), r = (y - k * (H / 2)) * 2, q = x - (x & 1);
+      if (k == 2) return 128.0 / 255.0;
+      vec3 c = (colour(k, q, r) + colour(k, q + 1, r) + colour(k, q, r + 1) + colour(k, q + 1, r + 1)) * 0.25;
       float l = dot(c, K);
       return (128.0 + 224.0 * ((x & 1) == 0 ? (c.b - l) / 1.8556 : (c.r - l) / 1.5748)) / 255.0;
     }
     void main() {
       ivec2 p = ivec2(gl_FragCoord.xy);
-      int x = p.x * 4, y = p.y - H;
+      int x = p.x * 4, y = p.y - H * L;
       o = y < 0 ? vec4(luma(x, p.y), luma(x + 1, p.y), luma(x + 2, p.y), luma(x + 3, p.y)) : vec4(chroma(x, y), chroma(x + 1, y), chroma(x + 2, y), chroma(x + 3, y));
     }`));
   gl.linkProgram(prog);
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error("The export's shader would not link: " + gl.getProgramInfoLog(prog));
   gl.useProgram(prog);
-  const strip = gl.createTexture(), frame = gl.createTexture();
+  const tall = H * layers * 3 / 2, strip = gl.createTexture(), frame = gl.createTexture(), ink = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, strip);
-  gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, W / 4, H * 3 / 2);
+  gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, W / 4, tall);
   gl.bindFramebuffer(gl.FRAMEBUFFER, gl.createFramebuffer());
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, strip, 0);
   if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw new Error("The graphics card would not make the export's strip.");
-  gl.bindTexture(gl.TEXTURE_2D, frame);
-  gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, W, H);
-  for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
+  for (const [unit, tex, big] of [[gl.TEXTURE1, ink, layers > 1], [gl.TEXTURE0, frame, true]]) {      // (the picture's is left the one in hand)
+    gl.activeTexture(unit); gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, big ? W : 1, big ? H : 1);
+    for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
+  }
   gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-  gl.uniform1i(gl.getUniformLocation(prog, "src"), 0); gl.uniform1i(gl.getUniformLocation(prog, "H"), H);
-  gl.viewport(0, 0, W / 4, H * 3 / 2); gl.disable(gl.BLEND); gl.disable(gl.DITHER);
+  gl.uniform1i(gl.getUniformLocation(prog, "src"), 0); gl.uniform1i(gl.getUniformLocation(prog, "ink"), 1);
+  gl.uniform1i(gl.getUniformLocation(prog, "W"), W); gl.uniform1i(gl.getUniformLocation(prog, "H"), H); gl.uniform1i(gl.getUniformLocation(prog, "L"), layers);
+  gl.viewport(0, 0, W / 4, tall); gl.disable(gl.BLEND); gl.disable(gl.DITHER);
   return {
-    bytes: W * H * 3 / 2,
-    take(picture, into, at) {         // a frame (an ImageBitmap, or a canvas): its bytes are written into `into` from `at` on
+    bytes: W * tall,
+    take(picture, into, at, over) {   // a frame (an ImageBitmap, or a canvas) and, for three layers, what goes over it: its bytes are written into `into` from `at` on
       gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, picture);
+      if (over) { gl.activeTexture(gl.TEXTURE1); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, over); gl.activeTexture(gl.TEXTURE0); }
       gl.drawArrays(gl.TRIANGLES, 0, 3);
-      gl.readPixels(0, 0, W / 4, H * 3 / 2, gl.RGBA, gl.UNSIGNED_BYTE, into, at);
+      gl.readPixels(0, 0, W / 4, tall, gl.RGBA, gl.UNSIGNED_BYTE, into, at);
     },
   };
 }
@@ -3277,12 +3299,12 @@ function filmWorker() {               // (the text of this function IS the worke
   };
   const on = {
     start(m) {                        // (a piece is about 24 MB of whole frames: seven of them at 1080p, two at 4K)
-      press = filmPress(m.W, m.H); where = m.where;
+      press = filmPress(m.W, m.H, m.layers || 1); where = m.where;
       per = Math.max(1, Math.round(24e6 / press.bytes)); piece = new Uint8Array(per * press.bytes);
     },
     async frame(m) {
       let at = clock();
-      try { if (!failed) press.take(m.picture, piece, held++ * press.bytes); } finally { m.picture.close(); }
+      try { if (!failed) press.take(m.picture, piece, held++ * press.bytes, m.over); } finally { m.picture.close(); if (m.over) m.over.close(); }
       spent.take += clock() - at; at = clock();
       if (held === per) await send();
       spent.send += clock() - at;
@@ -3316,17 +3338,17 @@ async function filmDoor() {
   } catch (e) { /* a browser with no service workers, or a Pit Wall from before this: the page itself */ }
   return filmWay;
 }
-function filmHand(W, H, where, door) {      // the worker, and the page's end of it
+function filmHand(W, H, where, door, layers = 1) {      // the worker, and the page's end of it
   const text = URL.createObjectURL(new Blob([`${filmPress}\n(${filmWorker})();`], { type: "text/javascript" })), worker = new door.Worker(text);
   let out = 0, back = 0, error = null, done = null, wake = null;
   const stir = () => { const w = wake; wake = null; if (w) w(); }, moved = () => new Promise(r => { wake = r; });
   worker.onmessage = e => { const m = e.data; if (m.took) back += m.took; if (m.error) error = error || new Error(m.error); if (m.done) done = m; stir(); };
   worker.onerror = e => { error = error || new Error("The part of the export that sends the picture stopped: " + (e.message || "it gave no reason")); stir(); };
-  worker.postMessage({ op: "start", W, H, where });
+  worker.postMessage({ op: "start", W, H, where, layers });
   return {
     get error() { return error; },
-    async frame(picture) {            // (no more than six are on their way at once: each is a whole picture held on the graphics card)
-      worker.postMessage({ op: "frame", picture }, [picture]);
+    async frame(picture, over) {      // (no more than six are on their way at once: each is a whole picture held on the graphics card; over: what goes over it, for an enhanced film)
+      worker.postMessage({ op: "frame", picture, over }, over ? [picture, over] : [picture]);
       out++;
       while (out - back > 6 && !error) await moved();
     },
@@ -3662,13 +3684,18 @@ function drawResult(g, u, W) {                // the result, as the live page's 
     g.fillStyle = moved[0] === "▲" ? "#3ec43e" : "#e0605a"; g.font = `600 ${17 * u}px ${FACE}`; g.fillText(moved, x + w - 24 * u, ry);
   });
 }
-function drawFrame(g, W, H, st, want) {
+function drawFrame(g, W, H, st, want, over = false) {
   const u = H / 1080, up = st.again && st.again.screen && st.again.up && st.again.screen.kind !== "talk" ? st.again : null;
   // (a screen of the race has the race soft behind it, and the whole picture: the tower makes way for it)
   const soft = up && !up.win.card ? screenEase(up.since / 0.5) * screenEase(up.left / 0.4) : 0;
-  if (soft > 0.02) g.filter = `blur(${(10 * soft * u).toFixed(1)}px)`;
-  g.drawImage($("map3d"), 0, 0, W, H);
-  g.filter = "none";
+  if (over) {                           // only what goes over the picture, on a clear sheet: the picture itself is going through an enhancer (exportVideo)
+    g.clearRect(0, 0, W, H);            // (the race soft behind a screen is then the picture as it was, blurred, and faded in over the enhanced one)
+    if (soft > 0.02) { g.globalAlpha = soft; g.filter = `blur(${(10 * u).toFixed(1)}px)`; g.drawImage($("map3d"), 0, 0, W, H); g.filter = "none"; g.globalAlpha = 1; }
+  } else {
+    if (soft > 0.02) g.filter = `blur(${(10 * soft * u).toFixed(1)}px)`;
+    g.drawImage($("map3d"), 0, 0, W, H);
+    g.filter = "none";
+  }
   if (want.tower && soft < 0.98 && !(up && up.win.card)) { g.globalAlpha = 1 - soft; drawTower(g, u, st.t); g.globalAlpha = 1; }
   if (st.again && st.again.p != null) drawAgain(g, W, H, st.again, 44 * u);
   if (st.again && st.again.screen) drawScreen(g, W, H, st.again, st.t, 30 * u);
@@ -3695,6 +3722,7 @@ async function exportVideo(pick) {         // pick: a highlight's id, to export 
   const segs = what === "one" ? [REEL.find(q => q.id === pick) || chosenSeg || REEL[0]] : REEL;
   if (what !== "race" && (!segs.length || !segs[0])) return exNote("There are no highlights to export.");
   const small = exPick("exQuality") === "web";         // (how good each is, and so how big, is Pit Wall's to say: Exporter.LOOK)
+  const enhance = !$("exEnhanceRow").hidden && $("exEnhance").checked;      // (the picture through an outside program, and the graphics put on after: Exporter.enhancer)
   const steps = { start: "to begin the export", video: "with a piece of the picture", audio: "with the sound", finish: "to have the file put together", cancel: "to call the export off", reveal: "to show the file" };
   let door = window;                    // (where the export's requests are made from: filmDoor, asked below)
   const post = (step, body, q = "") => askPitwall(`/api/export/${step}${q}`, body, steps[step] || step, door)
@@ -3724,15 +3752,15 @@ async function exportVideo(pick) {         // pick: a highlight's id, to export 
     }
     const tidy = str => String(str).replace(/[^A-Za-z0-9]+/g, " ").trim();
     const token = Math.random().toString(36).slice(2) + Date.now().toString(36);      // (so a start that has to be asked twice is one export, not two)
-    const begun = await post("start", JSON.stringify({ session: sid, fps, token, raw: { h: H, quality: small ? "web" : "best", seconds: show.total },
-                                                       name: `${tidy(D.title)}${what === "race" ? " whole race" : whole ? " highlights" : " " + tidy(segs[0].title)} ${H}p${fps}${small ? "" : " sharp"}` }));
+    const begun = await post("start", JSON.stringify({ session: sid, fps, token, raw: { h: H, quality: small ? "web" : "best", seconds: show.total, enhance },
+                                                       name: `${tidy(D.title)}${what === "race" ? " whole race" : whole ? " highlights" : " " + tidy(segs[0].title)} ${H}p${fps}${small ? "" : " sharp"}${enhance ? " enhanced" : ""}` }));
     if (!begun.ok) throw new Error(begun.error);
     id = begun.id;
-    if (!begun.raw) throw new Error("Pit Wall needs restarting before it can export from this page (close its window, run run.bat again): the one that is running is older than the page.");
+    if (!begun.raw || (enhance && !begun.enhance)) throw new Error("Pit Wall needs restarting before it can export from this page (close its window, run run.bat again): the one that is running is older than the page.");
     // the engines, if one is chosen and wanted: what is heard at each frame is kept as it is filmed, for the sound
     const film = $("exEngines").checked && engineBank ? { bank: engineBank, fps, track: [], hearing: engineHearing(), was: null, slider: Math.pow(+$("engineVol").value / 60, 1.5) } : null;
     const q = `?id=${id}`, stretches = filmStretches(show, fps), spf = Math.round(FILM.rate / fps);
-    hand = filmHand(W, H, `${location.origin}/api/export/video${q}`, door);
+    hand = filmHand(W, H, `${location.origin}/api/export/video${q}`, door, enhance ? 3 : 1);
     let failed = null, hearing = Promise.resolve(), mixed = 0, gone = 0;
     // the sound: each stretch of it is made as soon as its frames have been filmed, and sent (see filmStretch)
     const sound = async filmed => {
@@ -3744,6 +3772,7 @@ async function exportVideo(pick) {         // pick: a highlight's id, to export 
     };
     // (each frame is drawn on a picture of its own, which is then handed over whole: nothing is copied)
     const sheet = new OffscreenCanvas(W, H), g = sheet.getContext("2d", { alpha: false });
+    const cover = enhance ? new OffscreenCanvas(W, H) : null, go = cover ? cover.getContext("2d") : null;      // (for an enhanced film: what goes over the picture, by itself)
     const spent = { draw: 0, hand: 0, sound: 0 }, clock = () => performance.now();       // (milliseconds: where the export's time went, for a test to read)
     Stage3D.fixed = [W, H];
     Stage3D.quality = 2;                // (a film is made with everything on, whatever a busy moment made of the picture being watched: it is off the clock)
@@ -3766,10 +3795,10 @@ async function exportVideo(pick) {         // pick: a highlight's id, to export 
         else { film.hearing.was = null; film.hearing.on.clear(); film.track.push(null); }
       }
       T = st.t;
-      drawFrame(g, W, H, st, want);
-      if (window.__filmFrame) window.__filmFrame(sheet, n);        // (for a test: the frame as it goes)
+      if (enhance) { g.drawImage($("map3d"), 0, 0, W, H); drawFrame(go, W, H, st, want, true); } else drawFrame(g, W, H, st, want);
+      if (window.__filmFrame) window.__filmFrame(sheet, n, cover);        // (for a test: the frame as it goes)
       spent.draw += clock() - from;
-      { const at = clock(); await hand.frame(sheet.transferToImageBitmap()); spent.hand += clock() - at; }
+      { const at = clock(); await hand.frame(sheet.transferToImageBitmap(), cover ? cover.transferToImageBitmap() : null); spent.hand += clock() - at; }
       if (n % fps === 0) { const at = clock(); await sound(n + 1); spent.sound += clock() - at; }
       if (n % 6 === 0) {
         const left = (performance.now() - began) / (n + 1) * (frames - n) / 1000;
@@ -3789,7 +3818,17 @@ async function exportVideo(pick) {         // pick: a highlight's id, to export 
     if (failed) throw failed;
     if (window.__keepFilm) window.__film = { show, film };         // (for a test to measure the mix)
     exNote("Putting the file together…");
-    const done = await post("finish", null, q);
+    let done = await post("finish", null, q);
+    while (done.ok && done.working) {   // its picture is with the enhancer, which may be an hour over it: Pit Wall is asked how it is getting on
+      await wait(1500);
+      if (exporting.cancel) throw new Error("Cancelled.");
+      const now = await post("progress", null, q);
+      if (!now.ok) throw new Error(now.error);
+      if (!now.working) { done = now.result; break; }
+      const stage = now.stage.charAt(0).toUpperCase() + now.stage.slice(1);
+      $("exBar").style.width = now.total ? (now.frames / now.total * 100).toFixed(1) + "%" : "100%";
+      exNote(now.total ? `${stage}: ${now.frames} of ${now.total} frames` : `${stage} · ${Math.floor(now.seconds / 60)}:${pad(now.seconds % 60)} so far`);
+    }
     id = null;
     if (!done.ok) throw new Error(done.error);
     $("exBar").style.width = "100%";
@@ -3810,6 +3849,11 @@ $("export").onclick = () => {
   const box = $("exportBox");
   box.hidden = !box.hidden; $("webBox").hidden = true;
   $("exEnginesRow").hidden = !engineBank;       // (the engines go in the film if one is chosen in the Engines menu; the slider there is how loud)
+  // (and the picture goes through an enhancer if this PC has one set up: Pit Wall says what it is called, and no more)
+  if (!box.hidden && /^http/.test(location.protocol)) fetch("/api/export/enhancer", { method: "POST", headers: { "X-Pitwall": "1" } }).then(r => r.json()).then(e => {
+    $("exEnhanceRow").hidden = !e.name;
+    if (e.name) $("exEnhanceText").textContent = `Put the picture through ${e.name}, and the graphics on afterwards (a good deal slower)`;
+  }).catch(() => { $("exEnhanceRow").hidden = true; });
   if (engineBank) $("exEnginesText").textContent = `Engine sounds (${$("enginePick").selectedOptions[0].textContent}), kept under the hosts`;
   if (!box.hidden && !exporting) exNote(`The reel is ${REEL.length} highlights. "One highlight" is the one you played last${chosenSeg ? `: ${chosenSeg.title}` : " (or the first)"}. "Whole race" is all ${Math.round((TEND - T0) / 60)} minutes of it as a broadcast. The file goes in this session's folder.`);
 };
@@ -3926,7 +3970,7 @@ async function boot() {
     const voice = race.voiceBytes ? download(`races/${encodeURIComponent(race.id)}/voice.bin`).then(inflate).then(b => JSON.parse(new TextDecoder().decode(b))).catch(() => null) : null;
     start(D, { voice });
     page("veil").hidden = true;
-    if (D.track3d) import("./replay3d.js?v=57d61695").catch(e => console.warn("The 3D view could not be loaded, so the map is all there is:", e));
+    if (D.track3d) import("./replay3d.js?v=8924c3f3").catch(e => console.warn("The 3D view could not be loaded, so the map is all there is:", e));
   } catch (e) {
     veilSay("That didn't open", e.message || String(e), null);
     console.error(e);

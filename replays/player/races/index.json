@@ -1,6 +1,24 @@
 {
  "version": 1,
- "races": [],
+ "races": [
+  {
+   "id": "preseason-2026",
+   "title": "League Night · Losail · 29 laps",
+   "track": "Losail",
+   "type": "Race",
+   "date": "2026-10-08",
+   "laps": 29,
+   "cars": 22,
+   "drivers": 7,
+   "winner": "SirTasteTheRambo",
+   "minutes": 53,
+   "bytes": 4430495,
+   "voiceBytes": 9122114,
+   "season": null,
+   "round": null,
+   "built": "2026-10-13T00:20:35"
+  }
+ ],
  "site": {
   "brand": "Slayter League",
   "back": "../",

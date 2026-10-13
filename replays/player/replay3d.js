@@ -2035,31 +2035,94 @@ function venueLot(lay, p, far) {        // a car park: tarmac with bays and cars
   m.position.set(p.at[0], y + 0.04, p.at[1]); m.rotation.y = yaw; m.receiveShadow = false; lay.add(m);
   for (let a = -long / 2 + 35; a < long / 2; a += 70) for (let b = -wide / 2 + 35; b < wide / 2; b += 70) far.cool.push(p.at[0] + a * sn + b * cs, y + 10, p.at[1] + a * cs - b * sn);
 }
-function venueTrees(lay) {              // low dark trees and shrubs, in the gardens the venue says
-  const where = [];
+/* WHAT IS GREEN, AND WHERE. A circuit in the desert is bare sand with a few planted places, so nothing is planted by
+   guess: the venue's file has every tree, every row of trees, every lawn and every planted bed that OpenStreetMap's
+   mappers have drawn from aerial pictures (venues\green.py), and each is stood where it is. (An older venue file
+   may still give patches of trees by the lap, and those are scattered as they were.)
+   The plants are sculpted on this PC from a concept picture and rebuilt as something a circuit can hold thousands
+   of (venues\plant.py; venues\local\plant_<name>.glb): a tree near the road is its trunk with its leaves on cards,
+   a tree far from it is three crossed photographs of itself (plant_<name>_far.glb), a shrub is one skin and a clump
+   of grass its own photographs. Where a plant's file has not come (the website, or a PC that has not made them)
+   a low dark shape stands in its place. */
+const PLANTS = { tree: [["sidr", 0.4], ["ghaf", 0.35], ["acacia", 0.25]], low: [["shrub", 0.55], ["grass", 0.45]],
+                 near: 110,       // a tree within this many metres of the road is the whole model
+                 row: 18,         // a row of trees has one this often
+                 bed: 16 };       // a planted bed has a shrub or a grass to this many square metres
+function venueTrees(lay) {              // the trees, shrubs, grasses and lawns
+  const where = [], low = [], own = seeded(41);      // (the plants have dice of their own, so that nothing else the circuit is built with moves)
   for (const patch of V.trees || []) {
     const L = patch.lap;
     for (let i = 0; i < patch.n; i++) { const p = at(vSec(L.from + rnd() * (L.to - L.from)), L.near + rnd() * (L.far - L.near)); where.push([p[0], p[1], p[2], 0.7 + rnd() * 0.9]); }
+    for (let i = 0; i < patch.n * 1.1; i++) { const p = at(vSec(L.from + own() * (L.to - L.from)), L.near + own() * (L.far - L.near)); low.push([p[0], p[1], p[2], own() * TAU, 0.75 + own() * 0.6, own()]); }
   }
-  if (!where.length) return;
+  for (let i = 0; i < (V.dice || 0); i++) rnd();      // (the throws of the circuit's dice that its trees used to take, thrown still: nothing else it is built with moved when the trees went to where the map has them)
+  for (const [x, z] of V.treesAt || []) where.push([x, vFloor(x, z), z, 0.6 + own() * 0.8]);
+  for (const row of V.treeRows || []) for (let i = 0; i + 1 < row.length; i++) {
+    const [x0, z0] = row[i], [x1, z1] = row[i + 1], long = Math.hypot(x1 - x0, z1 - z0);
+    for (let d = own() * PLANTS.row; d < long; d += PLANTS.row) { const x = x0 + (x1 - x0) * d / long, z = z0 + (z1 - z0) * d / long; where.push([x, vFloor(x, z), z, 0.75 + own() * 0.4]); }
+  }
+  const inside = (ring, x, z) => { let odd = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [xi, zi] = ring[i], [xj, zj] = ring[j]; if ((zi > z) !== (zj > z) && x < (xj - xi) * (z - zi) / (zj - zi) + xi) odd = !odd; } return odd; };
+  const span = ring => { let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity, twice = 0; ring.forEach(([x, z], i) => { const [u, v] = ring[(i + 1) % ring.length]; twice += x * v - u * z; x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }); return { x0, x1, z0, z1, area: Math.abs(twice) / 2 }; };
+  for (const ring of V.gardens || []) {            // a planted bed: shrubs and grasses all over it
+    const q = span(ring), want = Math.round(q.area / PLANTS.bed);
+    for (let got = 0, tries = 0; got < want && tries < want * 40; tries++) { const x = q.x0 + own() * (q.x1 - q.x0), z = q.z0 + own() * (q.z1 - q.z0); if (inside(ring, x, z)) { low.push([x, vFloor(x, z), z, own() * TAU, 0.75 + own() * 0.6, own()]); got++; } }
+  }
+  if ((V.lawns || []).length) {                    // a lawn: its outline, laid flat
+    const turf = new THREE.MeshStandardMaterial({ color: 0x17361d, roughness: 1 });      // (dark: under the floodlights a brighter green reads as paint)
+    toySkin.push([turf, { color: new THREE.Color(0x4f9d4b) }]);
+    for (const ring of V.lawns) {
+      const q = span(ring), m = new THREE.Mesh(new THREE.ShapeGeometry(new THREE.Shape(ring.map(([x, z]) => new THREE.Vector2(x, -z)))).rotateX(-Math.PI / 2), turf);
+      m.position.y = vFloor((q.x0 + q.x1) / 2, (q.z0 + q.z1) / 2) + 0.05; m.receiveShadow = true; lay.add(m);
+    }
+  }
+  if (!where.length && !low.length) return;
   const leaf = new THREE.MeshStandardMaterial({ color: 0x1f4f2c, roughness: 1, flatShading: true }), bark = new THREE.MeshStandardMaterial({ color: 0x3b2f24, roughness: 1 });
   toySkin.push([leaf, { color: new THREE.Color(0x4f9d4b) }], [bark, { color: new THREE.Color(0x7a5c40) }]);      // (dark, for the night: in the model's daylight they are green)
-  const crown = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(2.4, 1).scale(1, 0.8, 1).translate(0, 4.2, 0), leaf, where.length);
-  const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.16, 0.24, 2.6, 6).translate(0, 1.3, 0), bark, where.length), d = new THREE.Object3D();
-  where.forEach(([x, y, z, s], i) => { d.position.set(x, y, z); d.rotation.y = rnd() * TAU; d.scale.set(s, s * (0.8 + rnd() * 0.5), s); d.updateMatrix(); crown.setMatrixAt(i, d.matrix); trunk.setMatrixAt(i, d.matrix); });
+  const crown = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(2.4, 1).scale(1, 0.8, 1).translate(0, 4.2, 0), leaf, Math.max(1, where.length));
+  const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.16, 0.24, 2.6, 6).translate(0, 1.3, 0), bark, Math.max(1, where.length)), d = new THREE.Object3D(), turns = [];
+  crown.count = trunk.count = where.length;
+  where.forEach(([x, y, z, s], i) => { d.position.set(x, y, z); d.rotation.y = turns[i] = own() * TAU; d.scale.set(s, s * (0.8 + own() * 0.5), s); d.updateMatrix(); crown.setMatrixAt(i, d.matrix); trunk.setMatrixAt(i, d.matrix); });
   crown.castShadow = trunk.castShadow = true; lay.add(crown); lay.add(trunk);
+  const road = []; for (let k = 0; k < K.centre.length; k += 3) road.push(K.centre[k][0], K.centre[k][2]);      // how far each tree is from the road
+  const off = (x, z) => { let least = Infinity; for (let i = 0; i < road.length; i += 2) { const far = (road[i] - x) * (road[i] - x) + (road[i + 1] - z) * (road[i + 1] - z); if (far < least) least = far; } return Math.sqrt(least); };
+  const pick = (list, r) => { let sum = 0; for (const [name, share] of list) { sum += share; if (r < sum) return name; } return list[list.length - 1][0]; };
+  const places = {}, put = (name, place) => (places[name] = places[name] || []).push(place);
+  where.forEach(([x, y, z, s], i) => put(pick(PLANTS.tree, own()) + (off(x, z) > PLANTS.near ? "_far" : ""), [x, y, z, turns[i], 0.55 + 0.45 * s, i]));
+  for (const [x, y, z, turn, size, r] of low) put(pick(PLANTS.low, r), [x, y, z, turn, size, -1]);
+  const gone = new THREE.Matrix4().makeScale(0, 0, 0);
+  for (const [name, list] of Object.entries(places)) vModel("plant_" + name, parts => {
+    vCopies(lay, parts, list, { cast: !name.endsWith("_far"), wear: (kind, p) => { if (kind === "leaf") { p.material.alphaTest = Math.max(p.material.alphaTest || 0, 0.4); p.material.transparent = false; if (name.endsWith("_far")) p.material.color.setScalar(0.62); } return p.material; } });      // (cut out by its picture; every card has a back of its own, so neither side is drawn from behind)
+    for (const place of list) if (place[5] >= 0) { crown.setMatrixAt(place[5], gone); trunk.setMatrixAt(place[5], gone); }      // and the shape that stood in for it goes
+    crown.instanceMatrix.needsUpdate = trunk.instanceMatrix.needsUpdate = true;
+  });
 }
 function venuePanels(lay) {             // the light panels the marshals' flags are shown on, on the fence where the circuit has them: green, the track is clear
   const list = V.panels || [];
   if (!list.length) return;
   const face = new THREE.InstancedMesh(new THREE.PlaneGeometry(1.3, 0.9), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.25, 3.2, 0.5), side: both }), list.length);
   const back = new THREE.InstancedMesh(new THREE.BoxGeometry(1.6, 1.2, 0.25), vMat("dark"), list.length), d = new THREE.Object3D();
+  const sides = V.panelSides || [];      // (which side of the road each is on, where the venue knows: else the outside of its bend)
   list.forEach((metres, i) => {
-    const k = vSec(metres), sign = bend[wrap(k)] > 0 ? -1 : 1, w = (sign < 0 ? WALL.L : WALL.R)[wrap(k)], p = at(k, sign * (w + 0.5)), c = K.centre[wrap(k - 12)];
+    const k = vSec(metres), sign = sides[i] || (bend[wrap(k)] > 0 ? -1 : 1), w = (sign < 0 ? WALL.L : WALL.R)[wrap(k)], p = at(k, sign * (w + 0.5)), c = K.centre[wrap(k - 12)];
     d.position.set(p[0], p[1] + 3.4, p[2]); d.lookAt(c[0], p[1] + 3.4, c[2]); d.updateMatrix(); back.setMatrixAt(i, d.matrix);
     d.translateZ(0.14); d.updateMatrix(); face.setMatrixAt(i, d.matrix);
   });
   lay.add(back); lay.add(face);
+}
+/* THE MARSHAL POSTS, each where the FIA's own circuit map has it (venues\fia_map.py reads them off the drawing: 45
+   at Lusail, MP0.0 to MP16.9, each on its side of the road). At this circuit a post is a bay behind the barrier:
+   concrete blocks with framed mesh panels on them, open at the back (the fence-maker's photographs of the place).
+   In each stands a wheeled extinguisher, where this PC has the model (venues\local\trolley.glb, the one GPT Astra
+   made by itself: venues\thing.py). */
+function venuePosts(lay) {
+  const list = V.posts || [];
+  if (!list.length) return;
+  const long = 3.4, deep = 1.9, block = 0.85, mesh = 2.1, end = long / 2 - 0.22;
+  const blocks = merge([new THREE.BoxGeometry(long, block, 0.45).translate(0, block / 2, 0), new THREE.BoxGeometry(0.45, block, deep).translate(-end, block / 2, deep / 2), new THREE.BoxGeometry(0.45, block, deep).translate(end, block / 2, deep / 2)]);
+  const panels = merge([new THREE.PlaneGeometry(long, mesh).translate(0, block + mesh / 2, 0), new THREE.PlaneGeometry(deep, mesh).rotateY(Math.PI / 2).translate(-end, block + mesh / 2, deep / 2), new THREE.PlaneGeometry(deep, mesh).rotateY(Math.PI / 2).translate(end, block + mesh / 2, deep / 2)]);
+  const places = list.map(([metres, sign]) => { const k = vSec(metres), w = (sign < 0 ? WALL.L : WALL.R)[wrap(k)], p = at(k, sign * (w + 1.2)); return [p[0], p[1], p[2], vAlong(k) + (sign > 0 ? 0 : Math.PI), 1]; });      // (its open back away from the road)
+  vCopies(lay, [{ kind: "body", geometry: blocks, material: vMat("grey") }, { kind: "body", geometry: panels, material: vMat("truss") }], places);
+  vModel("trolley", parts => vCopies(lay, parts, places.map(([x, y, z, turn]) => [x + Math.cos(turn) * 0.9 + Math.sin(turn) * 1.0, y, z - Math.sin(turn) * 0.9 + Math.cos(turn) * 1.0, turn + 2.6, 1])));
 }
 function venueArena(lay, A) {           // the dome on the skyline: white, a dark lattice over it, lit from below
   const skin = new THREE.MeshStandardMaterial({ map: tex(512, 256, (c, w, h) => {
@@ -2089,6 +2152,7 @@ function venueBuild(lay) {
   for (const p of V.carParks || []) venueLot(lay, p, far);
   venueTrees(lay);
   venuePanels(lay);
+  venuePosts(lay);
   if (V.arena) { venueArena(lay, V.arena); for (let i = 0; i < 28; i++) { const a = i / 28 * TAU; far.warm.push(V.arena.at[0] + Math.cos(a) * V.arena.size[0] * 0.62, vFloor(...V.arena.at) + 9, V.arena.at[1] + Math.sin(a) * V.arena.size[1] * 0.62); } }
   for (const t of V.towers || []) {      // a mast with a red lamp on it
     const y = vFloor(t[0], t[1]), mast = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 1.6, 60, 4, 6, true), vMat("truss"));

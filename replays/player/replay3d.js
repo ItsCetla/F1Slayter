@@ -1551,13 +1551,13 @@ function init() {
   ready = true;
 }
 // f1.cetla.dev: how many device pixels each CSS pixel of the picture gets (put here by tools/add-mobile-player.mjs).
-// A desktop as the player has it. A phone keeps its sharpness whatever effects are off: up to 2 (1.5 when struggling),
-// and never past a budget of about 1.4 million pixels, so a big picture on its side does not swamp the phone.
+// A desktop as the player has it. A phone draws at its screen's own sharpness (up to 3; 2 once it is struggling and
+// its effects are down), whatever effects are off, and never past about 2.6 million pixels for the whole picture.
 const PHONE_SCREEN = matchMedia("(pointer: coarse)").matches && Math.min(screen.width, screen.height) < 600;
 function sharpness(w, h) {
   const dpr = window.devicePixelRatio || 1;
   if (!PHONE_SCREEN) return quality > 1 ? Math.min(dpr, 2) : 1;
-  return Math.max(1, Math.min(dpr, quality > 0 ? 2 : 1.5, Math.sqrt(1.4e6 / Math.max(1, w * h))));
+  return Math.max(1, Math.min(dpr, quality > 0 ? 3 : 2, Math.sqrt(2.6e6 / Math.max(1, w * h))));
 }
 function resize() {                   // the size of its place on the page, or the size it has been told to film at
   const set = api.fixed, r = canvas.getBoundingClientRect();

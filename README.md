@@ -82,8 +82,8 @@ After copying a new player in, put this site's phone additions back into it (the
 `node tools/add-mobile-player.mjs`. The tests fail until it is.
 
 With `"site"` in Pit Wall's `web.json` set to a clone of this repo, steps 2 and 3 happen by
-themselves. The round's replay page then shows the 3D picture with its scrubber and an
-**Open viewer** button for the full viewer. A round has one `replay` link, so a 3D replay takes the
+themselves. Every Watch and Replay button for that round (replays page, schedule, results, home) then
+opens the race straight in the viewer, and an old `/replays/?round=N` link goes there too. A round has one `replay` link, so a 3D replay takes the
 place of a video link on that round. The 3D view loads three.js from cdn.jsdelivr.net; without it
 the viewer falls back to the 2D track map.
 
@@ -99,7 +99,8 @@ link like a round's `replay`:
 ```
 
 It is never counted: no results, no standings, no round number. `/replays/` shows it (leading the page
-while the season has no race replays yet), marked "Not a points race", and `/replays/?watch=<id>` plays it.
+while the season has no race replays yet), marked "Not a points race". Watch opens it: a 3D replay straight in the viewer, a video on
+`/replays/?watch=<id>`.
 `short` is the few letters on its thumbnail. `id` is lower-case letters, digits and dashes.
 
 ### Schedule a round

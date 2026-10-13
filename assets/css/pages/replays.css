@@ -751,55 +751,6 @@
   border: 0;
 }
 
-/* The 3D viewer's embed carries its own scrubber under the picture, so it needs more height than 16:9. */
-.rp-player--pitwall {
-  aspect-ratio: 16 / 11;
-}
-
-@media (max-width: 560px) {
-  .rp-player--pitwall {
-    aspect-ratio: auto;
-    height: min(78vh, 560px);
-  }
-}
-
-.rp-viewer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px 20px;
-  margin-top: 14px;
-  padding: 16px 18px;
-  border: 1px solid var(--carbon-line);
-  border-left: 4px solid var(--red);
-  border-radius: var(--radius);
-  background: var(--carbon-2);
-}
-
-.rp-viewer__copy {
-  flex: 1 1 320px;
-  min-width: 0;
-}
-
-.rp-viewer__title {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--red-on-dark);
-}
-
-.rp-viewer__text {
-  margin-top: 4px;
-  font-size: 15px;
-  color: var(--on-dark-2);
-}
-
-.rp-viewer .btn {
-  flex: none;
-}
-
 .rp-player--link .rp-screen {
   position: absolute;
   inset: 0;

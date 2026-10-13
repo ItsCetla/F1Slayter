@@ -1,7 +1,7 @@
 import {
   parseVideo, parseStart, roundStatus, roundWinner, latestCompletedRound, nextRound, teamColor, pointsFor,
 } from "../league.js";
-import { initPage, esc, link, asset, flag, countryName, driverId, roundTitle, isTbd, fmt } from "../ui.js";
+import { initPage, esc, link, watchHref, flag, countryName, driverId, roundTitle, isTbd, fmt } from "../ui.js";
 
 // Spaced so it reads right inline; flex rows drop the spaces and use their gap.
 const SEP = ' <span class="rp-sep" aria-hidden="true">·</span> ';
@@ -46,6 +46,7 @@ function render({ league, season, params }) {
   if (watchParam) {
     const extra = (season.extras || []).find((e) => e.id === watchParam);
     const video = videoOf(extra);
+    if (video && video.kind === "pitwall") return location.replace(watchHref(extra));
     if (!extra || !video) {
       document.title = "Replay not found — Slayter League";
       main.innerHTML = notFoundView(season, watchParam, "replay");
@@ -61,6 +62,7 @@ function render({ league, season, params }) {
     const n = /^\d+$/.test(roundParam) ? Number(roundParam) : NaN;
     const round = season.rounds.find((r) => r.round === n);
     const video = videoOf(round);
+    if (video && video.kind === "pitwall") return location.replace(watchHref(round));
     if (!round) {
       document.title = "Race not found — Slayter League";
       main.innerHTML = notFoundView(season, roundParam);
@@ -110,11 +112,6 @@ function isRaced(round) {
 function dateTag(round, format = fmt.short) {
   const start = parseStart(round);
   return start ? `<time datetime="${esc(start.toISOString())}">${esc(format(start))}</time>` : "Date TBC";
-}
-
-// The site's own 3D race viewer, opened on one race.
-function viewerHref(video) {
-  return `${asset("replays/player/")}?race=${encodeURIComponent(video.id)}`;
 }
 
 function externalLink(video, text, cls = "") {
@@ -170,7 +167,7 @@ function roundCard(round) {
 }
 
 function replayCard(league, round) {
-  return `<li><a class="rp-card card" href="${link("replays/", { round: round.round })}">
+  return `<li><a class="rp-card card" href="${watchHref(round, { round: round.round })}">
     ${thumb(round, videoOf(round))}
     <span class="rp-card__body">
       <span class="rp-card__meta">Round ${esc(round.round)}${SEP}${dateTag(round)}</span>
@@ -182,7 +179,7 @@ function replayCard(league, round) {
 
 // A session outside the rounds: its own card, and the hero's feature when the season has no race replays yet.
 function extraHref(extra) {
-  return link("replays/", { watch: extra.id });
+  return watchHref(extra, { watch: extra.id });
 }
 function extraMeta(extra, format = fmt.short) {
   return `${extra.start ? dateTag(extra, format) : ""}${extra.start && extra.circuit ? SEP : ""}${extra.circuit ? esc(extra.circuit) : ""}`;
@@ -306,12 +303,12 @@ function galleryView(league, season, rounds, extras = []) {
           <h1 class="rp-hero__title">Race <em>replays</em></h1>
           <p class="lede">Every race in full, from lights out to the chequered flag. ${rounds.length} of ${raced} ${raced === 1 ? "race" : "races"} ${rounds.length === 1 ? "is" : "are"} ready to watch.</p>
           <div class="btn-row rp-hero__actions">
-            <a class="btn" href="${link("replays/", { round: latest.round })}">${PLAY_GLYPH}<span>Watch latest</span></a>
+            <a class="btn" href="${watchHref(latest, { round: latest.round })}">${PLAY_GLYPH}<span>Watch latest</span></a>
             <a class="btn btn--ghost" href="${link("results/")}">${esc(season.label)} results</a>
           </div>
         </div>
         <div class="rp-hero__visual">
-          <a class="rp-feature" href="${link("replays/", { round: latest.round })}">
+          <a class="rp-feature" href="${watchHref(latest, { round: latest.round })}">
             ${thumb(latest, videoOf(latest))}
             <span class="rp-feature__body">
               <span class="rp-feature__label">Latest replay · Round ${esc(latest.round)}</span>
@@ -367,10 +364,6 @@ function stageHead(season, round, label = "") {
 
 function player(name, video) {
   const title = `${name} replay`;
-  if (video.kind === "pitwall") {
-    // embed=1 is the viewer's picture and scrubber only; the full viewer is a button away.
-    return `<div class="rp-player rp-player--pitwall"><iframe src="${esc(`${viewerHref(video)}&embed=1`)}" title="${esc(`${title}, 3D`)}" allow="fullscreen; clipboard-write" allowfullscreen loading="lazy"></iframe></div>`;
-  }
   if (video.kind === "youtube") {
     const src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(video.id)}?rel=0&start=${Math.max(0, video.start)}`;
     return `<div class="rp-player"><iframe src="${esc(src)}" title="${esc(title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`;
@@ -443,7 +436,7 @@ function steps(season, round) {
     if (!target) {
       return `<span class="rp-step rp-step--${dir}" aria-disabled="true"><span class="rp-step__dir">${label}</span><span class="rp-step__name">${dir === "prev" ? "None earlier" : "None later"}</span></span>`;
     }
-    return `<a class="rp-step rp-step--${dir}" href="${link("replays/", { round: target.round })}" rel="${dir}">
+    return `<a class="rp-step rp-step--${dir}" href="${watchHref(target, { round: target.round })}" rel="${dir}">
       <span class="rp-step__dir">${dir === "prev" ? CHEVRON.prev : ""}<span>${label}</span>${dir === "next" ? CHEVRON.next : ""}</span>
       <span class="rp-step__name">R${esc(target.round)} · ${esc(roundTitle(target))}</span>
     </a>`;
@@ -467,26 +460,15 @@ function moreReplays(league, season, round) {
   </section>`;
 }
 
-// Under a 3D replay: what the full viewer adds to the embedded picture.
-function viewerCallout(video) {
-  return `<div class="rp-viewer">
-    <div class="rp-viewer__copy">
-      <p class="rp-viewer__title">Full race viewer</p>
-      <p class="rp-viewer__text">Follow any driver from the cockpit, from above or on the broadcast cameras, with their race lap by lap, every pass they made and lost, and their own highlights.</p>
-    </div>
-    <a class="btn" href="${esc(viewerHref(video))}">${PLAY_GLYPH}<span>Open viewer</span></a>
-  </div>`;
-}
-
 function playerView(league, season, round, video) {
-  const embedded = video.kind !== "link", pitwall = video.kind === "pitwall";
+  const embedded = video.kind !== "link";
   return `<section class="rp-stage band-dark">
       <div class="container">
-        ${stageHead(season, round, pitwall ? "3D race replay" : "Full race replay")}
+        ${stageHead(season, round, "Full race replay")}
         <div class="rp-watch">
           <div class="rp-watch__main">
             ${player(roundTitle(round), video)}
-            ${pitwall ? viewerCallout(video) : `<p class="rp-open">${embedded ? "<span>Player not loading?</span>" : ""}${externalLink(video, `Open on ${hostName(video)}`)}</p>`}
+            <p class="rp-open">${embedded ? "<span>Player not loading?</span>" : ""}${externalLink(video, `Open on ${hostName(video)}`)}</p>
             ${steps(season, round)}
           </div>
           <div class="rp-watch__side">${tower(league, round)}</div>
@@ -498,21 +480,21 @@ function playerView(league, season, round, video) {
 
 // A session outside the rounds, with its replay.
 function extraView(league, season, extra, video) {
-  const pitwall = video.kind === "pitwall", country = extra.country ? countryName(extra.country) : "";
+  const country = extra.country ? countryName(extra.country) : "";
   const meta = [country ? `<span class="rp-stage__place">${flag(extra.country, country)}<span>${esc(country)}</span></span>` : "",
     extra.circuit ? `<span>${esc(extra.circuit)}</span>` : "", extra.start ? `<span>${dateTag(extra, fmt.long)}</span>` : ""].filter(Boolean);
   return `<section class="rp-stage band-dark">
       <div class="container">
         <div class="rp-stage__head">
           <a class="rp-back" href="${link("replays/")}">${CHEVRON.prev}<span>All replays</span></a>
-          <p class="kicker">${esc(season.label)} · Not a points race · ${pitwall ? "3D race replay" : "Full replay"}</p>
+          <p class="kicker">${esc(season.label)} · Not a points race · Full replay</p>
           <h1 class="rp-stage__title">${esc(extra.name)}</h1>
           ${meta.length ? `<p class="rp-stage__meta">${meta.join(SEP)}</p>` : ""}
         </div>
         <div class="rp-watch rp-watch--solo">
           <div class="rp-watch__main">
             ${player(extra.name, video)}
-            ${pitwall ? viewerCallout(video) : `<p class="rp-open">${video.kind !== "link" ? "<span>Player not loading?</span>" : ""}${externalLink(video, `Open on ${hostName(video)}`)}</p>`}
+            <p class="rp-open">${video.kind !== "link" ? "<span>Player not loading?</span>" : ""}${externalLink(video, `Open on ${hostName(video)}`)}</p>
           </div>
         </div>
       </div>

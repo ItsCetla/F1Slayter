@@ -7,6 +7,8 @@
   const SIDEWAYS = matchMedia("(orientation: landscape)");
   const $ = id => document.getElementById(id);
   const TABS = [["order", "Order"], ["driver", "Driver"], ["moments", "Moments"]];
+  const FULL_ICON = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg>';
+  const SHRINK_ICON = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2v4H2M14 6h-4V2M10 14v-4h4M2 10h4v4"/></svg>';
   const CAMERA_ICON = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="1.5" y="4" width="10" height="8" rx="1.5"/><path d="M11.5 7l3-2v6l-3-2"/></svg>';
   let built = false, tab = "order", timer = 0;
 
@@ -27,6 +29,11 @@
     const cam = el("button", { id: "mCam", type: "button", "aria-haspopup": "dialog", "aria-label": "How the race is shown" }, `${CAMERA_ICON}<span>Map</span>`);
     cam.addEventListener("click", openSheet);
     stage.appendChild(cam);
+
+    const full = el("button", { id: "mFull", type: "button", "aria-label": "Full screen" }, FULL_ICON);
+    full.addEventListener("click", () => (isFull() ? leaveFull() : enterFull("button")));
+    stage.appendChild(full);
+    stage.appendChild(el("div", { id: "mFullAsk", hidden: "" }, "Tap for full screen"));
 
     const speed = el("button", { id: "mSpeed", class: "btn", type: "button", "aria-label": "Playback speed" }, "1×");
     speed.addEventListener("click", () => {      // the next speed along, round to the first
@@ -149,19 +156,79 @@
   function openSheet() { renderSheet(); $("mSheet").setAttribute("open", ""); }
   function closeSheet() { const s = $("mSheet"); if (s) s.removeAttribute("open"); }
 
+  // ---- full screen. A browser only goes full screen from a tap, so turning the phone sideways lays the race out
+  // edge to edge at once and asks; where the browser wants a tap first, the next tap anywhere does it. An iPhone
+  // will not put a page full screen at all (only a video), so there "full screen" is the edge-to-edge layout.
+  const root = document.documentElement;
+  const canFull = !!(root.requestFullscreen || root.webkitRequestFullscreen) && (document.fullscreenEnabled || document.webkitFullscreenEnabled);
+  let fullBy = null, armed = false;      // what put us in full screen ("button" or "turn"); a tap still owed to the browser
+  const fsElement = () => document.fullscreenElement || document.webkitFullscreenElement;
+  const isFull = () => !!fsElement() || document.body.classList.contains("theatre");
+  function request() {
+    const go = root.requestFullscreen ? root.requestFullscreen({ navigationUI: "hide" }) : root.webkitRequestFullscreen();
+    return Promise.resolve(go);
+  }
+  function enterFull(by) {
+    fullBy = by;
+    if (!canFull) { document.body.classList.add("theatre"); syncFull(); return Promise.resolve(); }
+    return request().then(() => {
+      disarm();
+      // from the button with the phone upright, turn the picture sideways as a video app does (Android; others ignore it)
+      if (by === "button" && screen.orientation && screen.orientation.lock) screen.orientation.lock("landscape").catch(() => {});
+    }, () => { if (by === "turn") arm(); });
+  }
+  function leaveFull() {
+    fullBy = null; disarm();
+    document.body.classList.remove("theatre");
+    if (screen.orientation && screen.orientation.unlock) try { screen.orientation.unlock(); } catch (e) { /* not locked */ }
+    if (fsElement()) (document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen && document.webkitExitFullscreen())?.catch?.(() => {});
+    syncFull();
+  }
+  function owedTap() { if (armed) enterFull("turn"); }
+  function arm() {
+    if (armed) return;
+    armed = true; $("mFullAsk").hidden = false;
+    addEventListener("pointerup", owedTap, true);
+    setTimeout(() => { if ($("mFullAsk")) $("mFullAsk").hidden = true; }, 4000);      // the pill goes; the tap still works
+  }
+  function disarm() {
+    armed = false; if ($("mFullAsk")) $("mFullAsk").hidden = true;
+    removeEventListener("pointerup", owedTap, true);
+  }
+  function turned() {
+    if (!document.body.classList.contains("m")) return;
+    if (SIDEWAYS.matches) { if (!isFull()) enterFull("turn"); }
+    else if (fullBy === "turn") leaveFull();
+    else disarm();
+  }
+  function syncFull() {
+    const on = isFull(), b = $("mFull");
+    if (!b) return;
+    b.innerHTML = on ? SHRINK_ICON : FULL_ICON;
+    b.setAttribute("aria-label", on ? "Leave full screen" : "Full screen");
+    document.body.classList.toggle("full", on);
+    setLand();
+  }
+  function setLand() {        // the edge-to-edge layout: a phone on its side, or full screen of any kind
+    const m = document.body.classList.contains("m");
+    document.body.classList.toggle("land", m && ((SIDEWAYS.matches && innerHeight < 500) || isFull()));
+  }
+  document.addEventListener("fullscreenchange", () => { if (!fsElement()) { fullBy = null; if (screen.orientation && screen.orientation.unlock) try { screen.orientation.unlock(); } catch (e) { /* not locked */ } } syncFull(); });
+  document.addEventListener("webkitfullscreenchange", syncFull);
+
   // ---- on and off with the screen
   function apply() {
     const on = PHONE.matches && !document.body.classList.contains("embed");
     if (on) build();
     document.body.classList.toggle("m", on);
-    document.body.classList.toggle("land", on && SIDEWAYS.matches && innerHeight < 500);
+    setLand();
     clearInterval(timer);
-    if (on) { show(tab); sync(); timer = setInterval(sync, 300); }
-    else closeSheet();
+    if (on) { show(tab); sync(); syncFull(); timer = setInterval(sync, 300); }
+    else { closeSheet(); if (document.body.classList.contains("theatre")) leaveFull(); disarm(); }
   }
   PHONE.addEventListener("change", apply);
-  SIDEWAYS.addEventListener("change", apply);
-  addEventListener("resize", () => document.body.classList.toggle("land", document.body.classList.contains("m") && SIDEWAYS.matches && innerHeight < 500));
+  SIDEWAYS.addEventListener("change", () => { apply(); turned(); });
+  addEventListener("resize", setLand);
   document.addEventListener("stage3d-ready", () => setTimeout(sync, 50));
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", apply); else apply();
   // the page marks itself an embed only once the race is in: look again when that mark comes or goes

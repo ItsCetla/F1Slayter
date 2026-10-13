@@ -24,6 +24,8 @@ export function createLeague(raw) {
     .map((season) => ({
       ...season,
       rounds: (season.rounds || []).slice().sort((a, b) => a.round - b.round),
+      // Sessions outside the rounds (a preseason practice, a test): never counted, only shown with their replay.
+      extras: (season.extras || []).filter((e) => e && typeof e.id === "string" && e.id),
     }))
     .sort((a, b) => b.year - a.year);
 
@@ -61,6 +63,11 @@ export function createLeague(raw) {
         ),
       };
       // Only http(s) links ever reach an href or the player.
+      if (clean.replay !== undefined && !isWebUrl(clean.replay)) delete clean.replay;
+      return clean;
+    });
+    season.extras = season.extras.map((extra) => {
+      const clean = { ...extra };
       if (clean.replay !== undefined && !isWebUrl(clean.replay)) delete clean.replay;
       return clean;
     });
@@ -434,6 +441,17 @@ function validate(league) {
       } else if (round.start && !/(Z|[+-]\d\d:\d\d)$/.test(round.start)) {
         issues.push(`${where}: start "${round.start}" needs a time and UTC offset, e.g. 2026-10-20T20:00:00-04:00`);
       }
+    }
+    const seenExtras = new Set();
+    for (const extra of season.extras || []) {
+      const where = `${season.label} extra "${extra.id}"`;
+      if (!/^[a-z0-9][a-z0-9-]*$/.test(extra.id)) issues.push(`${where}: id must be lower-case letters, digits and dashes`);
+      if (seenExtras.has(extra.id)) issues.push(`${where}: listed twice`);
+      seenExtras.add(extra.id);
+      if (!extra.name) issues.push(`${where}: needs a "name"`);
+      if (extra.replay !== undefined && !isWebUrl(extra.replay)) issues.push(`${where}: replay "${extra.replay}" must be a full http(s) link`);
+      if (extra.start && !parseStart(extra)) issues.push(`${where}: unreadable start "${extra.start}"`);
+      else if (extra.start && !/(Z|[+-]\d\d:\d\d)$/.test(extra.start)) issues.push(`${where}: start "${extra.start}" needs a time and UTC offset`);
     }
   }
   return issues;

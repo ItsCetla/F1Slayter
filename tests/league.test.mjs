@@ -185,3 +185,27 @@ test("replay links: only http(s) survive, known hosts parse for embedding", () =
   assert.equal(parseVideo("https://youtube.com/watch?v=<script>").kind, "link");
   assert.equal(parseVideo("not a url"), null);
 });
+
+test("extras: sessions outside the rounds are kept, checked and never counted", () => {
+  const l = createLeague({
+    drivers: [],
+    seasons: [{ id: "x", label: "X", year: 1, rounds: [], extras: [
+      { id: "preseason", name: "Preseason practice", start: "2026-10-08T21:18:00-04:00", replay: "https://f1.cetla.dev/replays/player/?race=preseason-2026" },
+      { id: "Bad Id", name: "Test", replay: "javascript:alert(1)" },
+      { name: "no id" },
+    ] }],
+  });
+  const extras = l.seasons[0].extras;
+  assert.equal(extras.length, 2);
+  assert.equal(parseVideo(extras[0].replay).kind, "pitwall");
+  assert.equal(extras[1].replay, undefined);
+  assert.ok(l.issues.some((i) => i.includes('"Bad Id"') && i.includes("lower-case")));
+  assert.ok(l.issues.some((i) => i.includes('"Bad Id"') && i.includes("http(s)")));
+});
+
+test("Season 2's preseason practice has its replay and no data issues", () => {
+  const s2 = league.season("season-2");
+  const pre = s2.extras.find((e) => e.id === "preseason");
+  assert.equal(pre.name, "Preseason practice");
+  assert.deepEqual(parseVideo(pre.replay), { kind: "pitwall", id: "preseason-2026", url: pre.replay });
+});

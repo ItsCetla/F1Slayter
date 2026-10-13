@@ -42,6 +42,9 @@
       "label": "Season 2",
       "year": 2026,
       "status": "active",
+      "extras": [
+        {"id": "preseason", "name": "Preseason practice", "short": "PRE", "circuit": "Lusail International Circuit", "country": "QA", "start": "2026-10-08T21:18:00-04:00", "replay": "https://f1.cetla.dev/replays/player/?race=preseason-2026"}
+      ],
       "entries": [
         {"driver": "itscetla", "team": "Red Bull"},
         {"driver": "cbreezyll", "team": "Mercedes"},

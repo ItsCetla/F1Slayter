@@ -42,11 +42,21 @@ function render({ league, season, params }) {
     return;
   }
 
-  const roundParam = params.get("round");
-  if (roundParam === null || roundParam === "") {
-    const rounds = replayRounds(season);
+  const roundParam = params.get("round"), watchParam = params.get("watch");
+  if (watchParam) {
+    const extra = (season.extras || []).find((e) => e.id === watchParam);
+    const video = videoOf(extra);
+    if (!extra || !video) {
+      document.title = "Replay not found — Slayter League";
+      main.innerHTML = notFoundView(season, watchParam, "replay");
+    } else {
+      document.title = `${extra.name} replay — Slayter League`;
+      main.innerHTML = extraView(league, season, extra, video);
+    }
+  } else if (roundParam === null || roundParam === "") {
+    const rounds = replayRounds(season), extras = extraReplays(season);
     document.title = `${season.label} replays — Slayter League`;
-    main.innerHTML = rounds.length ? galleryView(league, season, rounds) : comingSoonView(league, season);
+    main.innerHTML = rounds.length ? galleryView(league, season, rounds, extras) : comingSoonView(league, season, extras);
   } else {
     const n = /^\d+$/.test(roundParam) ? Number(roundParam) : NaN;
     const round = season.rounds.find((r) => r.round === n);
@@ -73,6 +83,11 @@ function videoOf(round) {
 
 function replayRounds(season) {
   return season.rounds.filter((r) => videoOf(r));
+}
+
+// Sessions outside the rounds that have a replay (a preseason practice, a test): never counted, shown here only.
+function extraReplays(season) {
+  return (season.extras || []).filter((e) => videoOf(e));
 }
 
 function hostName(video) {
@@ -113,13 +128,13 @@ function wireThumbs(root) {
   });
 }
 
-function thumb(round, video) {
+function thumb(round, video, tag = `R${round.round}`) {
   const host = hostName(video);
   const img = video.kind === "youtube"
-    ? `<img data-thumb src="https://i.ytimg.com/vi/${esc(video.id)}/hqdefault.jpg" alt="Thumbnail for the ${esc(roundTitle(round))} replay" width="480" height="360" loading="lazy">`
+    ? `<img data-thumb src="https://i.ytimg.com/vi/${esc(video.id)}/hqdefault.jpg" alt="Thumbnail for the ${esc(round.round ? roundTitle(round) : round.name)} replay" width="480" height="360" loading="lazy">`
     : "";
   return `<span class="rp-thumb rp-thumb--${esc(video.kind)}">
-    <span class="rp-thumb__ph" aria-hidden="true"><span class="rp-thumb__round">R${esc(round.round)}</span></span>
+    <span class="rp-thumb__ph" aria-hidden="true"><span class="rp-thumb__round">${esc(tag)}</span></span>
     ${img}
     <span class="rp-thumb__play" aria-hidden="true">${PLAY_GLYPH}</span>
     <span class="rp-thumb__tag">${esc(host)}</span>
@@ -165,6 +180,46 @@ function replayCard(league, round) {
   </a></li>`;
 }
 
+// A session outside the rounds: its own card, and the hero's feature when the season has no race replays yet.
+function extraHref(extra) {
+  return link("replays/", { watch: extra.id });
+}
+function extraMeta(extra, format = fmt.short) {
+  return `${extra.start ? dateTag(extra, format) : ""}${extra.start && extra.circuit ? SEP : ""}${extra.circuit ? esc(extra.circuit) : ""}`;
+}
+function extraCard(extra) {
+  return `<li><a class="rp-card card" href="${extraHref(extra)}">
+    ${thumb(extra, videoOf(extra), extra.short || "+")}
+    <span class="rp-card__body">
+      <span class="rp-card__meta">${extraMeta(extra)}</span>
+      <h3 class="rp-card__title">${flag(extra.country)}<span>${esc(extra.name)}</span></h3>
+      <span class="rp-card__foot"><span class="rp-winner muted">Not a points race</span><span class="btn-replay btn-replay--compact" aria-hidden="true">${PLAY_ICON}<span>Watch</span></span></span>
+    </span>
+  </a></li>`;
+}
+function extraFeature(extra, label = "Ready to watch") {
+  return `<a class="rp-feature" href="${extraHref(extra)}">
+    ${thumb(extra, videoOf(extra), extra.short || "+")}
+    <span class="rp-feature__body">
+      <span class="rp-feature__label">${esc(label)} · Not a points race</span>
+      <span class="rp-feature__title">${flag(extra.country)}<span>${esc(extra.name)}</span></span>
+      <span class="rp-feature__meta">${extraMeta(extra, fmt.long)}</span>
+    </span>
+  </a>`;
+}
+function extrasSection(season, extras, title = "Practice and testing") {
+  if (!extras.length) return "";
+  return `<section class="section container" aria-labelledby="rpExtrasTitle">
+    <div class="section-head">
+      <div>
+        <p class="kicker">${esc(season.label)} · Outside the rounds</p>
+        <h2 class="section-title" id="rpExtrasTitle">${esc(title)}</h2>
+      </div>
+    </div>
+    <ul class="rp-grid" role="list">${extras.map((e) => extraCard(e)).join("")}</ul>
+  </section>`;
+}
+
 // Decorative "player" used while no replay exists.
 function screenMock(caption) {
   return `<div class="rp-screen rp-screen--mock" aria-hidden="true">
@@ -179,7 +234,7 @@ function screenMock(caption) {
 
 // ---------- No replays in the season: coming soon ----------
 
-function comingSoonView(league, season) {
+function comingSoonView(league, season, extras = []) {
   const other = league.seasons.find((s) => s.id !== season.id && replayRounds(s).length);
   const otherCount = other ? replayRounds(other).length : 0;
   const resultsSeason = latestCompletedRound(season) ? season : league.seasons.find((s) => latestCompletedRound(s));
@@ -201,20 +256,24 @@ function comingSoonView(league, season) {
         <h1 class="rp-hero__title">Race replays <em>Coming soon</em></h1>
         <p class="lede">${finished
           ? `Full-race videos of the ${esc(season.label)} rounds will be posted here as they're uploaded.`
-          : "Full-race videos of every Slayter League round will be posted here after each race."} A <strong>Replay</strong> button will appear next to races that have one.</p>
+          : "Full-race videos of every Slayter League round will be posted here after each race."} A <strong>Replay</strong> button will appear next to races that have one.${extras.length ? ` Until then, the <strong>${esc(extras[0].name)}</strong> is ready to watch.` : ""}</p>
         <div class="btn-row rp-hero__actions">
-          <a class="btn" href="${link("schedule/")}">Season schedule</a>
-          <a class="btn btn--ghost" href="${resultsHref}">Latest results</a>
+          ${extras.length
+            ? `<a class="btn" href="${extraHref(extras[0])}">${PLAY_GLYPH}<span>Watch ${esc(extras[0].name.toLowerCase())}</span></a>
+              <a class="btn btn--ghost" href="${link("schedule/")}">Season schedule</a>`
+            : `<a class="btn" href="${link("schedule/")}">Season schedule</a>
+              <a class="btn btn--ghost" href="${resultsHref}">Latest results</a>`}
         </div>
         ${other
           ? `<p class="rp-hero__other"><a class="btn-replay" href="${link("replays/", { season: seasonParam(league, other) })}">${PLAY_ICON}<span>${esc(other.label)} replays</span></a><span>${otherCount} ${otherCount === 1 ? "race" : "races"} ready to watch</span></p>`
           : ""}
       </div>
-      <div class="rp-hero__visual">${screenMock(caption)}</div>
+      <div class="rp-hero__visual">${extras.length ? extraFeature(extras[0]) : screenMock(caption)}</div>
     </div>
   </section>`;
 
   return `${hero}
+    ${extras.length > 1 ? extrasSection(season, extras) : ""}
     <section class="section container" aria-labelledby="rpScheduleTitle">
       <div class="section-head">
         <div>
@@ -232,7 +291,7 @@ function comingSoonView(league, season) {
 
 // ---------- Some replays: gallery ----------
 
-function galleryView(league, season, rounds) {
+function galleryView(league, season, rounds, extras = []) {
   const [latest, ...earlier] = rounds.slice().reverse();
   // Raced rounds still waiting for a video, then (mid-season) the races still to run.
   const waiting = season.rounds.filter((r) => !videoOf(r) && r.status !== "cancelled");
@@ -275,6 +334,7 @@ function galleryView(league, season, rounds) {
           <ul class="rp-grid" role="list">${earlier.map((r) => replayCard(league, r)).join("")}</ul>
         </section>`
       : ""}
+    ${extrasSection(season, extras)}
     ${waiting.length
       ? `<section class="section container" aria-labelledby="rpWaitingTitle">
           <div class="section-head">
@@ -305,8 +365,8 @@ function stageHead(season, round, label = "") {
   </div>`;
 }
 
-function player(round, video) {
-  const title = `${roundTitle(round)} replay`;
+function player(name, video) {
+  const title = `${name} replay`;
   if (video.kind === "pitwall") {
     // embed=1 is the viewer's picture and scrubber only; the full viewer is a button away.
     return `<div class="rp-player rp-player--pitwall"><iframe src="${esc(`${viewerHref(video)}&embed=1`)}" title="${esc(`${title}, 3D`)}" allow="fullscreen; clipboard-write" allowfullscreen loading="lazy"></iframe></div>`;
@@ -393,7 +453,7 @@ function steps(season, round) {
 
 // Up to three other replays from the season, newest first.
 function moreReplays(league, season, round) {
-  const others = replayRounds(season).filter((r) => r.round !== round.round).reverse().slice(0, 3);
+  const others = replayRounds(season).filter((r) => !round || r.round !== round.round).reverse().slice(0, 3);
   if (!others.length) return "";
   return `<section class="section container" aria-labelledby="rpMoreTitle">
     <div class="section-head">
@@ -425,7 +485,7 @@ function playerView(league, season, round, video) {
         ${stageHead(season, round, pitwall ? "3D race replay" : "Full race replay")}
         <div class="rp-watch">
           <div class="rp-watch__main">
-            ${player(round, video)}
+            ${player(roundTitle(round), video)}
             ${pitwall ? viewerCallout(video) : `<p class="rp-open">${embedded ? "<span>Player not loading?</span>" : ""}${externalLink(video, `Open on ${hostName(video)}`)}</p>`}
             ${steps(season, round)}
           </div>
@@ -434,6 +494,30 @@ function playerView(league, season, round, video) {
       </div>
     </section>
     ${moreReplays(league, season, round)}`;
+}
+
+// A session outside the rounds, with its replay.
+function extraView(league, season, extra, video) {
+  const pitwall = video.kind === "pitwall", country = extra.country ? countryName(extra.country) : "";
+  const meta = [country ? `<span class="rp-stage__place">${flag(extra.country, country)}<span>${esc(country)}</span></span>` : "",
+    extra.circuit ? `<span>${esc(extra.circuit)}</span>` : "", extra.start ? `<span>${dateTag(extra, fmt.long)}</span>` : ""].filter(Boolean);
+  return `<section class="rp-stage band-dark">
+      <div class="container">
+        <div class="rp-stage__head">
+          <a class="rp-back" href="${link("replays/")}">${CHEVRON.prev}<span>All replays</span></a>
+          <p class="kicker">${esc(season.label)} · Not a points race · ${pitwall ? "3D race replay" : "Full replay"}</p>
+          <h1 class="rp-stage__title">${esc(extra.name)}</h1>
+          ${meta.length ? `<p class="rp-stage__meta">${meta.join(SEP)}</p>` : ""}
+        </div>
+        <div class="rp-watch rp-watch--solo">
+          <div class="rp-watch__main">
+            ${player(extra.name, video)}
+            ${pitwall ? viewerCallout(video) : `<p class="rp-open">${video.kind !== "link" ? "<span>Player not loading?</span>" : ""}${externalLink(video, `Open on ${hostName(video)}`)}</p>`}
+          </div>
+        </div>
+      </div>
+    </section>
+    ${moreReplays(league, season, null)}`;
 }
 
 // A real round whose video isn't up (or that hasn't been raced).
@@ -475,7 +559,7 @@ function noReplayView(league, season, round) {
   ${moreReplays(league, season, round)}`;
 }
 
-function notFoundView(season, value) {
+function notFoundView(season, value, kind = "round") {
   const count = season.rounds.length;
   return `<section class="page-head">
       <div class="container">
@@ -485,8 +569,8 @@ function notFoundView(season, value) {
     </section>
     <div class="container">
       <div class="card empty-state">
-        <h2>No round “${esc(value)}”</h2>
-        <p>${esc(season.label)} has ${count} ${count === 1 ? "round" : "rounds"}. The link may be out of date, or the race belongs to another season.</p>
+        <h2>No ${kind === "replay" ? "replay" : "round"} “${esc(value)}”</h2>
+        <p>${kind === "replay" ? "The link may be out of date, or the replay belongs to another season." : `${esc(season.label)} has ${count} ${count === 1 ? "round" : "rounds"}. The link may be out of date, or the race belongs to another season.`}</p>
         <div class="btn-row">
           <a class="btn" href="${link("replays/")}">${esc(season.label)} replays</a>
           <a class="btn btn--ghost" href="${link("schedule/")}">Schedule</a>

@@ -3,7 +3,7 @@
  "races": [
   {
    "id": "preseason-2026",
-   "title": "League Night · Losail · 29 laps",
+   "title": "Preseason practice",
    "track": "Losail",
    "type": "Race",
    "date": "2026-10-08",
@@ -12,7 +12,7 @@
    "drivers": 7,
    "winner": "SirTasteTheRambo",
    "minutes": 53,
-   "bytes": 4430495,
+   "bytes": 4430490,
    "voiceBytes": 9122114,
    "season": null,
    "round": null,

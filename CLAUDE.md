@@ -15,6 +15,8 @@ it is an official F1 site.
 - Never store totals (points, wins, podiums). `assets/js/league.js` derives everything from
   `results` (`position`, optional `fastestLap`, optional `points` override).
 - AI drivers are not stored. `position` is the real race position, so gaps in positions are normal.
+- A season's `extras` are sessions outside the rounds (a preseason practice): shown on `/replays/` with their
+  replay, never counted in results or standings.
 - Season `status`: `active` (the default season shown) or `complete` (crowns a champion).
   Round status is derived: complete / awaiting-results / scheduled, or `"status": "cancelled"`.
 - Keep `league.json` formatted with one result per line so it stays easy to edit by hand.

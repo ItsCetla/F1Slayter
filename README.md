@@ -13,7 +13,7 @@ Website for the Slayter League, a CETLA league racing the F1 video game. A stati
 | `/standings/` | Driver standings; `?view=teams` for team standings |
 | `/drivers/` | Driver cards; `?id=<driver id>` shows a driver profile with career stats |
 | `/analytics/` | Timeline playback, insights and charts (points, gaps, positions, heatmap, form, head-to-head) |
-| `/replays/` | Race replays: "coming soon" until videos are added, then a gallery and player (`?round=N`) |
+| `/replays/` | Race replays: "coming soon" until videos are added, then a gallery and player (`?round=N`, or `?watch=<id>` for a session outside the rounds) |
 | `/replays/player/` | The 3D race viewer from F1 Pit Wall: `?race=<id>` opens one race, with no `race` it lists them |
 
 Every page takes `?season=<season id>` (the header's season picker sets it); without it the
@@ -86,6 +86,21 @@ themselves. The round's replay page then shows the 3D picture with its scrubber 
 **Open viewer** button for the full viewer. A round has one `replay` link, so a 3D replay takes the
 place of a video link on that round. The 3D view loads three.js from cdn.jsdelivr.net; without it
 the viewer falls back to the 2D track map.
+
+### A replay that isn't a round (preseason, testing)
+
+A session outside the calendar, such as a preseason practice, goes in the season's `extras`, with a
+link like a round's `replay`:
+
+```json
+"extras": [
+  {"id": "preseason", "name": "Preseason practice", "short": "PRE", "circuit": "Lusail International Circuit", "country": "QA", "start": "2026-10-08T21:18:00-04:00", "replay": "https://f1.cetla.dev/replays/player/?race=preseason-2026"}
+]
+```
+
+It is never counted: no results, no standings, no round number. `/replays/` shows it (leading the page
+while the season has no race replays yet), marked "Not a points race", and `/replays/?watch=<id>` plays it.
+`short` is the few letters on its thumbnail. `id` is lower-case letters, digits and dashes.
 
 ### Schedule a round
 

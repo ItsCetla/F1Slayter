@@ -462,10 +462,10 @@ function buildCircuit() {
   });
   G.add(pole, head, face);
   for (const mesh of [pole, head, face]) mastsListed(mesh);
-  if (own) vModel("mast", parts => {      // the venue's masts as somebody made them properly (venues\props.py: on this PC), in place of the poles drawn here
+  if (own && !PHONE_SCREEN) vModel("mast", parts => {      // the venue's masts as somebody made them properly (venues\props.py: on this PC), in place of the poles drawn here
     const lit = new THREE.MeshBasicMaterial({ color: new THREE.Color(6, 5.5, 4.6) });
     for (const mesh of vCopies(lay, parts, masts.map(m => { const c = K.centre[m.k]; return [m.p[0], m.p[1], m.p[2], Math.atan2(-(c[2] - m.p[2]), c[0] - m.p[0]) + MAST_FACES, tall / 27.1]; }),
-                               { wear: kind => (kind === "lamp" ? lit : steel) })) mastsListed(mesh);
+                               { wear: kind => (kind === "lamp" ? lit : steel), listed: true })) mastsListed(mesh);
     pole.visible = head.visible = face.visible = false;
   });
   const glowGeo = new THREE.BufferGeometry(); glowGeo.setAttribute("position", new THREE.Float32BufferAttribute(glow, 3));
@@ -495,9 +495,9 @@ function mastsOutOf(i) {                  // i: the camera that is filming, or -
   const hide = i < 0 ? [] : (mastSet.per[i] = mastSet.per[i] || MASTS.map((m, j) => (inShotOf(i, m.x, m.z) ? j : -1)).filter(j => j >= 0));
   const was = mastSet.out < 0 ? [] : mastSet.per[mastSet.out] || [];
   for (const mesh of mastSet.meshes) {
-    const a = mesh.instanceMatrix.array, home = mesh.userData.home;
-    for (const j of was) a.set(home.subarray(j * 16, j * 16 + 16), j * 16);
-    for (const j of hide) { a.fill(0, j * 16, j * 16 + 16); a[j * 16 + 15] = 1; }      // (shrunk to nothing)
+    const a = mesh.instanceMatrix.array, home = mesh.userData.home, at = mesh.userData.at;      // (at: a drawing of one block of masts, tools/lighten-player.mjs)
+    for (const m of was) { const j = at ? at.get(m) : m; if (j !== undefined) a.set(home.subarray(j * 16, j * 16 + 16), j * 16); }
+    for (const m of hide) { const j = at ? at.get(m) : m; if (j !== undefined) { a.fill(0, j * 16, j * 16 + 16); a[j * 16 + 15] = 1; } }      // (shrunk to nothing)
     mesh.instanceMatrix.needsUpdate = true;
   }
   if (mastSet.halo) {
@@ -1542,16 +1542,17 @@ function init() {
   controls();
   const look = new URLSearchParams(location.search).get("look");      // ?look=az,alt,fov in the page's address does the same
   if (look) api.debug.look = look.split(",").map(Number);
-  ready = true;
+  ready = true; api.quality = quality;      // (tools/lighten-player.mjs)
 }
 // f1.cetla.dev: how many device pixels each CSS pixel of the picture gets (put here by tools/add-mobile-player.mjs).
 // A desktop as the player has it. A phone draws at its screen's own sharpness (up to 3; 2 once it is struggling and
-// its effects are down), whatever effects are off, and never past about 2.6 million pixels for the whole picture.
+// its effects are down), whatever effects are off, within about 2 million pixels for the whole picture (1.2 million
+// once it is struggling): more was sharper but too slow for a phone with the circuit's full scenery.
 const PHONE_SCREEN = matchMedia("(pointer: coarse)").matches && Math.min(screen.width, screen.height) < 600;
 function sharpness(w, h) {
   const dpr = window.devicePixelRatio || 1;
   if (!PHONE_SCREEN) return quality > 1 ? Math.min(dpr, 2) : 1;
-  return Math.max(1, Math.min(dpr, quality > 0 ? 3 : 2, Math.sqrt(2.6e6 / Math.max(1, w * h))));
+  return Math.max(1, Math.min(dpr, quality > 0 ? 3 : 2, Math.sqrt((quality > 0 ? 2e6 : 1.2e6) / Math.max(1, w * h))));
 }
 function resize() {                   // the size of its place on the page, or the size it has been told to film at
   const set = api.fixed, r = canvas.getBoundingClientRect();
@@ -1990,7 +1991,7 @@ function venueModel(lay, name, p, turn, drawn = [], lean = 0) {       // (drawn:
     for (const part of parts) { const mesh = new THREE.Mesh(part.geometry, vLook(part.material)); mesh.castShadow = !part.material.transparent; mesh.receiveShadow = true; home.add(mesh); }
     lay.add(home);
     for (const old of drawn) old.visible = false;
-    for (const kit of (about && about.kits) || []) vModel(kit.file, kparts => vCopies(home, kparts, kit.places.map(([x, y, z, turn]) => [x, z, -y, turn, 1]), { cast: false, wear: (kind, part) => vLook(part.material) }));
+    for (const kit of (about && about.kits) || []) { if (PHONE_SCREEN && /seats and people|^ASSET/i.test(kit.what || "")) continue; vModel(kit.file, kparts => vCopies(home, kparts, kit.places.map(([x, y, z, turn]) => [x, z, -y, turn, 1]), { cast: false, wear: (kind, part) => vLook(part.material) })); }
   });
 }
 function vPosts(lay, list, wide, mat, cast = true) {      // upright posts: [x, the height of its middle, z, how tall]
@@ -2367,13 +2368,23 @@ function vModel(name, then) {
   }, () => {});
 }
 function vCopies(lay, parts, places, o = {}) {      // a prop stood in many places: [x, y, z, turned so far about the upright, how big]; o.wear(kind, part) may give a part another material
+  // f1.cetla.dev (tools/lighten-player.mjs): stood in blocks of about 200 m, each a drawing of its own, so the ones out
+  // of the picture or out of the shadows' reach are skipped. With o.listed (the masts) each block knows which of the
+  // places it holds (userData.at: place → its own index), for mastsOutOf().
   const d = new THREE.Object3D(), made = [];
   if (!places.length) return made;
+  const blocks = new Map();
+  places.forEach((p, n) => { const key = Math.floor(p[0] / 200) + ":" + Math.floor(p[2] / 200); if (!blocks.has(key)) blocks.set(key, []); blocks.get(key).push(n); });
   for (const p of parts) {
-    const mesh = new THREE.InstancedMesh(p.geometry, (o.wear && o.wear(p.kind, p)) || p.material, places.length);
-    places.forEach(([x, y, z, turn = 0, size = 1], i) => { d.position.set(x, y, z); d.rotation.set(0, turn, 0); d.scale.setScalar(size); d.updateMatrix(); mesh.setMatrixAt(i, d.matrix); });
-    mesh.castShadow = o.cast !== false && p.kind !== "lamp";
-    lay.add(mesh); made.push(mesh);
+    const material = (o.wear && o.wear(p.kind, p)) || p.material;
+    for (const block of blocks.values()) {
+      const mesh = new THREE.InstancedMesh(p.geometry, material, block.length);
+      block.forEach((n, i) => { const [x, y, z, turn = 0, size = 1] = places[n]; d.position.set(x, y, z); d.rotation.set(0, turn, 0); d.scale.setScalar(size); d.updateMatrix(); mesh.setMatrixAt(i, d.matrix); });
+      mesh.computeBoundingSphere();
+      if (o.listed) mesh.userData.at = new Map(block.map((n, i) => [n, i]));
+      mesh.castShadow = o.cast !== false && p.kind !== "lamp";
+      lay.add(mesh); made.push(mesh);
+    }
   }
   return made;
 }
@@ -3822,7 +3833,7 @@ function carsStep(t) {                  // each frame, after the cars have been 
     if (alt.close) alt.close.visible = car.position.distanceToSquared(camera.position) < 1600;      // within 40 m
     if (alt.kit.farStock) {               // an adopted F1 car is ten times the typed-in one to draw: from far enough off that they cannot be told apart, the typed-in one is drawn
       const size = car.position.distanceTo(camera.position) * lens;      // (how far off, and how long the lens is: a long lens brings a far car close)
-      const far = alt.far ? size > 30 : size > 36;
+      const near = PHONE_SCREEN || quality < 2 ? 0.55 : 1, far = alt.far ? size > 30 * near : size > 36 * near;
       if (far !== alt.far) { alt.far = far; alt.root.visible = alt.ground.visible = !far; u.f1.visible = far; for (const w of u.wheels) w.hub.visible = far; }
     }
     if (alt.kit.step) alt.kit.step(alt, p, t, moved);
@@ -4517,7 +4528,7 @@ const f1Hub = new THREE.Vector3(F1_COLUMN[0] - F1_MAN[0], F1_COLUMN[1] - F1_MAN[
 // own badges (adopt.py keeps them as decal_), and of the replay's labels only the one a livery cannot know: the
 // car's number. The other teams' cars are the first model repainted, as before, until a
 // model of their own is adopted: rides\local\f1_<team>.glb, the names in F1_REAL.
-const F1_REAL = ["f1_mclaren", "f1_ferrari", "f1_mercedes", "f1_aston", "f1_williams", "f1_haas", "f1_audi", "f1_cadillac", "f1_alpine", "f1_rb"];
+const F1_REAL = [];      // f1.cetla.dev: those in rides/local (of ["f1_mclaren","f1_ferrari","f1_mercedes","f1_aston","f1_williams","f1_haas","f1_audi","f1_cadillac","f1_alpine","f1_rb"]) (tools/lighten-player.mjs)
 const F1_AS = { sauber: "audi" };       // a team that goes by another name by the season the models are of
 const F1_OWN = /^(num|nose)$/;          // the labels a car in its real livery still wears: its number, on the fin and the nose (its driver's letters would go on the rear wing's endplates, where a real livery has a partner's name)
 // A TEAM'S OWN STICKERS ON THE SAME CAR. Eric, Oct 13 2026: "no new car model just come up with the sticker sheet for

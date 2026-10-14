@@ -1,0 +1,142 @@
+[
+ {
+  "what": "The cars",
+  "items": [
+   {
+    "title": "Halo Infinite Master Chief Rigged",
+    "link": "https://sketchfab.com/3d-models/halo-infinite-master-chief-rigged-0ad7b1431a6748959d691e9c171c6e2c",
+    "by": "bizarrefog1",
+    "byLink": "https://sketchfab.com/bizarrefog1",
+    "licence": "CC BY 4.0",
+    "licenceLink": "http://creativecommons.org/licenses/by/4.0/",
+    "note": "Cut down for this replay, and repainted."
+   },
+   {
+    "title": "1985 DeLorean DMC-12 Time Machine BTTF",
+    "link": "https://sketchfab.com/3d-models/1985-delorean-dmc-12-time-machine-bttf-c6d865257d344523be373f543323ae18",
+    "by": "Ddiaz Design",
+    "byLink": "https://sketchfab.com/ddiaz-design",
+    "licence": "CC BY-NC-SA 4.0",
+    "licenceLink": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "note": "Cut down for this replay, and repainted."
+   },
+   {
+    "title": "2026 Redbull RB22",
+    "link": "https://sketchfab.com/3d-models/2026-redbull-rb22-0a3d24a58e0549d591a5a48c22eec383",
+    "by": "Dave Love",
+    "byLink": "https://sketchfab.com/Tyler_Dave",
+    "licence": "CC BY 4.0",
+    "licenceLink": "http://creativecommons.org/licenses/by/4.0/",
+    "note": "Cut down for this replay, and repainted."
+   },
+   {
+    "title": "Vehicles>Human>Ground>Warthogs>Halo Reach",
+    "link": "https://sketchfab.com/3d-models/vehicleshumangroundwarthogshalo-reach-aed6bdf9701b4589b32530a64a11c1d4",
+    "by": "jameslucino117",
+    "byLink": "https://sketchfab.com/jameslucino117",
+    "licence": "CC BY 4.0",
+    "licenceLink": "http://creativecommons.org/licenses/by/4.0/",
+    "note": "Cut down for this replay, and repainted."
+   }
+  ],
+  "text": "The names, marks and liveries of the teams and their sponsors belong to their owners. Halo, its Warthog and the Master Chief are Microsoft's. The time machine is from Back to the Future (Universal and Amblin). A league of friends made this replay: it is not connected with or endorsed by Formula 1, the FIA, any team or sponsor, or anyone else whose work is shown."
+ },
+ {
+  "what": "Round the circuit",
+  "items": [
+   {
+    "title": "Race Track Assets Pack",
+    "link": "https://sketchfab.com/3d-models/race-track-assets-pack-4a863e7005d647adb2f72775cf41e808",
+    "by": "Cherk",
+    "byLink": "https://sketchfab.com/alex20010804",
+    "licence": "CC BY 4.0",
+    "licenceLink": "http://creativecommons.org/licenses/by/4.0/",
+    "note": "Cut down for this replay."
+   },
+   {
+    "title": "Stadium Light",
+    "link": "https://sketchfab.com/3d-models/stadium-light-425625d154084a29a194dd2b0bb52fd5",
+    "by": "thundermind",
+    "byLink": "https://sketchfab.com/thundermind",
+    "licence": "CC BY 4.0",
+    "licenceLink": "http://creativecommons.org/licenses/by/4.0/",
+    "note": "Cut down for this replay."
+   },
+   {
+    "title": "Date Palm",
+    "link": "https://sketchfab.com/3d-models/date-palm-11acf710e6c149daa8d6fb8cdc5d087f",
+    "by": "evolveduk",
+    "byLink": "https://sketchfab.com/evolveduk",
+    "licence": "CC BY 4.0",
+    "licenceLink": "http://creativecommons.org/licenses/by/4.0/",
+    "note": "Cut down for this replay."
+   }
+  ],
+  "text": "The grandstands, the pit building, the plants and the lamps were made for this replay."
+ },
+ {
+  "what": "Surfaces",
+  "items": [
+   {
+    "title": "Asphalt Track",
+    "link": "https://polyhaven.com/a/asphalt_track",
+    "by": "Dimitrios Savva, Poly Haven",
+    "licence": "CC0",
+    "licenceLink": "https://creativecommons.org/publicdomain/zero/1.0/"
+   },
+   {
+    "title": "Painted Concrete 02",
+    "link": "https://polyhaven.com/a/painted_concrete_02",
+    "by": "Rob Tuytel, Poly Haven",
+    "licence": "CC0",
+    "licenceLink": "https://creativecommons.org/publicdomain/zero/1.0/"
+   },
+   {
+    "title": "Concrete Slab Wall 02",
+    "link": "https://polyhaven.com/a/concrete_slab_wall_02",
+    "by": "Amal Kumar, Poly Haven",
+    "licence": "CC0",
+    "licenceLink": "https://creativecommons.org/publicdomain/zero/1.0/"
+   },
+   {
+    "title": "Gravel 037",
+    "link": "https://ambientcg.com/view?id=Gravel037",
+    "by": "ambientCG",
+    "licence": "CC0",
+    "licenceLink": "https://creativecommons.org/publicdomain/zero/1.0/"
+   },
+   {
+    "title": "Fence 003",
+    "link": "https://ambientcg.com/view?id=Fence003",
+    "by": "ambientCG",
+    "licence": "CC0",
+    "licenceLink": "https://creativecommons.org/publicdomain/zero/1.0/"
+   }
+  ],
+  "text": "Photographs of real road, paint, concrete, gravel and fence, given to the public domain."
+ },
+ {
+  "what": "The engines",
+  "items": [],
+  "text": "Made from on-board recordings of Formula 1's own broadcasts, 1992 to 2024. The recordings are Formula 1's."
+ },
+ {
+  "what": "The player",
+  "items": [
+   {
+    "title": "three.js",
+    "link": "https://threejs.org/",
+    "licence": "MIT",
+    "licenceLink": "https://github.com/mrdoob/three.js/blob/dev/LICENSE"
+   },
+   {
+    "title": "Titillium Web",
+    "link": "https://fonts.google.com/specimen/Titillium+Web",
+    "by": "Accademia di Belle Arti di Urbino",
+    "licence": "SIL Open Font License",
+    "licenceLink": "https://openfontlicense.org/"
+   }
+  ],
+  "text": "Made by F1 Pit Wall from the game's own telemetry."
+ }
+]

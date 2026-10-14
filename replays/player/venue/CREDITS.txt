@@ -5,3 +5,4 @@ paint_d.jpg, paint_n.jpg, paint_arm.jpg: Painted Concrete 02 by Rob Tuytel, Poly
 concrete_d.jpg, concrete_n.jpg, concrete_arm.jpg: Concrete Slab Wall 02 by Amal Kumar, Poly Haven, CC0: https://polyhaven.com/a/concrete_slab_wall_02
 gravel_d.jpg, gravel_n.jpg, gravel_arm.jpg: Gravel 037 by ambientCG, CC0: https://ambientcg.com/view?id=Gravel037
 fence.png: Fence 003 by ambientCG, CC0: https://ambientcg.com/view?id=Fence003
+sand_d.jpg, sand_n.jpg, sand_arm.jpg: sand drawn for this by GPT Astra to a brief of ours (venues/concept_briefs.py, 12), made to repeat by venues/make_sand.py: ours, no rights kept

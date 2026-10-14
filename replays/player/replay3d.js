@@ -301,7 +301,7 @@ function buildCircuit() {
     c.fillStyle = "rgba(60,150,150,0.10)"; for (let i = 0; i < 4; i++) c.fillRect(0, i * 128, w, 40);      // faded painted bands
   }), vertexColors: true, roughness: 0.8, side: both });
   const mGravel = new THREE.MeshStandardMaterial({ polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1, map: tex(512, 512, (c, w, h) => speckle(c, w, h, "#7f7157", 40000, 0.4, 3)), vertexColors: true, roughness: 1, side: both });
-  const mSand = new THREE.MeshStandardMaterial({ map: tex(256, 256, (c, w, h) => speckle(c, w, h, "#6b5c44", 9000, 0.3, 3)), vertexColors: true, roughness: 1, side: both });
+  const mSand = new THREE.MeshStandardMaterial({ map: tex(256, 256, (c, w, h) => speckle(c, w, h, "#b9a37a", 9000, 0.3, 3)), vertexColors: true, roughness: 1, side: both });      // sand (it was a brown, "#6b5c44", and read as dirt)
   toySkin.push([mSand, { map: null, vertexColors: false, color: new THREE.Color(TOY.ground) }]);      // (the ground beyond the walls shades away to black, for the night)
   const mConcrete = new THREE.MeshStandardMaterial({ polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3, map: tex(256, 256, (c, w, h) => speckle(c, w, h, "#5d5e60", 9000, 0.07, 1)), roughness: 0.75, side: both });      // (its speckle is slight: the picture is stretched over seven metres of pit lane, and anything more reads as cobbles from low down)
 
@@ -311,6 +311,7 @@ function buildCircuit() {
   surfaced(mGravel, "gravel", { repeat: 2.5, tint: [1.2, 1.12, 1.0] });
   surfaced(mConcrete, "paint", { repeat: 3, tint: [1.17, 1.3, 1.6], bump: 0.5 });      // (the photograph's own colours, brought to the grey that was drawn: smooth painted concrete, as a pit lane is)
   surfaced(mRunoff, "paint", { repeat: 3, bump: 0.6 });
+  surfaced(mSand, "sand", { repeat: 2.5, tint: [0.88, 0.85, 0.78], bump: 0.9 });      // (pale Gulf sand with wind ripples: venues\make_sand.py)
   // the far ground: dark, the circuit is the only thing lit out here
   const ground = lay(new THREE.PlaneGeometry(12000, 12000), new THREE.MeshStandardMaterial({ color: 0x0b0a08, roughness: 1 }));
   ground.rotation.x = -Math.PI / 2; ground.position.y = floor;
@@ -393,8 +394,8 @@ function buildCircuit() {
     lay(strip([k => [E(k) + sign * g0(k), 0], k => [E(k) + sign * (g0(k) + g1(k)) / 2, 0], k => [E(k) + sign * g1(k), 0]],
               { tile: 5, shade: (k, c) => [1, 0.95, 0.88][c] }), mGravel);
     // beyond the wall the light falls away into the dark
-    lay(strip([k => [W(k), -0.02], k => [sign * within(k, sign, Math.abs(W(k)) + 14), -0.02], k => [sign * within(k, sign, Math.abs(W(k)) + 60), 0, floor + 0.05]],
-              { tile: 10, shade: (k, c) => [0.5, 0.2, 0.02][c] }), mSand);
+    lay(strip([k => [W(k), -0.02], k => [sign * within(k, sign, Math.abs(W(k)) + 26), -0.02], k => [sign * within(k, sign, Math.abs(W(k)) + 110), 0, floor + 0.05]],
+              { tile: 10, shade: (k, c) => [0.86, 0.46, 0.04][c] }), mSand);      // (sand under the lamps is pale: at half strength and gone in fourteen metres it was dark earth)
     // the wall: a face and a top, with a crisp edge between them
     lay(strip([k => [W(k), -0.05], k => [W(k), 1.05], k => [W(k), 1.05], k => [W(k) + sign * 0.45, 1.05]],
               { uv: (k, c, off, dist) => [-sign * dist / WALL_RUN(), c === 0 ? 0 : c === 1 ? 1 : 0.02] }), mWall, { cast: true });
@@ -618,7 +619,7 @@ function pits(G, lay, M) {
   const bay = where.length > 1 ? (where[where.length - 1].k - where[0].k) * BIN / (where.length - 1) : 13;
   const front = Math.abs(where[Math.floor(where.length / 2)].off) + 4.4, back = front + 17, top = 9.4;
   const y0 = k => lane.y(lane.has(k) ? k : first);
-  if (V && V.pit) { venuePits(lay, { s, front, bay, first: where[0].k, y0 }); return; }      // a circuit that has been looked up has its own pit building, and its stands are where they really are
+  if (V && V.pit) { venuePits(lay, { s, front, bay, first: where[0].k, y0, wall: wallAt }); return; }      // a circuit that has been looked up has its own pit building, and its stands are where they really are
   const u = (k, c, o, dist) => (dist - where[0].k * BIN) / bay + 0.5;
   const mShell = new THREE.MeshStandardMaterial({ color: 0x7d8187, roughness: 0.6, side: both });
   const garage = tex(256, 128, (c, w, h) => {           // one team's garage: two lit doors in a dark wall, a number board over them
@@ -710,9 +711,9 @@ const CARBON = "#0d0e10", WHITE = "#f3f3f1";
 // body(p): p.all(colour, or [[metres along the car, colour], ...] nose to tail), p.top(part, from, to, half width, colour) a band over the top,
 //          p.flank((tub, cover, pod) => ...) drawn once for each side (0 is the keel, 0.25 the flank, 0.5 the top), p.side(right?, colour)
 const LOOKS = {
-  mclaren: { colours: { main: "#ff8000", second: CARBON, flap: "#ff8000", plate: CARBON, rear: CARBON, rflap: "#ff8000", trim: "#ffd21f" },      // papaya, with a black stripe down the middle
+  mclaren: { colours: { main: "#ff8000", second: CARBON, flap: "#ff8000", plate: CARBON, rear: CARBON, rflap: "#ff8000", trim: "#ffd21f" },      // papaya above, black down the flanks of the sidepods and the engine cover as the real car is, a black stripe down the middle
     body(p) { p.all("#ff8000"); p.top("tub", 0.08, 0.62, 0.065, CARBON); p.top("cover", 0, 1, 0.11, CARBON);
-      p.flank((tub, cover, pod) => { cover.shape([[0.45, 0.17], [1, 0.17], [1, 0.39]], CARBON); pod.shape([[0.55, 0.17], [1, 0.17], [1, 0.5], [0.8, 0.5]], CARBON); }); } },
+      p.flank((tub, cover, pod) => { cover.shape([[0.2, 0.17], [1, 0.17], [1, 0.42], [0.45, 0.3]], CARBON); pod.band(0, 1, 0.17, 0.41, CARBON); pod.band(0.55, 1, 0.41, 0.56, CARBON); }); } },
   ferrari: { colours: { main: "#e00620", second: WHITE, flap: "#e00620", plate: CARBON, rear: CARBON, rflap: CARBON, trim: "#ffec40" },           // red, white round the cockpit and airbox, a black rear wing
     body(p) { p.all("#e00620"); p.top("tub", 0.6, 1, 0.16, WHITE); p.top("cover", 0, 0.5, 0.19, WHITE);
       p.flank((tub, cover) => { cover.shape([[0.5, 0.31], [0.74, 0.5], [0.5, 0.5]], WHITE); tub.band(0.1, 0.6, 0.3, 0.307, WHITE); }); } },
@@ -721,33 +722,33 @@ const LOOKS = {
       p.flank((tub, cover, pod) => { tub.shape([[0.05, 0.21], [0.05, 0.27], [1, 0.36], [1, 0.31]], "#e0101f"); cover.shape([[0, 0.31], [0, 0.36], [0.9, 0.2], [0.7, 0.2]], "#e0101f");
         pod.shape([[0, 0.22], [0, 0.3], [1, 0.24], [1, 0.2]], "#e0101f"); tub.band(0.05, 1, 0.197, 0.204, WHITE); pod.band(0, 1, 0.188, 0.195, WHITE); }); } },
   mercedes: { colours: { main: "#c9cdd0", second: "#00d2be", flap: CARBON, plate: "#00d2be", rear: CARBON, rflap: "#00d2be", trim: WHITE },        // silver at the nose going to black at the tail, a teal line
-    body(p) { p.all([[2.8, "#c9cdd0"], [1.0, "#c9cdd0"], [-0.3, "#3a3d41"], [-1.1, CARBON], [-2.5, CARBON]]);
-      p.flank((tub, cover, pod) => { tub.band(0.08, 1, 0.2, 0.212, "#00d2be"); cover.band(0, 1, 0.2, 0.212, "#00d2be"); pod.band(0, 1, 0.3, 0.312, "#00d2be");
-        pod.shape([[0.05, 0.17], [0.16, 0.17], [0.36, 0.5], [0.25, 0.5]], "rgba(201,205,208,0.5)"); pod.shape([[0.3, 0.17], [0.36, 0.17], [0.56, 0.5], [0.5, 0.5]], "rgba(201,205,208,0.3)");
+    body(p) { p.all([[2.8, "#c9cdd0"], [1.25, "#c9cdd0"], [0.55, "#2c2f33"], [0.2, CARBON], [-2.5, CARBON]]);      // (black from the cockpit back, sidepods and all, as the real car is: the names on them are white)
+      p.flank((tub, cover, pod) => { tub.band(0.08, 1, 0.2, 0.212, "#00d2be"); cover.band(0, 1, 0.2, 0.212, "#00d2be"); pod.band(0, 1, 0.41, 0.422, "#00d2be");
+        pod.shape([[0, 0.17], [0.07, 0.17], [0.2, 0.5], [0.13, 0.5]], "rgba(201,205,208,0.5)");
         cover.shape([[0.05, 0.17], [0.14, 0.17], [0.3, 0.42], [0.21, 0.42]], "rgba(201,205,208,0.35)"); }); } },
   williams: { colours: { main: "#1b3fd2", second: WHITE, flap: WHITE, plate: "#1b3fd2", rear: WHITE, rflap: "#1b3fd2", trim: WHITE },             // cobalt blue, a white engine cover, lighter blue sidepods
     body(p) { p.all("#1b3fd2"); p.top("cover", 0, 0.8, 0.17, WHITE);
-      p.flank((tub, cover, pod) => { pod.band(0, 1, 0.17, 0.5, "#00a7e6"); pod.shape([[0.6, 0.17], [1, 0.17], [1, 0.5], [0.85, 0.5]], "#061a4d");
+      p.flank((tub, cover, pod) => { pod.band(0, 1, 0.17, 0.5, "#0a7fd4"); pod.shape([[0.7, 0.17], [1, 0.17], [1, 0.5], [0.9, 0.5]], "#061a4d");
         tub.shape([[0.55, 0.11], [1, 0.11], [1, 0.3], [0.8, 0.22]], "#061a4d"); cover.band(0, 0.8, 0.322, 0.334, CARBON); }); } },
   aston: { colours: { main: "#00594f", second: "#cedc00", flap: "#00594f", plate: "#cedc00", rear: "#00594f", rflap: "#00594f", trim: "#cedc00" },    // racing green, darker to the tail, lime lines
     body(p) { p.all([[2.8, "#0f7a66"], [0.5, "#00594f"], [-2.5, "#00382f"]]);
       p.flank((tub, cover, pod) => { pod.band(0.04, 1, 0.3, 0.312, "#cedc00"); pod.band(0.12, 1, 0.262, 0.269, "#cedc00"); tub.band(0.3, 1, 0.2, 0.207, "#cedc00"); cover.band(0, 0.9, 0.2, 0.207, "#cedc00"); }); } },
   alpine: { colours: { main: "#1166d6", second: "#ff7fc1", flap: "#1166d6", plate: "#ff7fc1", rear: "#ff7fc1", rflap: "#1166d6", trim: WHITE },    // blue at the front, pink behind
     body(p) { p.all([[2.8, "#1166d6"], [0.9, "#1166d6"], [0.1, "#ff7fc1"], [-2.5, "#ff7fc1"]]);
-      p.flank((tub, cover, pod) => { cover.shape([[0.62, 0.17], [1, 0.17], [1, 0.5], [0.86, 0.5]], "#1166d6"); pod.shape([[0, 0.17], [0.3, 0.17], [0.08, 0.5], [0, 0.5]], "#1166d6"); }); } },
-  haas: { colours: { main: WHITE, second: "#e2001a", flap: CARBON, plate: "#e2001a", rear: CARBON, rflap: WHITE, trim: "#e2001a" },               // white over black, a red sweep between them
+      p.flank((tub, cover, pod) => { cover.shape([[0.78, 0.17], [1, 0.17], [1, 0.5], [0.92, 0.5]], "#1166d6"); pod.band(0, 1, 0.17, 0.42, "#1166d6"); pod.shape([[0, 0.42], [0.3, 0.42], [0.08, 0.56], [0, 0.56]], "#1166d6"); }); } },      // (the sidepods' flanks blue, as the real car's are)
+  haas: { colours: { main: WHITE, second: "#e2001a", flap: CARBON, plate: "#e2001a", rear: CARBON, rflap: WHITE, trim: "#e2001a" }, low: 0.05,    // white, black sweeping up at the tail, red lines (its sidepods white to the floor, as the real car's are: its name is black on them)
     body(p) { p.all(WHITE);
-      p.flank((tub, cover, pod) => { tub.shape([[0.35, 0.11], [1, 0.11], [1, 0.25], [0.6, 0.2]], CARBON); cover.band(0, 1, 0.17, 0.27, CARBON);
-        cover.shape([[0.55, 0.27], [1, 0.27], [1, 0.5], [0.82, 0.5]], CARBON); pod.band(0, 1, 0.17, 0.27, CARBON);
-        tub.shape([[0.3, 0.2], [1, 0.25], [1, 0.285], [0.3, 0.215]], "#e2001a"); cover.shape([[0, 0.27], [0.55, 0.27], [0.82, 0.5], [0.76, 0.5], [0.5, 0.3], [0, 0.3]], "#e2001a"); pod.band(0, 1, 0.27, 0.295, "#e2001a"); }); } },
+      p.flank((tub, cover, pod) => { tub.shape([[0.35, 0.11], [1, 0.11], [1, 0.25], [0.6, 0.2]], CARBON);
+        cover.shape([[0.75, 0.17], [1, 0.17], [1, 0.5], [0.9, 0.5]], CARBON); cover.shape([[0.72, 0.17], [0.75, 0.17], [0.9, 0.5], [0.87, 0.5]], "#e2001a");
+        tub.shape([[0.3, 0.2], [1, 0.25], [1, 0.285], [0.3, 0.215]], "#e2001a"); pod.band(0, 1, 0.4, 0.418, "#e2001a"); pod.shape([[0.8, 0.05], [1, 0.05], [1, 0.4], [0.93, 0.4]], CARBON); }); } },
   rb: { colours: { main: WHITE, second: "#1b33c9", flap: "#1b33c9", plate: WHITE, rear: WHITE, rflap: "#1b33c9", trim: "#e8242c" }, numInk: "#e8242c",   // white, blue low on the flanks, red numbers
     body(p) { p.all(WHITE); p.top("tub", 0.04, 0.35, 0.028, "#1b33c9");
       p.flank((tub, cover, pod) => { pod.shape([[0, 0.17], [1, 0.17], [1, 0.3], [0, 0.44]], "#1b33c9"); cover.shape([[0.25, 0.17], [1, 0.17], [1, 0.4]], "#1b33c9");
         tub.shape([[0.55, 0.11], [1, 0.11], [1, 0.24]], "#1b33c9"); cover.band(0, 0.25, 0.17, 0.182, "#e8242c"); }); } },
-  audi: { colours: { main: "#c3c7cb", second: "#ff2d00", flap: CARBON, plate: "#ff2d00", rear: "#ff2d00", rflap: CARBON, trim: WHITE },            // titanium going to black, blocks of red
-    body(p) { p.all([[2.8, "#c6cacd"], [1.0, "#b0b5ba"], [0.0, "#868d94"], [-0.7, CARBON], [-2.5, CARBON]]); p.top("cover", 0, 0.3, 0.1, "#ff2d00");
-      p.flank((tub, cover, pod) => { cover.shape([[0.5, 0.17], [1, 0.17], [1, 0.5], [0.78, 0.5]], "#ff2d00"); pod.shape([[0.62, 0.17], [1, 0.17], [1, 0.5], [0.86, 0.5]], "#ff2d00"); }); } },
-  cadillac: { colours: { main: "#0a0c10", second: WHITE, flap: "#d7d9dc", plate: "#0a0c10", rear: "#0a0c10", rflap: WHITE, trim: WHITE }, outlined: true,     // one side black, the other white, chevrons down the seam
+  audi: { colours: { main: "#c3c7cb", second: "#ff2d00", flap: CARBON, plate: "#ff2d00", rear: "#ff2d00", rflap: CARBON, trim: WHITE }, low: 0.05,   // titanium going to black at the tail, blocks of red
+    body(p) { p.all([[2.8, "#c6cacd"], [1.0, "#b9bec2"], [-0.9, "#a7acb1"], [-1.5, CARBON], [-2.5, CARBON]]); p.top("cover", 0, 0.3, 0.1, "#ff2d00");      // (silver all down the sidepods, as the real car is: the name on them is black)
+      p.flank((tub, cover, pod) => { cover.shape([[0.42, 0.17], [1, 0.17], [1, 0.5], [0.7, 0.5]], "#ff2d00"); pod.shape([[0.78, 0.05], [1, 0.05], [1, 0.56], [0.58, 0.56]], "#ff2d00"); }); } },
+  cadillac: { colours: { main: "#0a0c10", second: WHITE, flap: "#d7d9dc", plate: "#0a0c10", rear: "#0a0c10", rflap: WHITE, trim: WHITE }, outlined: true, low: 0.05,     // one side black, the other white, chevrons down the seam
     body(p) { p.side(false, "#0a0c10"); p.side(true, "#f1f1ee");
       for (const key of ["tub", "cover"]) for (let t = 0.06; t < 0.96; t += 0.075) p.part(key).shape([[t, 0.455], [t + 0.03, 0.5], [t, 0.545], [t + 0.018, 0.545], [t + 0.048, 0.5], [t + 0.018, 0.455]], "#8a8e93"); } },
   sauber: { colours: { main: "#00e701", second: CARBON, flap: "#00e701", plate: CARBON, rear: CARBON, rflap: "#00e701", trim: WHITE },
@@ -790,7 +791,9 @@ function dress(c) {
       all(col) { for (const name of ["tub", "cover", "podL", "podR"]) part(name).band(0, 1, 0, 1, col); },
       top(name, t0, t1, half, col) { part(name).band(t0, t1, 0.5 - half, 0.5 + half, col); },
       side(right, col) { for (const name of ["tub", "cover"]) part(name).band(0, 1, right ? 0.5 : 0, right ? 1 : 0.5, col); part(right ? "podR" : "podL").band(0, 1, 0, 1, col); } });
-    flank((tub, cover, pod) => { tub.band(0, 1, 0, 0.11, CARBON); cover.band(0, 1, 0, 0.17, CARBON); pod.band(0, 1, 0, 0.17, CARBON); pod.band(0, 1, 0.56, 1, CARBON); });    // carbon below, and on the side of the pod nobody sees
+    // carbon below, and on the side of the pod nobody sees. (low: a team whose sidepods are painted down into the undercut: its big name lies
+    // across that line, and half of a dark name on light paint was on the carbon)
+    flank((tub, cover, pod) => { tub.band(0, 1, 0, 0.11, CARBON); cover.band(0, 1, 0, 0.17, CARBON); pod.band(0, 1, 0, look.low ?? 0.17, CARBON); pod.band(0, 1, 0.56, 1, CARBON); });
     for (const [name, j] of Object.entries(SWATCH)) { g.fillStyle = name === "carbon" ? CARBON : look.colours[name]; g.fillRect(j * W / 8, 0, W / 8, H * 0.24); }               // the row of plain colours
   }, { repeat: false, aniso: 8, read: true });
   const inkOn = (name, t, a) => {     // dark lettering on light paint, light on dark
@@ -1275,9 +1278,6 @@ function calibrate() {                // how the game's cars sit when running st
 //              for two cars in something together a shot of its own ("duo": both in one picture, from behind and
 //              above the middle of the pair, along the road)
 //   Drone      a racing drone flown round the car for show: chases, orbits, a loop over it, a tornado (replay3d_lens.js)
-//   Onboard    the driver's own eye line: just over the helmet, on the car's middle line, looking straight up the road
-//              (key 8). Placed from wherever the vehicle has its pod camera (kit.pod), so it sits right in any of them.
-//   Overhead   the helicopter as a choice of its own (key 9): a slow circle high over the car
 // The trackside cameras and the helicopter have long lenses: what is nearer or farther than the chosen car is soft.
 const POD = { at: new THREE.Vector3(0.12, 1.1, -0.12), down: 0.26, ahead: 1.4, fov: 57 };      // where it is on the typed-in car; how far down it looks; how far ahead the point on the middle line it is turned to; its lens
 const v1 = new THREE.Vector3(), v2 = new THREE.Vector3(), v3 = new THREE.Vector3(), q1 = new THREE.Quaternion(), q2 = new THREE.Quaternion(), e1 = new THREE.Euler();
@@ -1319,7 +1319,7 @@ function inShotOf(i, x, z) {
 }
 // The director: a new shot every nine seconds, counted from the start of the highlight being shown so each one
 // opens on a trackside camera. While the hosts talk over a held picture, a slow circle overhead.
-const SHOTS = ["tv", "chase", "tv", "pod", "tv", "heli", "tv", "cockpit", "chase"];
+const SHOTS = ["tv", "chase", "tv", "pod", "tv", "heli", "tv", "tv", "chase"];
 function directed(t) {
   const seg = S.seg;
   if (seg && seg.hold) return "heli";
@@ -1347,12 +1347,6 @@ function aim(car, p, dt, t) {
     camera.position.copy(POD.at).applyMatrix4(body.matrixWorld);
     camera.quaternion.copy(body.getWorldQuaternion(q1)).multiply(q2.setFromEuler(e1.set(-POD.down, Math.PI - Math.atan2(POD.at.x, POD.ahead), 0, "YXZ")));
     fov = POD.fov;
-  } else if (shot === "cockpit") {        // over the helmet: on the middle line, 15 cm under the pod and 22 cm forward of it
-    const body = car.userData.body;
-    car.updateMatrixWorld(true);
-    camera.position.set(0, POD.at.y - 0.15, POD.at.z + 0.22).applyMatrix4(body.matrixWorld);
-    camera.quaternion.copy(body.getWorldQuaternion(q1)).multiply(q2.setFromEuler(e1.set(-0.09, Math.PI, 0, "YXZ")));
-    fov = 78;
   } else if (shot === "iso") {
     fov = toyAim(car, p, dt);             // the model on a table (replay3d_toy.js)
   } else if (shot === "drone") {
@@ -1420,7 +1414,7 @@ function aim(car, p, dt, t) {
     }
     camera.up.set(0, 1, 0); camera.lookAt(v1);
   }
-  const near = shot === "pod" ? 0.08 : shot === "cockpit" ? 0.05 : shot === "drone" ? 0.2 : shot === "iso" ? TOY.near : 0.4, far = shot === "iso" ? TOY.far : 9000;
+  const near = shot === "pod" ? 0.08 : shot === "drone" ? 0.2 : shot === "iso" ? TOY.near : 0.4, far = shot === "iso" ? TOY.far : 9000;
   if (Math.abs(camera.fov - fov) > 0.01 || camera.near !== near || camera.far !== far) {
     camera.fov = follow.fresh || shot === "tv" || shot === "drone" || shot === "iso" ? fov : lerp(camera.fov, fov, 0.15); camera.near = near; camera.far = far; camera.updateProjectionMatrix();
   }
@@ -1632,7 +1626,7 @@ function render(t, dt) {
   for (const car of cars) {             // name tags: readable from far off, small up close, gone from the car you sit on
     if (!car.visible) continue;
     const tag = car.userData.tag, d = camera.position.distanceTo(car.position);
-    tag.visible = api.labels && !((follow.shot === "pod" || follow.shot === "cockpit" || follow.shot === "chase") && car === focusCar) && (TOY.on || d * lens < 235);
+    tag.visible = api.labels && !((follow.shot === "pod" || follow.shot === "chase") && car === focusCar) && (TOY.on || d * lens < 235);
     const s = TOY.on ? TOY.tall * 0.02 : Math.max(0.42, Math.min(d * lens, 75) * 0.056), big = car.scale.x;      // (a model's cars are bigger than life: their tags are not)
     tag.scale.set(2.86 * s / big, s / big, 1); tag.position.y = 1.35 + s * 0.75 / big;
   }
@@ -1640,6 +1634,7 @@ function render(t, dt) {
   startLights.forEach((m, i) => m.color.setRGB(i < on ? 9 : 0.1, i < on ? 0.25 : 0.02, i < on ? 0.15 : 0.02));
   carsStep(t);                          // whatever the field is driving today (replay3d_cars.js)
   lensStep(t, Math.max(0.001, dt), focusCar);      // the heat over the exhausts, what a long lens leaves soft (replay3d_lens.js)
+  mirrorsStep(focusCar);                // what is behind the car being followed, in its mirrors (replay3d_mirrors.js)
   // The grain is new in every frame, which is nothing to an eye and the dearest thing there is to a video encoder: it
   // cannot be predicted from the frame before, so the encoder spends most of what it has on it and smears the cars
   // and the track to pay for it. A film is made with as much of it as filmGrain says (none), and what there is of it
@@ -1652,6 +1647,7 @@ function render(t, dt) {
 }
 const api = window.Stage3D = {
   labels: true,
+  mirrors: true,                      // the followed car's mirrors show what is behind it (replay3d_mirrors.js); false: they are left dark
   fixed: null,                        // [width, height] to draw at exactly that size (the video export), null to fit the page
   filmGrain: 0,                       // how much of the picture's grain a film keeps (see render)
   render,
@@ -1919,11 +1915,15 @@ function vMat(name, colour) {           // the venue's own materials, each made 
    apart the boxes are and where the first is, the height of the lane). Three floors, each set back from the one
    below: the garages; a glazed floor behind a balcony, with a banner along the rail; a terrace under a thin roof. */
 function venuePits(lay, P) {
+  venuePitStands(lay, P);
   const pit = V.pit, s = P.s, [a, count] = vSpan(pit.from, pit.to), F = s * P.front, B = s * (P.front + pit.deep), [h1, h2, h3] = pit.floors;
   vPitBack = P.front + pit.deep;
   const up = h => k => P.y0(k) + h, u0 = P.first * BIN - P.bay / 2;
   const white = vMat("white"), glass = vMat("glass"), led = vMat("led", pit.led);
   lay(strip([k => [s * (P.front - 0.4), 0, P.y0(k) + 0.01], k => [B + s * 96, 0, P.y0(k) + 0.01]], { from: a - 26, count: count + 52, tile: 9 }), vMat("apron"));      // the paddock, paved
+  const whole = lay, drawn = [];                              // (the building as it is drawn here is kept track of: it goes when the model of it comes)
+  lay = Object.assign((g, m, o) => { const mesh = whole(g, m, o); drawn.push(mesh); return mesh; }, { add: thing => { drawn.push(thing); return whole.add(thing); } });
+  venuePitModel(whole, P, drawn);
   vFace(lay, a, count, F, up(0), up(h1 - 0.55), vMat("garage"), P.bay, { u0 });
   vSlab(lay, a, count, F - s * 2.4, F + s * 2.6, up(h1 - 0.55), up(h1), white);
   vFace(lay, a, count, F + s * 2.6, up(h1), up(h2 - 0.5), glass, 6);
@@ -1939,10 +1939,59 @@ function venuePits(lay, P) {
   const cols = [];
   for (let d = pit.from; d <= pit.to; d += 8) { const k = vSec(d), p = at(k, F + s * 2.3); cols.push([p[0], P.y0(wrap(k)) + (h2 + h3 - 0.35) / 2, p[2], h3 - 0.35 - h2]); }
   vPosts(lay, cols, 0.26, white);
+  lay = whole;
   // four screens along its roof, for the grandstand opposite
   for (let i = 0; i < 4; i++) vScreen(lay, pit.from + (pit.to - pit.from) * (i + 0.5) / 4, F + s * 9, P.y0(vSec(pit.from)) + h3 + 0.4, 15, 6.4, -s);
   for (const b of V.paddock || []) venueBlock(lay, b, P.y0(vSec(b.from)));
   for (const t of V.tents || []) venueTent(lay, t, P.y0(vSec(t.from)));
+}
+/* THE PIT BUILDING AS A MODEL, where this PC has one (venues\local\pit_shell.glb and its kits: venues\from_blend.py
+   makes them of a building built in Blender, the first of them the one GPT Astra built for Eric: 402 m, fifty
+   numbered garages with their doors, two floors of glazed boxes with terraces and glass rails, V columns, lamps
+   along every edge, and in every garage and box what stands in one). It is one straight piece, laid on the line of
+   the garages' doors. There is no slow renderer here to bounce lamplight round a room, so what is inside a garage
+   or a box glows a little of its own colour instead: a lit room seen from outside at night. */
+function venuePitModel(lay, P, drawn) {
+  const pit = V.pit, s = P.s, k = vSec((pit.from + pit.to) / 2), p = at(k, s * P.front), y0 = P.y0(vSec(pit.from)), y1 = P.y0(vSec(pit.to));
+  venueModel(lay, "pit", [p[0], (y0 + y1) / 2, p[2]], vAlong(k) + (s > 0 ? Math.PI : 0), drawn, Math.atan2(y1 - y0, pit.to - pit.from) * (s > 0 ? -1 : 1));
+}
+/* ANYTHING BUILT IN BLENDER, STOOD IN ITS PLACE (venues\local\<name>_shell.glb: what there is one of, one mesh a
+   material; and inside that file the names of its kits, each a thing built once, with every place it stands).
+   venues\make builds them by rule the way Astra built the pits: the grandstands with every seat and everybody in
+   them. A model's own x runs along it, its front is where it is put, its back is to the left of its x.
+   Each material is drawn as its name says. "Glazing" is a pane. " | lit" is where lamps reach: there is no slow
+   renderer here to work out how much light falls where, so such a face gives off a part of its own colour (its own
+   colour face by face, where each seat and each shirt has one), which is what a lit thing looks like at night.
+   A long one leans with its ground (lean: how far its own x climbs, as an angle): Lusail's main straight falls
+   1.2 m in the length of its grandstand, and a level building 417 m long would be buried at one end and
+   standing in the air at the other. */
+function vSelfLit(m, r, g, b) {
+  m.onBeforeCompile = shader => {
+    shader.uniforms.uGlow = { value: new THREE.Color(r, g, b) };
+    shader.fragmentShader = shader.fragmentShader.replace("void main() {", "uniform vec3 uGlow;\nvoid main() {")
+      .replace("#include <emissivemap_fragment>", "#include <emissivemap_fragment>\n\ttotalEmissiveRadiance += diffuseColor.rgb * uGlow;");
+  };
+  m.customProgramCacheKey = () => "selflit";
+}
+function vLook(m) {
+  if (m.userData.looked) return m;
+  m.userData.looked = true;
+  if (/glazing/i.test(m.name)) { m.transparent = true; m.opacity = 0.16; m.depthWrite = false; m.color.set(0xbfe9e4); m.roughness = 0.06; m.metalness = 0.5; }
+  else if (/lit suite|^Suite \||^Person \|/i.test(m.name)) vSelfLit(m, 0.62, 0.5, 0.36);              // warm lamps indoors
+  else if (/lit garage|^Workshop \||^Equipment \||^Car \|/i.test(m.name)) vSelfLit(m, 0.55, 0.58, 0.62);      // white work lights
+  else if (/^People \|/i.test(m.name)) vSelfLit(m, 0.3, 0.3, 0.31);
+  else if (/\| lit/i.test(m.name)) vSelfLit(m, 0.4, 0.4, 0.42);                                         // out of doors, under a roof's lamps and the circuit's
+  return m;
+}
+function venueModel(lay, name, p, turn, drawn = [], lean = 0) {       // (drawn: what was drawn in its place, put away when it comes)
+  vModel(name + "_shell", (parts, about) => {
+    const home = new THREE.Group();
+    home.position.set(p[0], p[1], p[2]); home.rotation.set(0, turn, lean, "YZX");
+    for (const part of parts) { const mesh = new THREE.Mesh(part.geometry, vLook(part.material)); mesh.castShadow = !part.material.transparent; mesh.receiveShadow = true; home.add(mesh); }
+    lay.add(home);
+    for (const old of drawn) old.visible = false;
+    for (const kit of (about && about.kits) || []) vModel(kit.file, kparts => vCopies(home, kparts, kit.places.map(([x, y, z, turn]) => [x, z, -y, turn, 1]), { cast: false, wear: (kind, part) => vLook(part.material) }));
+  });
 }
 function vPosts(lay, list, wide, mat, cast = true) {      // upright posts: [x, the height of its middle, z, how tall]
   if (!list.length) return null;
@@ -1980,11 +2029,17 @@ function venueStand(lay, st) {
   // Where the map has it, or behind the wall where the game's wall stands further out than that (a run-off that widens towards a corner)
   const wall = k => (away < 0 ? WALL.L : WALL.R)[wrap(k)], near = k => away * Math.max(Math.abs(st.near), wall(k) + 4), far = k => near(k) + away * deep;
   const y0 = verge(mid, near(mid)), seats = vMat(st.look === "grass" ? "grass" : "crowd"), shell = vMat("grey");
+  const whole = lay, drawn = [];                              // (the stand as it is drawn here goes when a model of it comes: venues\make\stand_<name>.py)
+  lay = Object.assign((g, m, o) => { const mesh = whole(g, m, o); drawn.push(mesh); return mesh; }, { add: thing => { drawn.push(thing); return whole.add(thing); } });
+  if (st.look !== "grass") {
+    const p = at(mid, near(mid)), ya = verge(a, near(a)), yb = verge(a + count - 1, near(a + count - 1));
+    venueModel(whole, "stand_" + st.name, [p[0], (ya + yb) / 2, p[2]], vAlong(mid) + (away > 0 ? Math.PI : 0), drawn, Math.atan2(yb - ya, (count - 1) * BIN) * (away > 0 ? -1 : 1));
+  }
   if (st.look !== "grass") lay(strip([k => [near(k), 0, y0], k => [near(k), 0, y0 + foot]], { from: a, count, uv: (k, c, o, dist) => [-away * dist / WALL_RUN(), c] }), vMat("wallBoards"), { cast: true });
   lay(strip([k => [near(k), 0, y0 + foot], k => [far(k), 0, y0 + top]], { from: a, count, uv: (k, c, o, dist) => [dist / 34, c] }), seats);
   vFace(lay, a, count, far, y0, y0 + top + 1.1, shell, 12);
   vEnds(lay, a, count, near, far, y0, y0 + foot, shell, y0 + top);
-  lay(strip([k => [near(k) - away * 3.5, 0, y0 + 0.02], k => [far(k) + away * 26, 0, y0 + 0.02]], { from: a - 2, count: count + 4, tile: 9 }), vMat("apron"));      // paving in front of it and the concourse behind
+  whole(strip([k => [away * (wall(k) + 0.3), 0.03], k => [far(k) + away * 34, 0.03]], { from: a - 2, count: count + 4, tile: 9 }), vMat("apron"));      // paving from the fence to it, and the concourse behind, lying on the ground
   if (st.roof) {
     const front = k => far(k) - away * deep * st.roof, high = y0 + top + 4.6;
     vSlab(lay, a, count, front, k => far(k) + away * 1.5, high, high + 0.45, vMat("white"));
@@ -2006,11 +2061,22 @@ function venueStandAt(lay, st) {         // a stand by where its front edge is o
   if ((dx * nm[0] + dz * nm[1]) * away < 0) { dx = -dx; dz = -dz; }
   const y0 = verge(g.k, g.off), foot = 2.2, top = foot + st.rise, P = (e, d, y) => [e[0] + dx * d, y, e[1] + dz * d];
   const wide = Math.hypot(q[0] - p[0], q[1] - p[1]), u = wide / 34;
+  const whole = lay, drawn = [];                              // (as it is drawn here it goes when a model of it comes: venues\make\stand_temp.py)
+  lay = Object.assign((g, m, o) => { const mesh = whole(g, m, o); drawn.push(mesh); return mesh; }, { add: thing => { drawn.push(thing); return whole.add(thing); } });
+  {                                                           // the model: its own x runs along the line between the ends of its front, its back is to the left of that
+    const M = st.model || st, [a, b] = M.front, cx = (a[0] + b[0]) / 2, cz = (a[1] + b[1]) / 2;
+    let ex = b[0] - a[0], ez = b[1] - a[1];
+    const el = Math.hypot(ex, ez), bx = M.behind ? M.behind[0] - cx : dx, bz = M.behind ? M.behind[1] - cz : dz;      // (which side is its back: the side a place behind it is on, or the side away from the road)
+    ex /= el; ez /= el;
+    if (ez * bx - ex * bz < 0) { ex = -ex; ez = -ez; }
+    const ya = vFloor(cx - ex * el / 2, cz - ez * el / 2), yb = vFloor(cx + ex * el / 2, cz + ez * el / 2);
+    venueModel(whole, "stand_" + st.name, [cx, (ya + yb) / 2, cz], Math.atan2(-ez, ex), drawn, Math.atan2(yb - ya, el));
+  }
   lay(quad(P(p, 0, y0 + foot), P(q, 0, y0 + foot), P(q, st.deep, y0 + top), P(p, st.deep, y0 + top), [0, 0, u, 0, u, 1, 0, 1]), vMat("crowd"));
   lay(quad(P(p, 0, y0), P(q, 0, y0), P(q, 0, y0 + foot), P(p, 0, y0 + foot)), vMat("grey"), { cast: true });
   lay(quad(P(p, st.deep, y0), P(q, st.deep, y0), P(q, st.deep, y0 + top + 1), P(p, st.deep, y0 + top + 1)), vMat("grey"), { cast: true });
   for (const e of [p, q]) lay(quad(P(e, 0, y0), P(e, st.deep, y0), P(e, st.deep, y0 + top), P(e, 0, y0 + foot)), vMat("grey"), { cast: true });
-  lay(quad(P(p, -6, y0 + 0.03), P(q, -6, y0 + 0.03), P(q, st.deep + 14, y0 + 0.03), P(p, st.deep + 14, y0 + 0.03), [0, 0, wide / 9, 0, wide / 9, 4, 0, 4]), vMat("apron"));
+  whole(quad(P(p, -6, y0 + 0.03), P(q, -6, y0 + 0.03), P(q, st.deep + 14, y0 + 0.03), P(p, st.deep + 14, y0 + 0.03), [0, 0, wide / 9, 0, wide / 9, 4, 0, 4]), vMat("apron"));
 }
 
 /* THE REST OF THE PLACE: what stands by itself, and what is beyond the fence. */
@@ -2029,6 +2095,9 @@ function vBoxAt(lay, b, mat, roof) {    // a block by where it is on the map: at
 }
 function venueDome(lay, d) {            // a canopy of steel lattice over a pale raft, with a curved wall under it
   const r = d.across / 2, y = vFloor(d.at[0], d.at[1]), web = vMat("lattice");
+  const whole = lay, drawn = [];          // (as it is drawn here it goes when the model of it comes: venues\make\vvip.py, three storeys under a round canopy on columns like trees)
+  lay = { add: thing => { drawn.push(thing); return whole.add(thing); } };
+  venueModel(whole, "vvip", [d.at[0], y, d.at[1]], 0, drawn);
   const cap = new THREE.Mesh(new THREE.SphereGeometry(r, 28, 8, 0, TAU, 0, Math.PI * 0.44).scale(1, d.h / r, 1), web);
   const uv = cap.geometry.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * 14, uv.getY(i) * 3);
   cap.position.set(d.at[0], y + 2.5, d.at[1]); cap.castShadow = true; lay.add(cap);
@@ -2055,7 +2124,9 @@ function venueLot(lay, p, far) {        // a car park: tarmac with bays and cars
    a low dark shape stands in its place. */
 const PLANTS = { tree: [["sidr", 0.4], ["ghaf", 0.35], ["acacia", 0.25]], low: [["shrub", 0.55], ["grass", 0.45]],
                  near: 110,       // a tree within this many metres of the road is the whole model
-                 row: 18,         // a row of trees has one this often
+                 share: 0.34,     // of the trees the map has, how many are stood: they were planted in 2023 and are saplings, and
+                 young: [0.42, 0.22],   // a third of them at this much of a grown tree's size (and as much again at most) is what the eye finds there:
+                 row: 0,          // "i dont see many trees out there in real life" (Eric). A row of trees has one this often (0: none: the map has 22 km of rows)
                  bed: 16 };       // a planted bed has a shrub or a grass to this many square metres
 function venueTrees(lay) {              // the trees, shrubs, grasses and lawns
   const where = [], low = [], own = seeded(41);      // (the plants have dice of their own, so that nothing else the circuit is built with moves)
@@ -2065,10 +2136,10 @@ function venueTrees(lay) {              // the trees, shrubs, grasses and lawns
     for (let i = 0; i < patch.n * 1.1; i++) { const p = at(vSec(L.from + own() * (L.to - L.from)), L.near + own() * (L.far - L.near)); low.push([p[0], p[1], p[2], own() * TAU, 0.75 + own() * 0.6, own()]); }
   }
   for (let i = 0; i < (V.dice || 0); i++) rnd();      // (the throws of the circuit's dice that its trees used to take, thrown still: nothing else it is built with moved when the trees went to where the map has them)
-  for (const [x, z] of V.treesAt || []) where.push([x, vFloor(x, z), z, 0.6 + own() * 0.8]);
-  for (const row of V.treeRows || []) for (let i = 0; i + 1 < row.length; i++) {
+  for (const [x, z] of V.treesAt || []) { const stood = own() < PLANTS.share, s = PLANTS.young[0] + own() * PLANTS.young[1]; if (stood) where.push([x, vFloor(x, z), z, s, true]); }
+  if (PLANTS.row) for (const row of V.treeRows || []) for (let i = 0; i + 1 < row.length; i++) {
     const [x0, z0] = row[i], [x1, z1] = row[i + 1], long = Math.hypot(x1 - x0, z1 - z0);
-    for (let d = own() * PLANTS.row; d < long; d += PLANTS.row) { const x = x0 + (x1 - x0) * d / long, z = z0 + (z1 - z0) * d / long; where.push([x, vFloor(x, z), z, 0.75 + own() * 0.4]); }
+    for (let d = own() * PLANTS.row; d < long; d += PLANTS.row) { const x = x0 + (x1 - x0) * d / long, z = z0 + (z1 - z0) * d / long; where.push([x, vFloor(x, z), z, PLANTS.young[0] + own() * PLANTS.young[1], true]); }
   }
   const inside = (ring, x, z) => { let odd = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [xi, zi] = ring[i], [xj, zj] = ring[j]; if ((zi > z) !== (zj > z) && x < (xj - xi) * (z - zi) / (zj - zi) + xi) odd = !odd; } return odd; };
   const span = ring => { let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity, twice = 0; ring.forEach(([x, z], i) => { const [u, v] = ring[(i + 1) % ring.length]; twice += x * v - u * z; x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }); return { x0, x1, z0, z1, area: Math.abs(twice) / 2 }; };
@@ -2096,7 +2167,7 @@ function venueTrees(lay) {              // the trees, shrubs, grasses and lawns
   const off = (x, z) => { let least = Infinity; for (let i = 0; i < road.length; i += 2) { const far = (road[i] - x) * (road[i] - x) + (road[i + 1] - z) * (road[i + 1] - z); if (far < least) least = far; } return Math.sqrt(least); };
   const pick = (list, r) => { let sum = 0; for (const [name, share] of list) { sum += share; if (r < sum) return name; } return list[list.length - 1][0]; };
   const places = {}, put = (name, place) => (places[name] = places[name] || []).push(place);
-  where.forEach(([x, y, z, s], i) => put(pick(PLANTS.tree, own()) + (off(x, z) > PLANTS.near ? "_far" : ""), [x, y, z, turns[i], 0.55 + 0.45 * s, i]));
+  where.forEach(([x, y, z, s, mapped], i) => put(pick(PLANTS.tree, own()) + (off(x, z) > PLANTS.near ? "_far" : ""), [x, y, z, turns[i], mapped ? s : 0.55 + 0.45 * s, i]));
   for (const [x, y, z, turn, size, r] of low) put(pick(PLANTS.low, r), [x, y, z, turn, size, -1]);
   const gone = new THREE.Matrix4().makeScale(0, 0, 0);
   for (const [name, list] of Object.entries(places)) vModel("plant_" + name, parts => {
@@ -2133,6 +2204,16 @@ function venuePosts(lay) {
   vCopies(lay, [{ kind: "body", geometry: blocks, material: vMat("grey") }, { kind: "body", geometry: panels, material: vMat("truss") }], places);
   vModel("trolley", parts => vCopies(lay, parts, places.map(([x, y, z, turn]) => [x + Math.cos(turn) * 0.9 + Math.sin(turn) * 1.0, y, z - Math.sin(turn) * 0.9 + Math.cos(turn) * 1.0, turn + 2.6, 1])));
 }
+/* THE TEAMS' STANDS ON THE PIT WALL: a roofed desk of screens with a row of seats, looking at the road, on its own
+   length of wall (venues\local\pit_stand.glb: sculpted on this PC from a picture GPT Astra drew, venues\thing.py).
+   Eleven, a team each, along the wall in front of the garages. Where each team's really stands is in no source
+   found, so they are evenly spaced: that much is ours and not the circuit's. */
+function venuePitStands(lay, P) {       // (P: the pit lane as replay3d.js laid it: which side it is on, and where its wall runs)
+  const pit = V.pit, places = [];
+  if (!pit || !P.wall) return;
+  for (let i = 0; i < 11; i++) { const k = vSec(pit.from + 40 + i * 30), p = at(k, P.wall(k) + P.s * 0.95); places.push([p[0], p[1], p[2], vAlong(k) + (P.s > 0 ? 0 : Math.PI), 1]); }      // (its own length of wall against the lane's side of the wall that is there)
+  vModel("pit_stand", parts => vCopies(lay, parts, places));
+}
 function venueArena(lay, A) {           // the dome on the skyline: white, a dark lattice over it, lit from below
   const skin = new THREE.MeshStandardMaterial({ map: tex(512, 256, (c, w, h) => {
     c.fillStyle = "#d9d6cc"; c.fillRect(0, 0, w, h); c.strokeStyle = "#1f2d55"; c.lineWidth = 3;
@@ -2152,6 +2233,29 @@ function vGlows(list, colour, size) {   // lamps a long way off: a soft point of
   nightOnly.push(glows);                // (put away in daylight: replay3d_toy.js)
   return glows;
 }
+/* THE SHORT LIGHTS. Lusail is lit by about a thousand posts, and most of them are short: a slim pole a little
+   taller than the fence with one lamp on it, every ten metres or so down both sides of the road just behind the
+   fence, all the way round (the venue's file says how often and how tall, and from what that is known). The pole
+   is venues\local\light_short_shell.glb (venues\make\lights.py); with or without it each lamp is a small glow,
+   and a string of those round the lap is most of what the place looks like from a distance at night. None on the
+   pits' side while the lane runs there, and none where it would stand in front of a television camera. */
+function venueLights(lay) {
+  const L = V.lights;
+  if (!L) return;
+  const every = Math.max(1, Math.round(L.every / BIN)), places = [], glow = [];
+  for (let k = 0; k < n; k += every) for (const sign of [-1, 1]) {
+    if (lane && lane.has(k) && sign === lane.side) continue;
+    const w = (sign < 0 ? WALL.L : WALL.R)[k];
+    if (!(w > 0)) continue;
+    const p = at(k, sign * (w + 1.1)), nm = K.normal[k];
+    if (STATIONS.some(st => Math.hypot(st.pos.x - p[0], st.pos.z - p[2]) < 7)) continue;
+    places.push([p[0], p[1], p[2], vAlong(k) + (sign > 0 ? Math.PI : 0), 1]);
+    glow.push(p[0] - nm[0] * sign * 0.5, p[1] + L.h - 0.15, p[2] - nm[1] * sign * 0.5);
+  }
+  vModel("light_short_shell", parts => vCopies(lay, parts, places, { cast: false, wear: (kind, part) => vLook(part.material) }));
+  const lamps = vGlows(glow, [1.0, 0.95, 0.86], 3.4);
+  if (lamps) lay.add(lamps);
+}
 function venueBuild(lay) {
   const far = { warm: [], cool: [], red: [] };
   for (const st of V.stands || []) venueStand(lay, st);
@@ -2162,6 +2266,7 @@ function venueBuild(lay) {
   venueTrees(lay);
   venuePanels(lay);
   venuePosts(lay);
+  venueLights(lay);
   if (V.arena) { venueArena(lay, V.arena); for (let i = 0; i < 28; i++) { const a = i / 28 * TAU; far.warm.push(V.arena.at[0] + Math.cos(a) * V.arena.size[0] * 0.62, vFloor(...V.arena.at) + 9, V.arena.at[1] + Math.sin(a) * V.arena.size[1] * 0.62); } }
   for (const t of V.towers || []) {      // a mast with a red lamp on it
     const y = vFloor(t[0], t[1]), mast = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 1.6, 60, 4, 6, true), vMat("truss"));
@@ -2223,14 +2328,14 @@ function venueSkyline() {
    it wants them, the lie of its surface, how rough it is. Until they come, and wherever there is nowhere to fetch
    them from (a replay opened as a file), what is drawn here stays. */
 const vPictures = new THREE.TextureLoader();
-function vPhoto(file, then, o = {}) {
+function vPhoto(file, then, o = {}, tries = 2) {
   if (!S.venueAt) return;
   vPictures.load(S.venueAt + file, t => {
     t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 16;
     t.colorSpace = o.data ? THREE.NoColorSpace : THREE.SRGBColorSpace;
     if (o.repeat) t.repeat.set(...(Array.isArray(o.repeat) ? o.repeat : [o.repeat, o.repeat]));
     then(t);
-  }, undefined, () => {});
+  }, undefined, () => { if (tries > 1) setTimeout(() => vPhoto(file, then, o, tries - 1), 600); });      // (once more, in case nobody answered: see glbLoad in replay3d_cars.js)
 }
 function surfaced(mat, name, o = {}) {      // o: repeat (how many times the photograph goes into one of the drawn picture), tint (what its colours are multiplied by; none: its colours are not used), bump (how strongly its surface shows)
   if (o.tint) vPhoto(name + "_d.jpg", t => { mat.map = t; mat.color.setRGB(...o.tint); mat.needsUpdate = true; }, o);
@@ -2239,17 +2344,18 @@ function surfaced(mat, name, o = {}) {      // o: repeat (how many times the pho
   return mat;
 }
 
-/* PROPS. Things somebody else made, adopted on this PC (venues\props.py, rides\adopt.py: venues\local\<name>.glb,
-   which Pit Wall serves to this PC and nothing copies to a website). Each is asked for when the circuit is built and
-   stood in its places when it has come; where it never comes, what is drawn here stays. */
+/* PROPS. Things somebody else made and adopted (venues\props.py, rides\adopt.py), and the stands and buildings made
+   by rule in Blender (venues\make): venues\local\<name>.glb, which goes wherever the player goes (venue/local beside
+   it: see ADOPTED in replay3d_cars.js). Each is asked for when the circuit is built and stood in its places when it
+   has come; where it never comes, what is drawn here stays. */
 function vModel(name, then) {
-  if (!S.venueAt || !HOME) return;
+  if (!S.venueAt) return;
   if (!sculptLoader) {
     const draco = new DRACOLoader();
     draco.setDecoderPath("https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/gltf/");
     sculptLoader = new GLTFLoader(); sculptLoader.setDRACOLoader(draco);
   }
-  sculptLoader.load(S.venueAt + "local/" + name + ".glb", gltf => {
+  glbLoad(S.venueAt + "local/" + name + ".glb", gltf => {      // (asked for again if nobody answers: replay3d_cars.js)
     gltf.scene.updateMatrixWorld(true);
     const parts = [];
     gltf.scene.traverse(o => {
@@ -2258,7 +2364,7 @@ function vModel(name, then) {
       parts.push({ name: o.name, kind: o.name.split("_")[0], geometry: o.geometry.clone().applyMatrix4(o.matrixWorld), material: o.material });
     });
     then(parts, (gltf.asset && gltf.asset.extras) || null);
-  }, undefined, () => {});
+  }, () => {});
 }
 function vCopies(lay, parts, places, o = {}) {      // a prop stood in many places: [x, y, z, turned so far about the upright, how big]; o.wear(kind, part) may give a part another material
   const d = new THREE.Object3D(), made = [];
@@ -3144,15 +3250,16 @@ const POD_F1 = POD.at.clone();
 const SCULPTS = {};                     // name -> { state: "loading" | "ready" | "none", parts: [{ name, geometry, material, painted }], mask, adopted, credit }
 let sculptLoader = null;
 /* ADOPTED. A thing everyone knows the exact look of (a film's car) is not sculpted from a picture: a model somebody
-   made properly is downloaded by Eric and cut down for here (rides\adopt.py). It has its maker's licence, so it is
-   kept on this PC (rides\local, which Pit Wall serves and nothing copies to a website), it is looked for first, and
-   the sculpt is what is drawn wherever it is not there. Its parts are told apart by their names: body_, glass_,
-   wheel_FL .. wheel_RR, calliper_FL .., glow_ (lit by the kit), lamp_ (always lit), over_ (laid over another part). */
-const HOME = /^(127\.0\.0\.1|localhost|\[::1\])$/.test(location.hostname);
-function sculpt(name, masked, homeOnly) {      // homeOnly: an adopted model with no sculpt of ours behind it, so there is nothing to ask a website for
+   made properly is downloaded by Eric and cut down for here (rides\adopt.py), with its maker's name and licence
+   written into the file. It is kept in rides\local, which goes wherever the player goes (rides/local beside it: Eric,
+   13 Oct 2026, of what had until then stayed on his PC, "add everything"), it is looked for first, and the sculpt is
+   what is drawn wherever it is not there: a site that has left a model out answers "not here" and gets the sculpt.
+   Its parts are told apart by their names: body_, glass_, wheel_FL .. wheel_RR, calliper_FL .., glow_ (lit by the
+   kit), lamp_ (always lit), over_ (laid over another part). */
+function sculpt(name, masked, adoptedOnly) {      // adoptedOnly: an adopted model with no sculpt of ours behind it, so where it is not there, there is nothing
   if (SCULPTS[name]) return SCULPTS[name];
   const rec = SCULPTS[name] = { state: "loading", parts: [], mask: null, adopted: false, credit: null }, at = S.ridesAt;
-  if (!at || (homeOnly && !HOME)) { rec.state = "none"; return rec; }
+  if (!at) { rec.state = "none"; return rec; }
   if (!sculptLoader) {
     const draco = new DRACOLoader();
     draco.setDecoderPath("https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/gltf/");
@@ -3166,17 +3273,26 @@ function sculpt(name, masked, homeOnly) {      // homeOnly: an adopted model wit
       rec.parts.push({ name: o.name, geometry: o.geometry.clone().applyMatrix4(o.matrixWorld), material: o.material, painted: !!o.material.map });
     });
   };
-  const ours = () => homeOnly ? void (rec.state = "none") : sculptLoader.load(at + name + ".glb", gltf => {
+  const ours = () => adoptedOnly ? void (rec.state = "none") : glbLoad(at + name + ".glb", gltf => {
     take(gltf);
     if (!masked) { rec.state = "ready"; return; }
     new THREE.TextureLoader().load(at + name + "_mask.png", t => { t.flipY = false; t.colorSpace = THREE.NoColorSpace; rec.mask = t; rec.state = "ready"; }, undefined, () => { rec.state = "ready"; });
-  }, undefined, () => { rec.state = "none"; });
-  if (HOME) sculptLoader.load(at + "local/" + name + ".glb", gltf => {
+  }, () => { rec.state = "none"; });
+  glbLoad(at + "local/" + name + ".glb", gltf => {
     take(gltf);
     rec.adopted = true; rec.credit = (gltf.asset && gltf.asset.extras) || null; rec.state = "ready";
-  }, undefined, ours);
-  else ours();
+  }, ours);
   return rec;
+}
+// A model asked for, and asked for again if nobody answered. A page opening asks for seventy of them at once, and
+// until 13 Oct 2026 Pit Wall kept only five callers waiting: now and then one was turned away, and that load of the
+// page had cars with no driver in them, or a stand with a piece missing, or no team's stickers. An answer of "it is
+// not here" is an answer, and is not asked about again: that is how a model that has not been adopted is found out.
+function glbLoad(url, got, failed, tries = 3) {
+  sculptLoader.load(url, got, undefined, e => {
+    if (tries > 1 && !(e && e.response)) setTimeout(() => glbLoad(url, got, failed, tries - 1), 400);
+    else failed(e);
+  });
 }
 // The line a wheel turns about: the line its tyre's walls are square to. Looked at along that line, the outermost
 // point of a wall is as far out all the way round; looked at along any other, the wall goes in and out once round
@@ -4404,24 +4520,34 @@ const f1Hub = new THREE.Vector3(F1_COLUMN[0] - F1_MAN[0], F1_COLUMN[1] - F1_MAN[
 const F1_REAL = ["f1_mclaren", "f1_ferrari", "f1_mercedes", "f1_aston", "f1_williams", "f1_haas", "f1_audi", "f1_cadillac", "f1_alpine", "f1_rb"];
 const F1_AS = { sauber: "audi" };       // a team that goes by another name by the season the models are of
 const F1_OWN = /^(num|nose)$/;          // the labels a car in its real livery still wears: its number, on the fin and the nose (its driver's letters would go on the rear wing's endplates, where a real livery has a partner's name)
+// A TEAM'S OWN STICKERS ON THE SAME CAR. Eric, Oct 13 2026: "no new car model just come up with the sticker sheet for
+// the other teams based on what red bulls looks like but with the appropriate logos and texts". The model's badges
+// are small patches that each show one place on a sheet of pictures, so a sheet laid out as Red Bull's is, with
+// another team's partners in the same places, puts their names where Red Bull's are (rides\stickers.py makes one a
+// team; rides\local\f1_stickers.glb holds them all, a part named stickers_<team> wearing each). A team that has
+// one drives the repainted car wearing it, and of the replay's own labels only its number, as a real livery does.
+const f1Stuck = team => F1_AS[team] || team;
 MAKE.f1 = got => {
   if (!got.f1 || !got.f1.adopted) return null;
   const man = got.racer && got.racer.adopted ? adoptedParts(got.racer) : null, rig = man && got.racer.credit && got.racer.credit.rig;
   f1Visor = f1Visor || new THREE.MeshStandardMaterial({ color: 0x0e0f11, roughness: 0.25, metalness: 0.6 });
   const keep = (alt, m) => { alt.own.push(m); return m; };
-  const base = f1Kit(got.f1, false, man, rig, keep), real = {};
+  const base = f1Kit(got.f1, false, man, rig, keep), real = {}, sheets = {};
   for (const rec of [got.f1, ...F1_REAL.map(id => got[id])]) {
     const team = rec && rec.adopted && rec.credit && rec.credit.team;
     if (team && !real[team]) real[team] = f1Kit(rec, true, man, rig, keep);
   }
-  const teams = Object.keys(real);
-  if (!teams.length || (S.D.liveries || {}).real === false) return base;      // (liveries.json can say no: every car in the replay's own paint)
-  return { ...base, variants: [base, ...teams.map(team => real[team])],       // (the first, the repainted car, is what a team with no model of its own drives)
-           which: i => { const c = S.CARS.find(q => q.i === i), team = c ? TEAM_OF[c.team] : null; return 1 + teams.indexOf(F1_AS[team] || team); } };
+  if (got.f1_stickers && got.f1_stickers.adopted) for (const p of got.f1_stickers.parts) if (p.material && p.material.map) sheets[p.name.replace(/^stickers_/, "")] = p.material.map;
+  const teams = Object.keys(real), stuck = Object.keys(sheets).length ? f1Kit(got.f1, false, man, rig, keep, sheets) : null;
+  if ((!teams.length && !stuck) || (S.D.liveries || {}).real === false) return base;      // (liveries.json can say no: every car in the replay's own paint)
+  return { ...base, variants: [base, ...teams.map(team => real[team]), ...(stuck ? [stuck] : [])],       // (the first, the repainted car with the replay's own lettering, is what a team with neither drives)
+           which: i => { const c = S.CARS.find(q => q.i === i), team = c ? f1Stuck(TEAM_OF[c.team]) : null, own = teams.indexOf(team);
+                         return own >= 0 ? 1 + own : stuck && sheets[team] ? 1 + teams.length : 0; } };
 };
-function f1Kit(rec, real, man, rig, keep) {      // the car made of one adopted model: repainted for whoever drives it, or (real) as it came
+function f1Kit(rec, real, man, rig, keep, sheets) {      // the car made of one adopted model: repainted for whoever drives it (wearing its team's stickers, if sheets are given), or (real) as it came
   const A = adoptedParts(rec), W = A.wheels, order = ["FL", "FR", "RL", "RR"].filter(q => W[q]);
-  const labels = A.sign.filter(q => !real || F1_OWN.test(q.name.split("_")[1])).map(q => {      // each label's picture runs 0 to 1 across and up it: moved to its own place in the sheet of words
+  const badges = {};                      // (a team's stickers are the same on both its cars: one material a team)
+  const labels = A.sign.filter(q => !(real || sheets) || F1_OWN.test(q.name.split("_")[1])).map(q => {      // each label's picture runs 0 to 1 across and up it: moved to its own place in the sheet of words
     const g = q.geometry.clone(), uv = g.attributes.uv;
     for (let i = 0; i < uv.count; i++) uv.setY(i, 1 - uv.getY(i));      // (a .glb counts a picture's rows from the top)
     return plaque(g, q.name.split("_")[1]);
@@ -4434,6 +4560,26 @@ function f1Kit(rec, real, man, rig, keep) {      // the car made of one adopted 
     const kind = part.name.split("_")[0];
     // (a real livery is the same for both of a team's cars: one material for the model, not one a car, and not thrown away with a car)
     if (kind === "paint" && real) return rec.livery = rec.livery || new THREE.MeshPhysicalMaterial({ map: part.material.map, normalMap: part.material.normalMap || null, roughness: 0.38, metalness: 0.25, clearcoat: 0.7, clearcoatRoughness: 0.16, side: both });
+    if (kind === "decal" && sheets) {
+      const c = S.CARS.find(q => q.i === alt.i), team = c ? f1Stuck(TEAM_OF[c.team]) : null, map = sheets[team], right = sheets[team + "_right"];
+      if (map) map.anisotropy = 8;
+      if (badges[team]) return badges[team];
+      const m = badges[team] = new THREE.MeshStandardMaterial({ map: map || null, visible: !!map, transparent: true, alphaTest: 0.3, roughness: 0.4, side: both, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+      // A car that is one colour on its left and another on its right (the Cadillac: black and white) has a sheet
+      // for each side, since a name that reads on the one is lost on the other (rides\stickers.py, "sides"): what
+      // is to the right of the car's middle line is taken from the second.
+      if (map && right) {
+        right.anisotropy = 8;
+        m.onBeforeCompile = sh => {
+          sh.uniforms.mapRight = { value: right };
+          sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying float vAcross;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvAcross = position.x;");
+          sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nuniform sampler2D mapRight;\nvarying float vAcross;")
+            .replace("#include <map_fragment>", "#ifdef USE_MAP\n  vec4 onLeft = texture2D(map, vMapUv), onRight = texture2D(mapRight, vMapUv);\n  diffuseColor *= vAcross < 0.0 ? onRight : onLeft;\n#endif");      // (both looked up, then one chosen: a look-up inside the choice has no slope to pick its size by)
+        };
+        m.customProgramCacheKey = () => "a sheet a side";
+      }
+      return m;
+    }
     if (kind === "decal") return rec.badges = rec.badges || new THREE.MeshStandardMaterial({ map: part.material.map, transparent: true, alphaTest: 0.35, roughness: 0.4, side: both, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
     if (kind === "paint") return alt.livery = alt.livery || keep(alt, liveried(part.material, u.wear.paint, F1_WHERE));
     if (kind === "sign") return alt.letters = alt.letters || keep(alt, new THREE.MeshStandardMaterial({ map: u.wear.signs, transparent: true, alphaTest: 0.3, roughness: 0.4, side: both, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
@@ -4454,6 +4600,8 @@ function f1Kit(rec, real, man, rig, keep) {      // the car made of one adopted 
       return m;
     }
     if (kind === "visor") return f1Visor;
+    // (its two mirror panes: a car's own material, because the car being followed has what is behind it in them: replay3d_mirrors.js)
+    if (kind === "body" && /mirror/i.test(part.material.name) && mirrorPanes(part.geometry)) return alt.mirror = alt.mirror || keep(alt, mirrorGlass());
     return null;
   };
   const wheelWear = (q, u, alt) => {                        // the tyres: one material a car, so that the markings on their walls can be that car's compound
@@ -4471,7 +4619,7 @@ function f1Kit(rec, real, man, rig, keep) {      // the car made of one adopted 
     return alt.tyres;
   };
   const seen = /paint/, cockpit = /steeringwheel|cinture|chrome|LCD|clearled|kers|black_s|carbon1/;
-  const bodies = [{ sculpt: { parts: [...A.paint, ...A.body, ...A.glass, ...(real ? A.decal || [] : []), ...signs, ...A.light, ...driver], mask: null }, at: [0, 0.03, 0], wear,      // (its tyres are drawn 3 cm into the road; ours stand on it, so the body is lifted to suit)
+  const bodies = [{ sculpt: { parts: [...A.paint, ...A.body, ...A.glass, ...(real || sheets ? A.decal || [] : []), ...signs, ...A.light, ...driver], mask: null }, at: [0, 0.03, 0], wear,      // (its tyres are drawn 3 cm into the road; ours stand on it, so the body is lifted to suit)
                     quiet: q => !(q.material && seen.test(q.material.name)), close: q => !!q.material && cockpit.test(q.material.name) }];
   if (A.steer) bodies.push({ sculpt: { parts: A.steer, mask: null }, at: [-F1_COLUMN[0], 0.03 - F1_COLUMN[1], -F1_COLUMN[2]], on: "steer", wear, quiet: () => true });
   if (man) bodies.push({ sculpt: { parts: man.torso || [], mask: null }, at: F1_MAN, wear, quiet: () => true, arms: rig ? rig.arms : null },
@@ -4497,7 +4645,166 @@ function f1Kit(rec, real, man, rig, keep) {      // the car made of one adopted 
              if (alt.compound && tyre !== alt.tyreNow) { alt.tyreNow = tyre; alt.compound.value.set(tyre || "#b4b4b4"); }
            } };
 }
-MAKE.f1.needs = ["f1!", "racer!", ...F1_REAL.map(id => id + "!")];
+MAKE.f1.needs = ["f1!", "racer!", "f1_stickers!", ...F1_REAL.map(id => id + "!")];
+
+// ---------------------------------------------------------------------------------------------------- mirrors
+// Eric, 13 Oct 2026, looking out of the onboard camera: "can you add reflection of whats behind the car in the
+// mirrors". The adopted F1 car has two mirror panes (one part of the model, a pane a side, 20 cm by 5), and they
+// were a flat grey. Now the car being followed has what is behind it in them.
+//
+// It is done as a racing game does it and not as glass does. Each pane is a little screen, showing the picture of
+// a camera that stands in the pane and looks back down the car's flank and a little outward. A true mirror shows
+// a different thing to every eye, and to the onboard camera, which is up on the airbox looking down at the panes,
+// a true one would show the car's own floor. What is wanted is what a driver has in his mirrors, wherever they
+// are looked at from: his own rear tyre on the inner side, the car behind seen under his rear wing, the road and
+// whoever is on it on the outer. (The picture is not turned over to make a mirror of it. A pane is looked at from
+// behind the camera that took its picture, and that turns it over, lettering and all, as a mirror does.)
+//
+// What it costs is the circuit drawn again for each pane, and drawn whole that was more than the picture itself:
+// from the onboard camera after the start, 12 ms a frame became 24 (each pane's slit of a view took in five million
+// triangles: every grandstand's crowd, every tree, the pit building's fittings, a third of a mile off and smaller
+// than a pixel). Eric, asked nothing, a minute later: "doesnt have to be crystal clear if that helps frames". So:
+//  - only the car being followed has them, and only while a pane is big enough in the picture for anybody to tell
+//    what is in it, and is seen from the side it shines on (MIRROR.least: from the chase camera they are specks);
+//  - the shadows are not worked out again for them: the main picture's are used, a frame old;
+//  - watched live, one pane is drawn again each frame, turn about, and it is drawn light (mirrorSpared): no crowd,
+//    no plants, none of the pit building's fittings, nothing that is a great many triangles in one piece, and
+//    nothing of any size that is further off than MIRROR.reach. The cars are never left out: they are what a
+//    mirror is for;
+//  - a film has both panes drawn for every frame, with everything in them: a film is off the clock, and the same
+//    film made twice is to be the same film.
+// The typed-in F1 car and the other vehicles have no panes, and nothing is drawn for them.
+const MIRROR = {
+  wide: 512, high: 128,                 // a pane's picture, in pixels (twice that for a film 1440 tall or more)
+  out: 0.175, down: 0.03,               // which way a pane's camera looks: this far out from straight back, and down (radians)
+  field: 40,                            // how much it takes in from side to side, in degrees (a flat mirror that size would show the driver 12: these are as a curved one)
+  near: 0.3, far: 3000,
+  least: 0.035,                         // how wide a pane must be in the picture, as a part of the picture's height, before it is drawn into (onboard it is 0.2 and more; from the chase camera 0.025)
+  dim: 0.88,                            // how much of the light a pane gives back
+  // what a pane watched live does without (by what a thing's material is called, by its size, by how far off it is):
+  never: /^(People|Person|Tree_|bush_|bark_|leaf_|Suite|Workshop|Equipment|Car|Carbon rubber|LCD|Telephone|Pit markings|Oiled walnut|body_trolley|brake_tablet)/,
+  most: 120000,                         // triangles in one piece (all its copies counted), over which it is left out
+  some: 20000, reach: 150,              // and a piece of this many or more is left out when the nearest of it is further off than this (metres)
+};
+let mirrorShot = null, mirrorBlank = null, mirrorOn = null, mirrorFrame = 0, mirrorLast = -9, mirrorKnown = null;
+
+// What a pane watched live does without, found out for it: the pieces of the circuit that are never drawn in one,
+// and those that are not when they are far off (with where each is and how big). The circuit's props come over a
+// few seconds after the page opens, so this is looked over again every four seconds or so.
+function mirrorSpared() {
+  if (mirrorKnown && mirrorFrame - mirrorKnown.at < 240) return mirrorKnown;
+  const own = new Set(cars), never = [], far = [], ball = new THREE.Sphere();
+  const walk = o => {
+    if (own.has(o)) return;
+    if (o.isMesh && o.geometry && o.geometry.attributes.position) {
+      const g = o.geometry, m = Array.isArray(o.material) ? o.material[0] : o.material;
+      const n = (g.index ? g.index.count : g.attributes.position.count) / 3 * (o.isInstancedMesh ? o.count : 1);
+      if (n > MIRROR.most || MIRROR.never.test((m && m.name) || "")) never.push(o);
+      else if (n >= MIRROR.some) {
+        if (o.isInstancedMesh) { if (!o.boundingSphere) o.computeBoundingSphere(); ball.copy(o.boundingSphere); }
+        else { if (!g.boundingSphere) g.computeBoundingSphere(); ball.copy(g.boundingSphere); }
+        ball.applyMatrix4(o.matrixWorld);
+        far.push({ o, at: ball.center.clone(), r: ball.radius });
+      }
+    }
+    for (const ch of o.children) walk(ch);
+  };
+  walk(scene);
+  return mirrorKnown = { at: mirrorFrame, never, far };
+}
+
+function mirrorPanes(g) {               // a mirror part's two panes found (one each side of the car), and its picture laid over each of them whole
+  if (g.userData.panes !== undefined) return g.userData.panes;
+  const P = g.attributes.position, N = g.attributes.normal, sides = [1, -1].map(side => ({ side, box: new THREE.Box3(), face: new THREE.Vector3() }));
+  g.userData.panes = null;
+  if (!P || !P.count) return null;
+  for (let i = 0; i < P.count; i++) {
+    const s = sides[P.getX(i) > 0 ? 0 : 1];
+    s.box.expandByPoint(v1.fromBufferAttribute(P, i));
+    if (N) s.face.add(v1.fromBufferAttribute(N, i));
+  }
+  if (sides.some(s => s.box.isEmpty())) return null;
+  // The two pictures are kept side by side in one (the left pane's in the left half), and each pane shows the whole
+  // of its own: across it by where a corner is across the pane, up it by how high. (The model's own picture places
+  // for the panes are a sheet's worth each, for a game to do the same with.)
+  const uv = new THREE.BufferAttribute(new Float32Array(P.count * 2), 2);
+  for (let i = 0; i < P.count; i++) {
+    const k = P.getX(i) > 0 ? 0 : 1, b = sides[k].box;
+    uv.setXY(i, (k + (P.getX(i) - b.min.x) / (b.max.x - b.min.x)) / 2, (P.getY(i) - b.min.y) / (b.max.y - b.min.y));
+  }
+  g.setAttribute("uv", uv);
+  const up = new THREE.Vector3(0, 1, 0), none = new THREE.Vector3(), turn = new THREE.Matrix4();
+  return g.userData.panes = sides.map(({ side, box, face }) => {
+    const across = Math.hypot(box.max.x - box.min.x, box.max.z - box.min.z), tall = box.max.y - box.min.y;      // (a pane is set at an angle across the car: its width is along that)
+    const eye = new THREE.PerspectiveCamera(2 * Math.atan(Math.tan(MIRROR.field * Math.PI / 360) * tall / across) * 180 / Math.PI, across / tall, MIRROR.near, MIRROR.far);
+    const way = new THREE.Vector3(side * Math.sin(MIRROR.out), -Math.sin(MIRROR.down), -Math.cos(MIRROR.out) * Math.cos(MIRROR.down));
+    return { side, at: box.getCenter(new THREE.Vector3()), across, eye,
+             face: face.lengthSq() ? face.normalize() : new THREE.Vector3(0, 0, -1),
+             look: new THREE.Quaternion().setFromRotationMatrix(turn.lookAt(none, way, up)) };
+  });
+}
+
+function mirrorGlass() {                // a pane's material: its picture as it is, a little dimmed. Until it has one, the dark of nothing much
+  if (!mirrorBlank) {
+    const c = document.createElement("canvas");
+    c.width = 4; c.height = 32;
+    const g = c.getContext("2d"), fade = g.createLinearGradient(0, 0, 0, 32);
+    for (const [at, colour] of [[0, "#0d1016"], [0.42, "#2f3540"], [0.5, "#3a3f47"], [0.58, "#26282c"], [1, "#131415"]]) fade.addColorStop(at, colour);
+    g.fillStyle = fade; g.fillRect(0, 0, 4, 32);
+    mirrorBlank = new THREE.CanvasTexture(c);
+    mirrorBlank.colorSpace = THREE.SRGBColorSpace;
+  }
+  return new THREE.MeshBasicMaterial({ map: mirrorBlank, color: new THREE.Color().setScalar(MIRROR.dim), side: both, fog: false });
+}
+
+function mirrorsStep(car) {             // each frame, when the cars are where they are and before the picture is drawn: what is behind the followed car, into its panes
+  const first = !mirrorFrame++, alt = car && car.visible ? car.userData.alt : null, glass = alt && !alt.far ? alt.mirror : null;
+  const dark = () => { if (mirrorOn) { mirrorOn.map = mirrorBlank; mirrorOn = null; } };      // (a pane that is not being drawn into shows nothing much, sooner than something from a while ago)
+  if (mirrorOn !== glass) dark();                                                             // (another car is followed now)
+  if (first || !glass || !api.mirrors || quality < 1 || TOY.on) return dark();                // (first: the shadows these are drawn with are the main picture's, and there has not been one yet)
+  if (!alt.panes) alt.root.traverse(o => { if (o.isMesh && o.material === glass) alt.panes = o; });
+  const mesh = alt.panes, panes = mesh ? mirrorPanes(mesh.geometry) : null;
+  if (!panes) return dark();
+  mesh.updateWorldMatrix(true, false);
+  const lens = Math.tan(camera.fov * Math.PI / 360);
+  const seen = panes.filter(pane => {
+    const at = pane.eye.position.copy(pane.at).applyMatrix4(mesh.matrixWorld);
+    return v1.copy(camera.position).sub(at).dot(v2.copy(pane.face).transformDirection(mesh.matrixWorld)) > 0
+        && pane.across / Math.max(0.05, at.distanceTo(camera.position)) / lens / 2 >= MIRROR.least;
+  });
+  if (!seen.length) return dark();
+  const big = api.fixed && api.fixed[1] >= 1440 ? 2 : 1, w = MIRROR.wide * big, h = MIRROR.high * big;
+  // (kept as the main picture is before it is finished: light as it is, with room above white, so that a headlamp
+  // or a floodlight in a pane is as bright as one anywhere; and with smaller copies of itself, for a pane seen small)
+  if (!mirrorShot) mirrorShot = new THREE.WebGLRenderTarget(w * 2, h, { type: THREE.HalfFloatType, samples: 4, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter });
+  let stale = mirrorOn !== glass || mirrorFrame - mirrorLast > 1;      // nothing of this car's in the panes yet, or not since a moment ago: both are drawn now
+  if (mirrorShot.width !== w * 2) { mirrorShot.setSize(w * 2, h); stale = true; }
+  if (glass.map !== mirrorShot.texture) glass.map = mirrorShot.texture;
+  mirrorOn = glass; mirrorLast = mirrorFrame;
+  const live = api.debug.mirrorsLive ?? !api.fixed;           // (api.debug.mirrorsLive: drawn as when watched live, or as for a film, whichever is being done: for looking at the difference)
+  const now = !live || stale || seen.length < 2 ? (stale ? panes : seen) : [seen[mirrorFrame % 2]];
+  const shadows = renderer.shadowMap.autoUpdate, tags = cars.map(c => c.userData.tag.visible), put = [];
+  renderer.shadowMap.autoUpdate = false;
+  for (const c of cars) c.userData.tag.visible = false;       // (nobody's name hangs over his car in a mirror)
+  if (live) {                                                 // watched live: drawn light (see the top of this file)
+    const spared = mirrorSpared();
+    for (const o of spared.never) if (o.visible) { o.visible = false; put.push(o); }
+    for (const q of spared.far) if (q.o.visible && q.at.distanceTo(car.position) - q.r > MIRROR.reach) { q.o.visible = false; put.push(q.o); }
+  }
+  mesh.getWorldQuaternion(q1);
+  for (const pane of now) {
+    pane.eye.position.copy(pane.at).applyMatrix4(mesh.matrixWorld);
+    pane.eye.quaternion.copy(q1).multiply(pane.look);
+    const x = pane.side > 0 ? 0 : w;
+    mirrorShot.viewport.set(x, 0, w, h); mirrorShot.scissor.set(x, 0, w, h); mirrorShot.scissorTest = true;
+    renderer.setRenderTarget(mirrorShot);
+    renderer.render(scene, pane.eye);
+  }
+  renderer.setRenderTarget(null);
+  renderer.shadowMap.autoUpdate = shadows;
+  for (const o of put) o.visible = true;
+  cars.forEach((c, i) => { c.userData.tag.visible = tags[i]; });
+}
 
 // What a camera does to the picture: part of the 3D view, joined on after replay3d_models.js (see replay3d.js); not
 // a module on its own. Three things Eric asked for (11 Oct 2026):

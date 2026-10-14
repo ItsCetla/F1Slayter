@@ -2603,6 +2603,11 @@ document.addEventListener("stage3d-lost", () => {
   document.addEventListener("visibilitychange", function back() { if (!document.hidden) { document.removeEventListener("visibilitychange", back); again(); } });
 });
 let towerAt = 0, slowFor = 0;
+// f1.cetla.dev (tools/lighten-player.mjs): the 3D picture is drawn every other refresh on a 120 or 144 Hz screen, and
+// at 30 a second while the replay is paused and nobody has touched it for a second (a frame is drawn once 10.7 ms,
+// or 27.3 ms, have gone by: a 60 or 90 Hz screen keeps every frame however unevenly they come)
+let drawnFor = 0, touchedAt = 0;
+for (const ev of ["pointerdown", "pointermove", "wheel", "keydown", "touchmove"]) addEventListener(ev, () => { touchedAt = performance.now(); }, { passive: true });
 function governor(dtSec) {              // a machine that can't keep up gets a lighter picture, not a slide show: bloom first, then shadows
   if (!view3d || !window.Stage3D || document.hidden) { slowFor = 0; return; }
   slowFor = dtSec > 0.045 ? slowFor + dtSec : Math.max(0, slowFor - dtSec * 2);
@@ -2634,7 +2639,7 @@ function tick(now, manual) {
   liveStep();
   governor(dtSec);
   if (again !== null) T = again;
-  if (view3d && window.Stage3D) { Stage3D.render(T, dtSec); if (building) { building = false; $("stageNote").hidden = true; } } else renderMap(dtSec);
+  if (view3d && window.Stage3D) { drawnFor += dtSec; if (drawnFor >= (playing || now - touchedAt < 1000 ? 0.0107 : 0.0273) || manual) { Stage3D.render(T, drawnFor); drawnFor = 0; } if (building) { building = false; $("stageNote").hidden = true; } } else renderMap(dtSec);
   engineStep(dtSec);                    // (after the picture: the engines are heard from where its camera has just been put)
   renderTrace();
   T = live;

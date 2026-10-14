@@ -77,9 +77,13 @@ driver's race lap by lap with their passes and highlights.
    {"round": 1, "...": "...", "replay": "https://f1.cetla.dev/replays/player/?race=<id>", "results": [...]}
    ```
 
-After copying a new player in, put this site's phone additions back into it (the phone layout in
-`replays/player/mobile.css` and `mobile.js`, and a sharp 3D picture on phones):
-`node tools/add-mobile-player.mjs`. The tests fail until it is.
+After copying a new player in, put this site's additions back into it. The tests fail until you do.
+
+```bash
+node tools/add-mobile-player.mjs       # the phone layout (mobile.css, mobile.js) and a sharp 3D picture on phones
+node tools/lighten-player.mjs          # lighter to run: off-screen scenery skipped, 60 fps cap, a lighter phone circuit
+python3 tools/slim-player-models.py    # the models' pictures as WebP (needs Pillow): about half the download
+```
 
 With `"site"` in Pit Wall's `web.json` set to a clone of this repo, steps 2 and 3 happen by
 themselves. Every Watch and Replay button for that round (replays page, schedule, results, home) then
@@ -191,6 +195,8 @@ assets/css/pages/*.css     page-specific styles
 assets/tracks/             circuit maps
 replays/player/            F1 Pit Wall's 3D race viewer and its races (copied in from Pit Wall's export)
 tools/add-mobile-player.mjs  puts the phone layout and the phone's sharp 3D picture into a newly copied viewer
+tools/lighten-player.mjs     makes a newly copied viewer lighter to run on phones and laptops
+tools/slim-player-models.py  shrinks the pictures inside the viewer's models (PNG to WebP)
 tests/                     node --test unit tests: the data model, and the viewer keeping its phone layout
 pages/, analytics.html     redirects from the old site's URLs
 ```

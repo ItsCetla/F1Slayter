@@ -179,6 +179,11 @@
   .exportbox pre { margin: 0; padding: 8px 10px; background: var(--page); border: 1px solid var(--line); border-radius: 6px; font: 12px/1.4 Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; user-select: all; }
   .exportbox .bar { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
   .exportbox .bar i { display: block; height: 100%; width: 0; background: var(--red); }
+  .exportbox .credits { max-height: min(58vh, 440px); overflow-y: auto; padding-right: 6px; }      /* (a block, not a grid: rows of a grid held to a height squash into each other) */
+  .exportbox .credits h4 { margin: 12px 0 4px; font-size: 11px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+  .exportbox .credits h4:first-child { margin-top: 0; }
+  .exportbox .credits p { min-height: 0; margin: 0 0 6px; font-size: 12.5px; }
+  .exportbox .credits a { color: var(--ink); }
   .tip {
     position: absolute; pointer-events: none; background: #0b0b10; border: 1px solid var(--line); border-radius: 6px;
     padding: 6px 8px; font-size: 12.5px; white-space: nowrap; display: none; z-index: 9;
@@ -243,15 +248,6 @@
   .lapsT th { font-size: 10.5px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
   .lapsT td:first-child, .lapsT th:first-child { text-align: left; color: var(--muted); }
   .lapsT td { border-top: 1px solid var(--grid); }
-  .lapsWrap { overflow-x: auto; flex: none; }
-  .lapsFull { border-collapse: collapse; width: 100%; min-width: 560px; }
-  .lapsFull td, .lapsFull th { padding: 8px 5px; }
-  .lapsFull tbody tr { cursor: pointer; }
-  .lapsFull tbody tr:hover td { background: rgba(255, 255, 255, 0.06); }
-  .lapsFull tr.now td { background: rgba(225, 6, 0, 0.18); }
-  .lapsFull tr.todo td { opacity: 0.45; }
-  .lapsFull td small { color: var(--muted); font-size: 10.5px; }
-  .lapsFull td.notes, .lapsFull th.notes { text-align: left; white-space: normal; min-width: 150px; font-size: 11.5px; color: var(--ink-2); }
 
   .logcard { flex: 1 1 0; min-height: 190px; display: flex; flex-direction: column; padding: 0; overflow: hidden; }
   .tabs { display: flex; border-bottom: 1px solid var(--line); flex: none; }
@@ -278,7 +274,6 @@
   .hl li:hover { background: rgba(255, 255, 255, 0.06); }
   .hl li.on { background: rgba(225, 6, 0, 0.22); box-shadow: inset 3px 0 0 var(--red); }
   .hl li.done .t { color: var(--muted); }
-  .hl li.empty { cursor: default; color: var(--muted); font-size: 13px; }
   .hl .dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 5px; flex: none; }
   .hl .t { flex: 1; }
   .hl .t small { display: block; color: var(--muted); font-size: 11.5px; }
@@ -339,8 +334,6 @@
     .caption { font-size: 13px; left: 8px; right: 8px; bottom: 8px; padding: 7px 10px; }
     .lowerthird { left: 8px; bottom: 62px; font-size: 11.5px; }
     .standings { left: 8px; right: 8px; min-width: 0; }
-    .lapsFull .wide { display: none; }
-    .lapsFull { min-width: 0; }
   }
   /* ---- embedded in another page's frame (?embed=1): the picture and the scrubber, nothing else */
   body.embed { display: grid; height: 100vh; height: 100dvh; overflow: hidden; gap: 6px; grid-template: "top" auto "stage" minmax(0, 1fr) "deck" auto / minmax(0, 1fr); }
@@ -351,8 +344,6 @@
   body.embed header.top { padding: 6px 10px; flex-wrap: nowrap; }
   body.embed .hitem b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   @media (min-width: 1000px) { body.embed footer.deck { grid-template-columns: auto minmax(0, 1fr); } }
-  /* a phone-width frame: the race's name on its own line, the buttons wrapping under it instead of running off the edge */
-  @media (max-width: 640px) { body.embed header.top { flex-wrap: wrap; } body.embed .hitem { flex: 1 0 100%; } body.embed .spacer { display: none; } }
 </style>
 <link rel="stylesheet" href="mobile.css">
 </head>
@@ -387,7 +378,7 @@
         <button type="button" data-view="2d" class="on" title="V">2D map</button><button type="button" data-view="25d" title="V · the circuit as a model on a table: drag to turn it, wheel to come nearer">2.5D</button><button type="button" data-view="3d" title="V">3D</button>
       </div>
       <div class="seg" id="camBar" role="group" aria-label="Camera" hidden>
-        <button type="button" data-cam="auto" title="5 · cuts between all the cameras, as a broadcast does">Director</button><button type="button" data-cam="story" title="7 · follows the commentary: each driver as the hosts name them, each thing they call as it happens, and the race itself when they are quiet. It chooses who to follow: to choose yourself, pick another camera">Commentary</button><button type="button" data-cam="pod" title="1">TV pod</button><button type="button" data-cam="chase" title="2">Chase</button><button type="button" data-cam="orbit" title="3 · drag to look round the car, wheel to zoom">Orbit</button><button type="button" data-cam="tv" title="4 · the trackside cameras">Trackside</button><button type="button" data-cam="drone" title="6 · a racing drone flown round the car: chases, orbits, a loop over it, a tornado">Drone</button><button type="button" data-cam="cockpit" title="8 · onboard, just over the driver's helmet">Onboard</button><button type="button" data-cam="heli" title="9 · a slow circle high over the car">Overhead</button>
+        <button type="button" data-cam="auto" title="5 · cuts between all the cameras, as a broadcast does">Director</button><button type="button" data-cam="story" title="7 · follows the commentary: each driver as the hosts name them, each thing they call as it happens, and the race itself when they are quiet. It chooses who to follow: to choose yourself, pick another camera">Commentary</button><button type="button" data-cam="pod" title="1">TV pod</button><button type="button" data-cam="chase" title="2">Chase</button><button type="button" data-cam="orbit" title="3 · drag to look round the car, wheel to zoom">Orbit</button><button type="button" data-cam="tv" title="4 · the trackside cameras">Trackside</button><button type="button" data-cam="drone" title="6 · a racing drone flown round the car: chases, orbits, a loop over it, a tornado">Drone</button>
       </div>
       <div class="seg" id="namesBar" hidden><button type="button" id="names3d" class="on" title="N · the three-letter tags over the cars">Names</button></div>
       <div class="looks" id="looksBar" hidden>
@@ -395,10 +386,11 @@
         <label title="What everyone is driving">Cars <select id="carsPick"></select></label>
       </div>
       <div class="looks" id="soundBar" hidden>
-        <label title="The cars' engines, from recordings of real laps. Heard at 1× speed; on this PC only.">Engines <select id="enginePick"></select></label>
+        <label title="The cars' engines, from recordings of real laps. Heard at 1× speed.">Engines <select id="enginePick"></select></label>
         <input type="range" id="engineVol" min="0" max="100" value="60" title="How loud the engines are" aria-label="How loud the engines are" hidden>
       </div>
       <div class="seg" id="followBar"><button type="button" id="followCam" title="Keep the map zoomed in on the followed car">Follow car</button></div>
+      <div class="seg" id="creditsBar" hidden><button type="button" id="creditsBtn" title="Who made the cars, the things round the circuit and the sounds">Credits</button></div>
       <span class="hint" id="camHint" hidden>drag to orbit the car (drag up to bring the camera down to the road; keep going and it looks up at the sky) · wheel to zoom · click a car to follow it</span>
     </div>
     <div class="titlecard" id="titleCard" hidden><b id="tcBig"></b><span id="tcSmall"></span></div>
@@ -431,6 +423,11 @@
       <p id="webNote"></p>
       <pre id="webLine" hidden></pre>
       <div class="row"><button class="btn primary" id="webGo" type="button">Export</button><button class="btn" id="webShow" type="button" hidden>Show in folder</button><a class="btn" id="webSee" target="_blank" rel="noopener" hidden>Preview</a><button class="btn" id="webClose" type="button">Close</button></div>
+    </div>
+    <div class="exportbox" id="creditsBox" hidden>
+      <h3>CREDITS</h3>
+      <div class="credits" id="creditsList"></div>
+      <div class="row"><button class="btn" id="creditsClose" type="button">Close</button></div>
     </div>
     <div class="tip" id="mapTip"></div>
   </section>
@@ -500,7 +497,6 @@
       <div class="tabs" id="tabs" role="tablist">
         <button type="button" data-tab="control" class="on" role="tab">Race control</button>
         <button type="button" data-tab="reel" role="tab">Highlights</button>
-        <button type="button" data-tab="laps" role="tab">Laps</button>
         <button type="button" data-tab="talk" role="tab">Commentary</button>
       </div>
       <div class="pane" id="paneControl">
@@ -511,15 +507,8 @@
         <p class="note" id="rcMore"></p>
       </div>
       <div class="pane" id="paneReel" hidden>
-        <div class="seg" id="reelWho" role="group" aria-label="Whose highlights">
-          <button type="button" data-who="all" class="on">Everyone</button><button type="button" data-who="me" id="reelMe">This car</button>
-        </div>
         <p class="note" id="hlNote"></p>
         <ol class="hl" id="hlList"></ol>
-      </div>
-      <div class="pane" id="paneLaps" hidden>
-        <p class="note" id="lapsNote"></p>
-        <div class="lapsWrap"><table class="lapsT lapsFull"><thead><tr><th>Lap</th><th>Pos</th><th>Time</th><th class="wide">S1</th><th class="wide">S2</th><th class="wide">S3</th><th>Ahead</th><th>Behind</th><th>Tyre</th><th class="wide">Fuel</th><th class="wide">Batt</th><th class="notes">Notes</th></tr></thead><tbody id="lapsBody"></tbody></table></div>
       </div>
       <div class="pane" id="paneTalk" hidden>
         <div class="picks" id="voicePicks"></div>
@@ -726,15 +715,6 @@ function segment(id) {
   };
 }
 const REEL = (D.reel || []).map(segment).filter(Boolean);
-// the followed driver's own moments: every detected highlight they are in, in time order, followed as them
-let reelWho = "all", reelKey = "", reelMeName = "";
-const MINE = {};
-function reelFor(i) {
-  if (!MINE[i]) MINE[i] = D.highlights.filter(h => h.cars.includes(i)).sort((a, b) => a.t - b.t)
-    .map(h => { const s = REEL.find(q => q.id === h.id) || segment(h.id); return s && Object.assign({}, s, { focus: i, played: false }); }).filter(Boolean);
-  return MINE[i];
-}
-const shownReel = () => (reelWho === "me" ? reelFor(focus) : REEL);
 const FILL = (D.fill || []).map(segment).filter(Boolean);       // what the hosts have for when nothing is happening
 
 // ------------------------------------------------------------------ voice
@@ -1031,7 +1011,7 @@ async function tourReel(token) {
   setPlaying(false);
   showStandings(true);
 }
-async function playList(list, first = 0) {
+async function playReel(first = 0) {
   stopReel();
   const token = ++reelToken;
   $("cta").hidden = true;
@@ -1039,8 +1019,8 @@ async function playList(list, first = 0) {
   await voicesIn();
   if (token !== reelToken) return;
   liveBuild();
-  if (list === REEL && first === 0 && voiceOn && liveTalk && liveList.some(q => !q.fill)) return tourReel(token);      // (with voices for the hosts: as the broadcast has it)
-  for (const seg of list.slice(first)) {
+  if (first === 0 && voiceOn && liveTalk && liveList.some(q => !q.fill)) return tourReel(token);      // (with voices for the hosts: as the broadcast has it)
+  for (const seg of REEL.slice(first)) {
     if (token !== reelToken) return;
     await playSegment(seg, token);
   }
@@ -1048,7 +1028,6 @@ async function playList(list, first = 0) {
   setPlaying(false); activeSeg = null; markList();
   showStandings(true);
 }
-const playReel = (first = 0) => playList(shownReel(), first);
 async function playOne(seg) {
   stopReel();
   const token = ++reelToken;
@@ -1938,38 +1917,20 @@ function bcastDraw(show) {              // every frame, after the picture: the w
 
 // ------------------------------------------------------------------ side list
 function markList() {
-  const list = shownReel();
   for (const li of $("hlList").children) {
-    const seg = list[+li.dataset.k];
-    if (!seg) continue;
+    const seg = REEL[+li.dataset.k];
     li.classList.toggle("on", activeSeg === seg);
     li.classList.toggle("done", !!seg.played);
   }
 }
-function renderReelList() {             // the list as it stands: the scripted reel, or the followed driver's own moments
-  if (reelMeName !== name(focus)) { reelMeName = name(focus); $("reelMe").textContent = reelMeName; }
-  const key = `${reelWho}/${reelWho === "me" ? focus : ""}`;
-  if (key === reelKey) return;
-  reelKey = key;
-  const list = shownReel();
-  $("hlList").innerHTML = list.map((s, k) => {
-    const color = (KIND[s.kind] || [0, s.h ? C.ink : C["ink-2"]])[1];
-    const sub = s.h ? `Lap ${s.h.lap ?? "—"} · ${stamp(s.h.t)}` : `${s.lap ? `Lap ${s.lap} · ` : ""}${stamp(s.from)}`;
-    return `<li data-k="${k}" tabindex="0"><span class="dot" style="background:${color}"></span><span class="t">${esc(s.h ? s.h.title.replace("Player One", name(D.player)) : s.title)}<small>${sub}</small></span></li>`;
-  }).join("") || `<li class="empty">Nothing involving ${esc(name(focus))} was detected.</li>`;
-  $("hlNote").textContent = reelWho === "me" ? `${list.length} moment${list.length === 1 ? "" : "s"} for ${name(focus)} · ${D.highlights.length} detected in all`
-    : `${REEL.length} in the reel · ${D.highlights.length} detected`;
-  markList();
-}
-function setReelWho(who) {
-  reelWho = who === "me" ? "me" : "all";
-  for (const b of $("reelWho").children) b.classList.toggle("on", b.dataset.who === reelWho);
-  renderReelList();
-}
-renderReelList();
-$("reelWho").addEventListener("click", e => { const b = e.target.closest("button"); if (b) setReelWho(b.dataset.who); });
-$("hlList").addEventListener("click", e => { const li = e.target.closest("li[data-k]"); if (li) playOne(shownReel()[+li.dataset.k]); });
-$("hlList").addEventListener("keydown", e => { if (e.key === "Enter" && e.target.matches("li[data-k]")) playOne(shownReel()[+e.target.dataset.k]); });
+$("hlList").innerHTML = REEL.map((s, k) => {
+  const color = (KIND[s.kind] || [0, s.h ? C.ink : C["ink-2"]])[1];
+  const sub = s.h ? `Lap ${s.h.lap ?? "—"} · ${stamp(s.h.t)}` : `${s.lap ? `Lap ${s.lap} · ` : ""}${stamp(s.from)}`;
+  return `<li data-k="${k}" tabindex="0"><span class="dot" style="background:${color}"></span><span class="t">${esc(s.h ? s.h.title.replace("Player One", name(D.player)) : s.title)}<small>${sub}</small></span></li>`;
+}).join("");
+$("hlNote").textContent = `${REEL.length} in the reel · ${D.highlights.length} detected`;
+$("hlList").addEventListener("click", e => { const li = e.target.closest("li"); if (li) playOne(REEL[+li.dataset.k]); });
+$("hlList").addEventListener("keydown", e => { if (e.key === "Enter" && e.target.matches("li")) playOne(REEL[+e.target.dataset.k]); });
 
 // ------------------------------------------------------------------ tower
 let towerKey = "";
@@ -2273,74 +2234,6 @@ function carSlow() {                    // a few times a second: the things that
   put("cLapsNote", done.length > 6 ? `the last 6 of ${done.length}` : "");
 }
 
-// ------------------------------------------------------------------ one driver's race, lap by lap
-const LAPROWS = {};
-let lapsKey = "";
-function lapRows(i) {                   // every lap the car finished: where it crossed the line, what it had on board, and what happened on the way
-  if (LAPROWS[i]) return LAPROWS[i];
-  const race = D.session.race, table = (D.lapTable || {})[i] || [], open = !!BY[i] && BY[i].open !== 0 && !!ST.fuel;
-  const own = [Infinity, Infinity, Infinity, Infinity], out = [];
-  let tStart = race ? 0 : T0;
-  for (const r of D.laps[i] || []) {
-    const tEnd = r[0], lapN = r[3], row = table[lapN - 1] || [r[1], 0, 0, 0, r[2] ? 15 : 0];
-    const k = towerIndex(tEnd), k0 = towerIndex(tStart);
-    const rows = race ? towerRows(tEnd) : [], me = rows.find(q => q.c.i === i);
-    const ahead = me ? rows.find(q => q.pos === me.pos - 1) : null, behind = me ? rows.find(q => q.pos === me.pos + 1) : null;
-    const gapTo = (a, b) => (a && b && a.gap && (b.gap || b.pos === 1) ? "+" + Math.max(0, (a.gap - b.gap) / 100).toFixed(1) : "—");
-    let pit = false;
-    for (let q = k0 + 1; q <= k; q++) if (TW.pit[i][q]) { pit = true; break; }
-    const s = statIndex(tEnd), s0 = statIndex(tStart);
-    let used = 0, got = 0;
-    if (open) for (let q = s0 + 1; q <= s; q++) { used = Math.max(used, statAt("ersOut", i, q)); got = Math.max(got, statAt("ersIn", i, q)); }
-    const notes = [];      // already escaped: names through esc(), race-control text as FEED carries it
-    if (pit) notes.push(D.highlights.some(h => h.kind === "pit" && h.cars[0] === i && h.changed && h.t > tStart - 2 && h.t <= tEnd) ? "pit stop" : "pit lane, no stop");
-    for (const f of fightsOf(i)) if (f.t > tStart && f.t <= tEnd) notes.push(f.cars[0] === i ? `passed ${esc(name(f.cars[1]))}` : `passed by ${esc(name(f.cars[0]))}`);
-    for (const q of FEED) {
-      if (q.t <= tStart || q.t > tEnd) continue;
-      if (q.code === "SCAR" && q.big && !notes.includes("safety car")) notes.push("safety car");
-      if (!q.cars.includes(i)) continue;
-      if (q.code === "COLL") notes.push(`contact with ${esc(name(q.cars.find(c => c !== i) ?? i))}`);
-      else if (q.code === "PENA" || q.code === "DTSV" || q.code === "SGSV") notes.push(q.text.replace(/^.*? · /, ""));
-      else if (q.code === "RTMT") notes.push("out of the race");
-      else if (q.code === "FTLP") notes.push("fastest lap");
-    }
-    if (!r[2]) notes.push("lap invalid");
-    if (r[2] && row[0]) own[0] = Math.min(own[0], row[0]);
-    for (let q = 1; q <= 3; q++) if (row[q] && (row[4] >> q) & 1) own[q] = Math.min(own[q], row[q]);
-    out.push({ lapN, tStart, tEnd, pos: TW.pos[i][k], row, valid: !!r[2], ahead: gapTo(me, ahead), behind: gapTo(behind, me),
-               tyre: TYRES[TW.tyre[i][k]], age: TW.age[i][k], pit, open,
-               fuel: open ? statAt("fuel", i, s) / 100 : null, batt: open ? statAt("ers", i, s) / 1e4 : null, used: used / 5000, got: got / 5000,
-               own: own.slice(), notes });
-    tStart = tEnd;
-  }
-  return (LAPROWS[i] = out);
-}
-function renderLaps() {                 // the Laps tab: every lap of the followed car, the ones still to come dimmed
-  if ($("paneLaps").hidden) return;
-  const i = focus, rows = lapRows(i), done = rows.filter(q => q.tEnd <= T).length;
-  const key = `${i}/${done}`;
-  if (key === lapsKey) return;
-  lapsKey = key;
-  const field = bestsBy(T), race = D.session.race, nowRow = rows[done - 1];
-  const mark = (v, q, ok, own) => (!v ? "" : !ok ? "bad" : v <= field[q] ? "purple" : v <= own[q] ? "pb" : "");
-  html("lapsBody", rows.map(q => {
-    const cls = q.tEnd > T ? "todo" : q === nowRow ? "now" : "";
-    return `<tr class="${cls}" data-t="${q.tStart}" tabindex="0" title="Watch this lap"><td>${q.lapN}</td><td>${q.pos ? "P" + q.pos : "—"}</td>`
-      + `<td class="${mark(q.row[0], 0, q.valid, q.own)}">${lapTime(q.row[0])}</td>`
-      + [1, 2, 3].map(sx => `<td class="wide ${mark(q.row[sx], sx, (q.row[4] >> sx) & 1, q.own)}">${sector(q.row[sx])}</td>`).join("")
-      + `<td>${race ? q.ahead : "—"}</td><td>${race ? q.behind : "—"}</td>`
-      + `<td>${q.tyre ? `<span style="color:${q.tyre[1]}">${q.tyre[0]}</span><small> ${q.age}</small>` : "—"}</td>`
-      + `<td class="wide">${q.fuel == null ? "—" : q.fuel.toFixed(1)}</td>`
-      + `<td class="wide">${q.batt == null ? "—" : q.batt.toFixed(2) + (q.used ? `<small> −${q.used.toFixed(1)} +${q.got.toFixed(1)}</small>` : "")}</td>`
-      + `<td class="notes">${q.notes.join(" · ")}</td></tr>`;
-  }).join("") || `<tr><td colspan="12" class="muted">No laps finished yet</td></tr>`);
-  const res = (D.result || []).find(r => r.i === i);
-  $("lapsNote").textContent = `${name(i)} · ${done} of ${rows.length} lap${rows.length === 1 ? "" : "s"} so far`
-    + (res && res.grid ? ` · from P${res.grid}` : "") + (res && res.pos ? ` to P${res.pos}` : "") + (rows.length ? " · click a lap to watch it" : "");
-}
-$("lapsBody").addEventListener("click", e => { const tr = e.target.closest("tr[data-t]"); if (tr) goTo(+tr.dataset.t + 4.5, [focus]); });
-$("lapsBody").addEventListener("keydown", e => { if (e.key === "Enter" && e.target.matches("tr[data-t]")) goTo(+e.target.dataset.t + 4.5, [focus]); });
-
 // ------------------------------------------------------------------ race control: the game's own event feed, as the live dashboard words it
 const RETIRE = ["", "retired", "finished", "terminal damage", "inactive", "not enough laps", "black flagged",
                 "red flagged", "mechanical failure", "session skipped", "session simulated"];
@@ -2404,28 +2297,6 @@ for (const item of FEED) if (item.more) {
   item.text = D.session.race ? `${item.text} (and ${item.more} more)` : `${esc(name(item.cars[0]))} moves up ${item.more + 1} places`;
   if (!D.session.race) item.label = "TIMING";
 }
-// passes for position, counted as replay_build.race_moments counts them, for every car: a place handed over in the pit
-// lane or by a stopped car isn't a pass, and swaps between the same two cars inside 15 s are one fight
-const FIGHTS = (() => {
-  if (!D.session.race) return [];
-  const open = new Map(), out = [];
-  for (const e of D.events || []) {
-    if (e.code !== "OVTK" || e.t <= 0) continue;
-    const a = e.overtakingVehicleIdx, c = e.beingOvertakenVehicleIdx, k = towerIndex(e.t);
-    if (!BY[a] || !BY[c] || TW.pit[a][k] || TW.pit[c][k] || CH.speed[c][Math.round(frameAt(e.t))] < 40) continue;
-    const key = Math.min(a, c) + ":" + Math.max(a, c), f = open.get(key);
-    if (f && e.t - f.last <= 15) { f.last = e.t; f.cars = [a, c]; f.swaps++; }
-    else { const g = { t: e.t, last: e.t, cars: [a, c], swaps: 1 }; open.set(key, g); out.push(g); }
-  }
-  for (const f of out) {
-    f.position = TW.pos[f.cars[0]][towerIndex(f.last + 1)]; f.lap = TW.lap[f.cars[0]][towerIndex(f.t)]; f.to = f.last + 5;
-    f.title = `${name(f.cars[0])} passes ${name(f.cars[1])}${f.position ? ` for P${f.position}` : ""}${f.swaps > 1 ? ` (${f.swaps} swaps)` : ""}`;
-  }
-  return out;
-})();
-let fightsFor = -1, focusFights = [];
-function fightsOf(i) { return FIGHTS.filter(f => f.cars.includes(i)); }
-function myFights() { if (fightsFor !== focus) { fightsFor = focus; focusFights = fightsOf(focus); } return focusFights; }
 let rcFilter = "all", rcKey = "";
 function renderControl() {
   let n = 0;
@@ -2446,14 +2317,12 @@ function renderControl() {
   $("rcMore").textContent = later ? `${later} more to come before the end` : FEED.length ? "That is everything race control reported." : "This recording has no race-control events.";
   $("rcList").parentElement.scrollTop = 0;
 }
-function goTo(t, cars) {                // a few seconds before a moment, following one of the cars in it (the followed car, if it is one)
-  stopReel(); $("cta").hidden = true;
-  if (cars && cars.length && !cars.includes(focus)) { focus = cars[0]; towerKey = ""; }
-  seek(t - 4); setSpeed(1); setPlaying(true);
-}
-function goToEvent(k) {                 // a click on a line of race control
+function goToEvent(k) {                 // a click on a line: a few seconds before it, following the first car in it
   const q = FEED[k];
-  if (q) goTo(q.t, q.cars);
+  if (!q) return;
+  stopReel(); $("cta").hidden = true;
+  if (q.cars.length && !q.cars.includes(focus)) { focus = q.cars[0]; towerKey = ""; }
+  seek(q.t - 4); setSpeed(1); setPlaying(true);
 }
 $("rcList").addEventListener("click", e => { const li = e.target.closest("li[data-k]"); if (li) goToEvent(+li.dataset.k); });
 $("rcList").addEventListener("keydown", e => { if (e.key === "Enter" && e.target.matches("li[data-k]")) goToEvent(+e.target.dataset.k); });
@@ -2465,8 +2334,7 @@ $("rcFilter").addEventListener("click", e => {
 });
 function showTab(tab) {
   for (const b of $("tabs").children) b.classList.toggle("on", b.dataset.tab === tab);
-  $("paneControl").hidden = tab !== "control"; $("paneReel").hidden = tab !== "reel"; $("paneTalk").hidden = tab !== "talk"; $("paneLaps").hidden = tab !== "laps";
-  if (tab === "laps") { lapsKey = ""; renderLaps(); }
+  $("paneControl").hidden = tab !== "control"; $("paneReel").hidden = tab !== "reel"; $("paneTalk").hidden = tab !== "talk";
 }
 $("tabs").addEventListener("click", e => { const b = e.target.closest("button"); if (b) showTab(b.dataset.tab); });
 
@@ -2490,26 +2358,18 @@ function renderTimeline() {
   const [ctx, W, H] = fit($("timeline"));
   ctx.clearRect(0, 0, W, H);
   const X = t => TL.pad + (t - T0) / (TEND - T0) * (W - 2 * TL.pad), mid = TL.bar, px = X(T);
-  for (const seg of shownReel()) {      // the stretches the highlight reel plays
+  for (const seg of REEL) {             // the stretches the highlight reel plays
     ctx.fillStyle = seg === activeSeg ? "rgba(225,6,0,0.5)" : "rgba(255,255,255,0.11)";
     ctx.fillRect(X(seg.from), mid - 10, Math.max(3, X(seg.to) - X(seg.from)), 20);
   }
   ctx.lineCap = "round"; ctx.lineWidth = 5;
   ctx.strokeStyle = C.line; ctx.beginPath(); ctx.moveTo(TL.pad, mid); ctx.lineTo(W - TL.pad, mid); ctx.stroke();
   ctx.strokeStyle = C.red; ctx.beginPath(); ctx.moveTo(TL.pad, mid); ctx.lineTo(px, mid); ctx.stroke();
-  const inReel = new Set(shownReel().map(s => s.id));
+  const inReel = new Set(REEL.map(s => s.id));
   for (const h of D.highlights) {
     const color = (KIND[h.kind] || [h.kind, C.ink])[1], big = inReel.has(h.id), x = X(h.t);
     ctx.beginPath(); ctx.arc(x, mid, big ? 5.5 : 3, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill();
     if (big) { ctx.lineWidth = 1.5; ctx.strokeStyle = "#fff"; ctx.stroke(); }
-  }
-  for (const f of myFights()) {         // the followed driver's passes, above the bar: up, a place taken; down, a place lost
-    const x = X(f.t), won = f.cars[0] === focus, top = mid - 19, base = mid - 11;
-    ctx.beginPath();
-    if (won) { ctx.moveTo(x, top); ctx.lineTo(x + 5, base); ctx.lineTo(x - 5, base); }
-    else { ctx.moveTo(x - 5, top); ctx.lineTo(x + 5, top); ctx.lineTo(x, base); }
-    ctx.closePath(); ctx.fillStyle = won ? (BY[focus] ? BY[focus].color : C.ink) : C.muted; ctx.fill();
-    ctx.lineWidth = 1; ctx.strokeStyle = "rgba(255,255,255,0.7)"; ctx.stroke();
   }
   ctx.beginPath(); ctx.arc(px, mid, 7, 0, Math.PI * 2); ctx.fillStyle = "#fff"; ctx.fill();
   ctx.lineWidth = 2.5; ctx.strokeStyle = C.red; ctx.stroke();
@@ -2529,59 +2389,35 @@ function renderTimeline() {
   ctx.textAlign = "left";
 }
 function timelineHit(e) {
-  const r = $("timeline").getBoundingClientRect(), mx = e.clientX - r.left, dy = e.clientY - r.top - TL.bar, wide = r.width - 2 * TL.pad;
-  const t = T0 + clamp((mx - TL.pad) / wide, 0, 1) * (TEND - T0), touch = e.pointerType === "touch";
-  const nearest = list => { let best = null, bd = touch ? 12 : 7; for (const q of list) { const d = Math.abs(TL.pad + (q.t - T0) / (TEND - T0) * wide - mx); if (d < bd) { bd = d; best = q; } } return best; };
-  // a dot is only meant when the pointer is on the bar, a pass marker when it is above it; a finger gets the whole height, split at the bar
-  let h = null, f = null;
-  if (touch ? dy >= -5 : Math.abs(dy) <= 12) h = nearest(D.highlights);
-  if (!h && (touch ? dy < -5 : dy < -6 && dy > -24)) f = nearest(myFights());
-  if (!h && !f && touch) { h = nearest(D.highlights); if (!h) f = nearest(myFights()); }
-  return { t, h, f, mx, wide: r.width };
+  const r = $("timeline").getBoundingClientRect(), mx = e.clientX - r.left, wide = r.width - 2 * TL.pad;
+  const t = T0 + clamp((mx - TL.pad) / wide, 0, 1) * (TEND - T0);
+  let best = null, bd = 7;
+  for (const h of D.highlights) { const d = Math.abs(TL.pad + (h.t - T0) / (TEND - T0) * wide - mx); if (d < bd) { bd = d; best = h; } }
+  if (Math.abs(e.clientY - r.top - TL.bar) > 12) best = null;      // a dot is only meant when the pointer is on the bar
+  return { t, h: best, mx, wide: r.width };
 }
 const tlBox = $("timelineBox");
-function pickOnTimeline(hit) {          // a dot plays its highlight; a pass marker goes to the pass, still following this driver
-  if (hit.h) playOne(shownReel().find(s => s.id === hit.h.id) || segment(hit.h.id));
-  else if (hit.f) goTo(hit.f.t, [focus]);
-}
-const tipFor = hit => hit.h ? `${hit.h.title.replace("Player One", name(D.player))} · lap ${hit.h.lap ?? "—"} · ${stamp(hit.h.t)} — click to play`
-  : hit.f ? `${hit.f.title} · lap ${hit.f.lap || "—"} · ${stamp(hit.f.t)} — click to watch` : stamp(hit.t);
-function showTip(hit, text) {
-  const tip = $("tlTip");
-  tip.style.display = "block"; tip.textContent = text;
-  tip.style.left = clamp(hit.mx - tip.offsetWidth / 2, 0, hit.wide - tip.offsetWidth) + "px"; tip.style.top = "-32px";
-}
-let tapped = null, tipTimer = 0;        // a finger: a tap on a dot or a marker picks it, a drag scrubs
 tlBox.addEventListener("pointerdown", e => {
   const hit = timelineHit(e);
   stopReel(); $("cta").hidden = true;
-  if ((hit.h || hit.f) && e.pointerType !== "touch") pickOnTimeline(hit);      // a mouse picks straight away
-  else {
-    tapped = e.pointerType === "touch" && (hit.h || hit.f) ? { x: e.clientX, y: e.clientY, hit } : null;
-    dragging = true; try { tlBox.setPointerCapture(e.pointerId); } catch (err) { /* older browsers */ } seek(hit.t);
-  }
+  if (hit.h && e.pointerType !== "touch") playOne(REEL.find(s => s.id === hit.h.id) || segment(hit.h.id));      // a finger scrubs; a mouse can pick a dot
+  else { dragging = true; try { tlBox.setPointerCapture(e.pointerId); } catch (err) { /* older browsers */ } seek(hit.t); }
 });
 tlBox.addEventListener("pointermove", e => {
-  const hit = timelineHit(e);
+  const hit = timelineHit(e), tip = $("tlTip");
   if (dragging) seek(hit.t);
-  if (tapped && Math.hypot(e.clientX - tapped.x, e.clientY - tapped.y) > 8) tapped = null;
   if (e.pointerType === "touch" && !dragging) return;
-  showTip(hit, dragging ? stamp(hit.t) : tipFor(hit));
+  tip.style.display = "block";
+  tip.textContent = hit.h && !dragging ? `${hit.h.title.replace("Player One", name(D.player))} · lap ${hit.h.lap ?? "—"} · ${stamp(hit.h.t)} — click to play` : stamp(hit.t);
+  tip.style.left = clamp(hit.mx - tip.offsetWidth / 2, 0, hit.wide - tip.offsetWidth) + "px";
+  tip.style.top = "-32px";
 });
-const tlDone = e => {
-  dragging = false; $("tlTip").style.display = "none";
-  if (tapped && e && e.type === "pointerup") {        // a tap that never moved: the thing under it
-    const hit = tapped.hit;
-    pickOnTimeline(hit); showTip(hit, tipFor(hit));
-    clearTimeout(tipTimer); tipTimer = setTimeout(() => { $("tlTip").style.display = "none"; }, 2000);
-  }
-  tapped = null;
-};
+const tlDone = () => { dragging = false; $("tlTip").style.display = "none"; };
 tlBox.addEventListener("pointerup", tlDone);
 tlBox.addEventListener("pointercancel", tlDone);
 tlBox.addEventListener("pointerleave", () => { if (!dragging) $("tlTip").style.display = "none"; });
 function stepEvent(dir) {               // the highlight before or after this moment, played as the reel plays it
-  const own = shownReel(), list = (own.length ? own : D.highlights.map(h => segment(h.id)).filter(Boolean)).slice().sort((a, b) => a.from - b.from);
+  const list = (REEL.length ? REEL : D.highlights.map(h => segment(h.id)).filter(Boolean)).slice().sort((a, b) => a.from - b.from);
   const here = activeSeg ? activeSeg.from : T;
   const next = dir > 0 ? list.find(s => s.from > here + 0.5) : list.reverse().find(s => s.from < here - 0.5);
   if (next) playOne(next);
@@ -2669,9 +2505,6 @@ if (WEB) {
   $("share").onclick = async () => {    // a link to this very moment, following this car
     const u = new URL(location.href);
     u.searchParams.delete("embed"); u.searchParams.set("t", Math.round(T)); u.searchParams.set("car", focus);
-    u.searchParams.delete("cam"); u.searchParams.delete("tab");
-    if (view3d && window.Stage3D && Stage3D.camera !== "auto") u.searchParams.set("cam", Stage3D.camera);
-    if (!$("paneLaps").hidden) u.searchParams.set("tab", "laps");
     try { await navigator.clipboard.writeText(u.href); $("shareText").textContent = "Link copied"; }
     catch (e) { window.prompt("Copy this link:", u.href); }
     setTimeout(() => { $("shareText").textContent = "Share"; }, 1800);
@@ -2718,14 +2551,13 @@ $("webGo").onclick = async () => {
 $("legend").innerHTML = "<span>Timeline (click a dot to play it):</span>" + [KIND.contact, KIND.stewards, ["Fastest lap / personal best", C["k-fast"]],
   KIND.moment, KIND.offtrack, KIND.speedtrap].concat(D.session.race ? [KIND.overtake, KIND.pit, ["Start / flag", C["k-flag"]]] : [])
   .map(([label, color]) => `<span><i style="background:${color}"></i>${label}</span>`).join("")
-  + `<span>· white ring = in the highlight reel</span>` + (D.session.race ? `<span>· ▲▼ the followed driver's passes, made and lost</span>` : "");
+  + `<span>· white ring = in the highlight reel</span>`;
 $("title").textContent = D.title || `${D.session.type} · ${D.session.track}`;
 $("subtitle").textContent = `${CARS.length} cars · ${D.session.length} m · ${["clear", "light cloud", "overcast", "light rain", "heavy rain", "storm"][D.session.weather] || ""} · track ${D.session.trackTemp}° / air ${D.session.airTemp}°`;
 setSpeed(1);
 seek(REEL.length ? REEL[0].from : T0 + 60);
 if (ASK.has("car") && BY[+ASK.get("car")]) focus = +ASK.get("car");      // a shared link: this car, at this moment
 if (ASK.get("t") && isFinite(+ASK.get("t")) && +ASK.get("t") <= TEND + 1) { seek(+ASK.get("t")); $("cta").hidden = true; }      // (a t far past the flag is not a moment: an old link's cache-buster)
-if (ASK.get("tab") === "laps") showTab("laps");
 $("mRpm").hidden = !CH.rpm;
 // ---- where you were. A browser unloads a tab that has sat in the background and loads the page again when you come
 // back to it (and the 3D view starts the page again when the browser takes its graphics away). So the moment, the
@@ -2794,7 +2626,7 @@ function tick(now, manual) {
   // of the race (the clock is put back for them); the race's clock, the tower and the hosts go on
   const live = T, show = bcastOn() ? (liveBuild(), bcastAt(T)) : null, again = show && show.p != null ? clamp(show.p, T0, TEND) : null;
   bcastShow = show;
-  if (now - towerAt > 200) { renderTower(); renderControl(); renderReelList(); renderLaps(); if (again !== null) T = again; carSlow(); T = live; towerAt = now; }
+  if (now - towerAt > 200) { renderTower(); renderControl(); if (again !== null) T = again; carSlow(); T = live; towerAt = now; }
   if (again !== null) T = again;
   storyStep();                          // (the Commentary camera says whose car it is, before anything is drawn of it)
   carFast();
@@ -2840,7 +2672,6 @@ function setView(kind) {
   for (const b of $("viewbar").querySelectorAll("[data-view]")) b.classList.toggle("on", b.dataset.view === kind);
   try { localStorage.setItem("pitwall.view", kind); } catch (e) { /* storage off */ }
 }
-const CAMS = ["pod", "chase", "orbit", "tv", "auto", "drone", "story", "cockpit", "heli"];      // in key order, 1 to 9
 const camHint3d = $("camHint").textContent;
 function markCamera() { for (const b of $("camBar").children) b.classList.toggle("on", window.Stage3D && b.dataset.cam === Stage3D.camera); }
 if (D.track3d && D.track3d.version >= 3 && CH.y) {
@@ -2855,7 +2686,6 @@ if (D.track3d && D.track3d.version >= 3 && CH.y) {
   document.addEventListener("stage3d-ready", () => {
     $("viewSeg").hidden = false;
     if (placeCam && placeCam !== "iso" && placeCam !== Stage3D.camera) Stage3D.setCamera(placeCam);      // the camera you had (see "where you were")
-    if (CAMS.includes(ASK.get("cam"))) Stage3D.setCamera(ASK.get("cam"));
     markCamera();
     let saved = null;
     try { saved = localStorage.getItem("pitwall.view"); } catch (e) { /* storage off */ }
@@ -2868,7 +2698,7 @@ if (D.track3d && D.track3d.version >= 3 && CH.y) {
     if (e.target.matches("input, select, textarea") || !window.Stage3D) return;
     if (e.key.toLowerCase() === "v") setView({ "2d": "25d", "25d": "3d", "3d": "2d" }[viewKind]);
     else if (view3d && e.key.toLowerCase() === "n") $("names3d").click();
-    else if (viewKind === "3d" && "123456789".includes(e.key)) Stage3D.setCamera(CAMS[+e.key - 1]);
+    else if (viewKind === "3d" && "1234567".includes(e.key)) Stage3D.setCamera(["pod", "chase", "orbit", "tv", "auto", "drone", "story"][+e.key - 1]);
   });
 }
 // ---- what is in the sky and what everyone is driving (3D only): two menus, remembered, and kept in the page's address
@@ -2887,7 +2717,7 @@ function looksMenu() {
   $("carsPick").onchange = e => { Stage3D.setCars(e.target.value); keep("cars", Stage3D.carsName, "f1"); e.target.blur(); };
 }
 document.addEventListener("stage3d-ready", looksMenu);
-// ------------------------------------------------------------------ the cars' engines (on this PC only)
+// ------------------------------------------------------------------ the cars' engines
 /* Eric, 11 Oct 2026: "maybe we add another drop down for audio ... 4 different engine sounds". An engine is two rows
    of short sounds cut from recordings of real laps (sounds\engine_bank.py): each sound is the engine held at one
    pitch, running round on itself with no join; one row is the engine pulling, the other the driver off the
@@ -2901,9 +2731,10 @@ document.addEventListener("stage3d-ready", looksMenu);
    and so that a camera thirty metres from the road is not left with a murmur, the whole is turned up when nothing
    is near, as whoever mixes a broadcast rides a trackside microphone (up to "mic" times, eased, and set at once
    when the camera cuts). The hosts are talked under, never over.
-   The recordings are Formula 1's own broadcasts, so the sounds are served by Pit Wall on this PC and by nothing
-   else: a page anywhere else never asks for them, and with none to be had there is no menu. They play at the race's
-   own speed only: paused, held, or at any other speed, the engines are silent. */
+   The recordings are Formula 1's own broadcasts. Until 13 Oct 2026 the sounds were served by Pit Wall on this PC and
+   by nothing else; then Eric, of everything that had stayed on his PC: "add everything". So they go wherever the
+   player goes (sounds/local beside it), and a site that has left them out has no menu: with none to be had there is
+   none. They play at the race's own speed only: paused, held, or at any other speed, the engines are silent. */
 // (level and duck were set by measuring, there being no ears here: on board with nobody speaking the engines come out
 // about as loud as the hosts' speech does, and under a host about 11 dB below it)
 const ENGINE = { level: 0.45,         // how loud, with the slider in the middle (the slider goes from nothing to about twice this)
@@ -2917,8 +2748,7 @@ const ENGINE = { level: 0.45,         // how loud, with the slider in the middle
                  // shorter ones are talked through), and while a host speaks. Set by measuring the league race's film,
                  // the hosts alone against the engines alone: see filmSound
                  film: { clear: 0.7, under: 0.22, pause: 1.2 } };
-const enginesAt = /^http/.test(location.protocol) && /^(127\.0\.0\.1|localhost|\[::1\])$/.test(location.hostname)
-  ? (WEB ? "sounds/local/" : "/player/sounds/local/") : null;
+const enginesAt = /^http/.test(location.protocol) ? (WEB ? "sounds/local/" : "/player/sounds/local/") : null;
 let engineBank = null, engineBus = null, engineWas = null, engineCost = 0;
 const engineBanks = new Map(), engineVoices = new Map(), engineHeard = engineHearing();
 function engineLoad(name) {             // an engine's two rows of sounds, fetched once: its index, and one WAV file that is cut up here
@@ -3144,7 +2974,7 @@ function engineFilm(film, n0, n1, rate, state = {}) {
   state.open = open;
   return any ? { left, right } : null;
 }
-async function engineMenu() {           // the menu: Off, and whatever engines Pit Wall has on this PC
+async function engineMenu() {           // the menu: Off, and whatever engines there are beside the player
   if (!enginesAt) return;
   let list = null;
   try { const r = await fetch(enginesAt + "index.json"); if (r.ok) list = await r.json(); } catch (e) { /* none to be had */ }
@@ -3166,6 +2996,25 @@ async function engineMenu() {           // the menu: Off, and whatever engines P
   choose(ASK.get("engine") || saved("engine") || "off");
 }
 engineMenu();
+// ------------------------------------------------------------------ whose the things in the picture are
+/* The F1 car, the film and game cars, what stands round the circuit, its surfaces and the engines' sounds are other
+   people's. A licence that lets a thing be passed on asks for its maker to be named where it is shown, and this is
+   where: a list beside the player (credits.json, which web_build.py makes from what each file says of itself), under
+   the Credits button. Where there is no list there is no button. */
+async function creditsMenu() {
+  if (!/^http/.test(location.protocol)) return;
+  let list = null;
+  try { const r = await fetch(WEB ? "credits.json" : "/player/credits.json"); if (r.ok) list = await r.json(); } catch (e) { /* none to be had */ }
+  if (!Array.isArray(list) || !list.length) return;
+  const link = (text, url) => (url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(text)}</a>` : esc(text));
+  $("creditsList").innerHTML = list.map(part => `<h4>${esc(part.what)}</h4>`
+    + (part.items || []).map(q => `<p>${link(q.title, q.link)}${q.by ? " by " + link(q.by, q.byLink) : ""}${q.licence ? " · " + link(q.licence, q.licenceLink) : ""}${q.note ? `<br><span class="muted">${esc(q.note)}</span>` : ""}</p>`).join("")
+    + (part.text ? `<p class="muted">${esc(part.text)}</p>` : "")).join("");
+  $("creditsBar").hidden = false;
+  $("creditsBtn").onclick = e => { $("exportBox").hidden = true; $("webBox").hidden = true; $("creditsBox").hidden = !$("creditsBox").hidden; e.target.blur(); };
+  $("creditsClose").onclick = () => { $("creditsBox").hidden = true; };
+}
+creditsMenu();
 // ------------------------------------------------------------------ export: the reel as a video file
 /* Makes the highlight reel (or the whole race) into an MP4, off the clock: every frame is drawn in turn (the 3D
    picture, then the graphics over it) and sent as it is, and the commentary is mixed exactly as planLines lays it
@@ -3833,7 +3682,8 @@ async function exportVideo(pick) {         // pick: a highlight's id, to export 
     id = null;
     if (!done.ok) throw new Error(done.error);
     $("exBar").style.width = "100%";
-    exNote(`Saved: ${done.file} (${done.mb} MB, ${Math.floor(show.total / 60)}:${pad(Math.round(show.total % 60))})${show.silent ? ` · ${show.silent} lines had no rendered voice and are silent` : ""}`);
+    // (done.note: the film is not all that was asked for, or not where it was to go. Pit Wall says which: an enhancer that made nothing, a full disk)
+    exNote(`Saved: ${done.file} (${done.mb} MB, ${Math.floor(show.total / 60)}:${pad(Math.round(show.total % 60))})${done.note ? ` · BUT ${done.note}` : ""}${show.silent ? ` · ${show.silent} lines had no rendered voice and are silent` : ""}`);
     $("exShow").hidden = false; $("exShow").onclick = () => post("reveal", JSON.stringify({ file: done.file }));
     return done;
   } catch (e) {
@@ -3867,7 +3717,6 @@ $("exClose").onclick = () => { if (exporting) exporting.cancel = true; else $("e
 
 // test hook: lets an automated check step the loop when the tab is hidden (requestAnimationFrame pauses)
 window.__replay = { get T() { return T; }, get cam() { return cam; }, get focus() { return focus; }, get view3d() { return view3d; }, seek, segment, REEL, FEED,
-                    FIGHTS, fightsOf, lapRows, renderLaps, shownReel, setReelWho, goTo,
                     data: { CH, TW, ST, GAP },
                     tick: now => tick(now, true), setView, exportVideo, showPlan, showBroadcast, showRace, showState, showTab, stepEvent,
                     follow: i => { focus = i; towerKey = ""; }, play: on => setPlaying(on),
@@ -3877,7 +3726,7 @@ window.__replay = { get T() { return T; }, get cam() { return cam; }, get focus(
                     engine: () => ({ ENGINE, bank: engineBank, bus: engineBus, voices: engineVoices, vel: engineHeard.vel, cost: engineCost, mic: engineHeard.mic }),      // and the engines being heard
                     filmSound, filmStretches, filmStretch, engineFilm, FILM,      // (a film's sound, whole or one half of it: for measuring the mix)
                     filmPress, filmHand, filmDoor, drawFrame,     // (and its picture: a frame as the bytes Pit Wall's encoder is sent)
-                    renderAll: () => { renderTower(); carFast(); carSlow(); renderControl(); renderReelList(); renderLaps(); if (view3d && window.Stage3D) Stage3D.render(T, 0.016); else renderMap(0.016); renderTrace(); renderTimeline(); } };
+                    renderAll: () => { renderTower(); carFast(); carSlow(); renderControl(); if (view3d && window.Stage3D) Stage3D.render(T, 0.016); else renderMap(0.016); renderTrace(); renderTimeline(); } };
 requestAnimationFrame(tick);
 }
 
@@ -3971,7 +3820,7 @@ async function boot() {
     const voice = race.voiceBytes ? download(`races/${encodeURIComponent(race.id)}/voice.bin`).then(inflate).then(b => JSON.parse(new TextDecoder().decode(b))).catch(() => null) : null;
     start(D, { voice });
     page("veil").hidden = true;
-    if (D.track3d) import("./replay3d.js?v=8924c3f3").catch(e => console.warn("The 3D view could not be loaded, so the map is all there is:", e));
+    if (D.track3d) import("./replay3d.js?v=6f034607").catch(e => console.warn("The 3D view could not be loaded, so the map is all there is:", e));
   } catch (e) {
     veilSay("That didn't open", e.message || String(e), null);
     console.error(e);
